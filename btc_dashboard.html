@@ -39,6 +39,26 @@ function showToast(title, msg) {
 <style>
 @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
 @keyframes slideOut { from{transform:translateX(0);opacity:1} to{transform:translateX(100%);opacity:0} }
+
+/* ─── 多空信号按钮 ─── */
+.signal-btn {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 4px; text-align: center; transition: all 0.2s;
+}
+.signal-btn.long {
+  background: rgba(255,77,109,.15); border-color: rgba(255,77,109,.5);
+}
+.signal-btn.short {
+  background: rgba(0,214,143,.15); border-color: rgba(0,214,143,.5);
+}
+.sb-name { font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+.sb-val { font-size: 13px; font-weight: 700; color: var(--text1); }
+.sb-arrow { font-size: 14px; margin-top: 2px; }
+.signal-btn.long .sb-val, .signal-btn.long .sb-arrow { color: var(--red); }
+.signal-btn.short .sb-val, .signal-btn.short .sb-arrow { color: var(--green); }
+
+#sb-result.long { background: rgba(255,77,109,.2); color: var(--red); }
+#sb-result.short { background: rgba(0,214,143,.2); color: var(--green); }
 </style>
 <style>
 :root {
@@ -387,21 +407,62 @@ body {
       <div class="risk-box" id="sig-risks" style="margin-top:6px"></div>
     </div>
 
-    <!-- ④ 指标徽章 -->
-    <div class="badge-row">
-      <span class="badge-row-label">指标：</span>
-      <span class="badge b-no" id="b-pin">插针</span>
-      <span class="badge b-no" id="b-vol">放量</span>
-      <span class="badge b-no" id="b-low">低点↑</span>
-      <span class="badge b-no" id="b-macd">MACD</span>
-      <span class="badge b-no" id="b-kdj">KDJ</span>
-      <span class="badge b-no" id="b-rsi">RSI</span>
-      <span class="badge b-no" id="b-wr">WR</span>
-      <span class="badge b-no" id="b-boll">BOLL</span>
-      <span class="badge b-no b-score" id="b-score">0/10</span>
+    <!-- ④ 一眼看多空 - 大按钮版 -->
+    <div style="background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:10px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:600;">🔔 指标多空信号</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+        <div class="signal-btn" id="sb-macd">
+          <div class="sb-name">MACD</div>
+          <div class="sb-val">--</div>
+          <div class="sb-arrow">⚪</div>
+        </div>
+        <div class="signal-btn" id="sb-kdj">
+          <div class="sb-name">KDJ</div>
+          <div class="sb-val">--</div>
+          <div class="sb-arrow">⚪</div>
+        </div>
+        <div class="signal-btn" id="sb-rsi">
+          <div class="sb-name">RSI</div>
+          <div class="sb-val">--</div>
+          <div class="sb-arrow">⚪</div>
+        </div>
+        <div class="signal-btn" id="sb-wr">
+          <div class="sb-name">WR</div>
+          <div class="sb-val">--</div>
+          <div class="sb-arrow">⚪</div>
+        </div>
+        <div class="signal-btn" id="sb-boll">
+          <div class="sb-name">BOLL</div>
+          <div class="sb-val">--</div>
+          <div class="sb-arrow">⚪</div>
+        </div>
+        <div class="signal-btn" id="sb-pin">
+          <div class="sb-name">插针</div>
+          <div class="sb-val">--</div>
+          <div class="sb-arrow">⚪</div>
+        </div>
+        <div class="signal-btn" id="sb-vol">
+          <div class="sb-name">放量</div>
+          <div class="sb-val">--</div>
+          <div class="sb-arrow">⚪</div>
+        </div>
+        <div class="signal-btn" id="sb-fund">
+          <div class="sb-name">资金费</div>
+          <div class="sb-val">--</div>
+          <div class="sb-arrow">⚪</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:13px;font-weight:700;">综合评分</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="sb-score-text" style="font-size:18px;font-weight:900;color:var(--text3);">0</span>
+          <span style="font-size:12px;color:var(--text3);">/ 10</span>
+          <div id="sb-result" style="padding:4px 12px;border-radius:15px;font-size:12px;font-weight:700;background:var(--bg2);color:var(--text3);">观望</div>
+        </div>
+      </div>
     </div>
 
-    <!-- ⑤ 指标卡 -->
+    <!-- 旧指标卡（保留显示数值） -->
     <div class="stats-grid">
       <div class="stat-card"><div class="lbl">4H 涨跌</div><div class="val" id="s4h">--</div></div>
       <div class="stat-card"><div class="lbl">24H 涨跌</div><div class="val" id="s24h">--</div></div>
@@ -784,6 +845,84 @@ function renderCharts(klines, ind) {
   }
 }
 
+// ─── 更新信号按钮（一键看多空）───
+function updateSignalButtons(klines, ind, sg, fr) {
+  const closes=klines.map(k=>+k[4]), n=closes.length-1;
+  const {dif,dea}=ind.macd, {K,D,J}=ind.kdj;
+  const rsi=ind.rsi[n]??50;
+  const wr=ind.wr[n];
+  const boll=ind.boll;
+  
+  // MACD
+  const macdCross = dif[n-1]<dea[n-1]&&dif[n]>=dea[n] ? 'long' : (dif[n-1]>dea[n-1]&&dif[n]<=dea[n] ? 'short' : null);
+  const macdBar = ind.macd.bar[n];
+  const macdDir = macdCross==='long'||(macdBar<0&&macdBar>ind.macd.bar[n-1]) ? 'long' : macdCross==='short'||(macdBar>0&&macdBar<ind.macd.bar[n-1]) ? 'short' : null;
+  setSignalBtn('sb-macd', macdDir, dif[n]>=dea[n] ? '多头' : '空头', macdDir==='long' ? '📈' : macdDir==='short' ? '📉' : '⚪');
+  
+  // KDJ
+  const kdjCross = K[n-1]<D[n-1]&&K[n]>=D[n] ? 'long' : K[n-1]>D[n-1]&&K[n]<=D[n] ? 'short' : null;
+  const jDir = J[n]<20 ? 'long' : J[n]>80 ? 'short' : null;
+  const kdjDir = kdjCross==='long'||jDir==='long' ? 'long' : kdjCross==='short'||jDir==='short' ? 'short' : null;
+  setSignalBtn('sb-kdj', kdjDir, 'J:'+J[n].toFixed(0), kdjDir==='long' ? '📈' : kdjDir==='short' ? '📉' : '⚪');
+  
+  // RSI
+  const rsiDir = rsi<30 ? 'long' : rsi>70 ? 'short' : null;
+  setSignalBtn('sb-rsi', rsiDir, rsi.toFixed(0), rsiDir==='long' ? '📈' : rsiDir==='short' ? '📉' : '⚪');
+  
+  // WR
+  const wrDir = wr<-80 ? 'long' : wr>-20 ? 'short' : null;
+  setSignalBtn('sb-wr', wrDir, wr.toFixed(0), wrDir==='long' ? '📈' : wrDir==='short' ? '📉' : '⚪');
+  
+  // BOLL
+  const bollPos = boll.lower[n] ? (closes[n]-boll.lower[n])/(boll.upper[n]-boll.lower[n])*100 : 50;
+  const bollDir = bollPos<20 ? 'long' : bollPos>80 ? 'short' : null;
+  setSignalBtn('sb-boll', bollDir, bollPos.toFixed(0)+'%', bollDir==='long' ? '📈' : bollDir==='short' ? '📉' : '⚪');
+  
+  // 插针
+  const pin=sg.badges||{};
+  const pinDir=pin.direction==='long'?'long':pin.direction==='short'?'short':null;
+  setSignalBtn('sb-pin', pinDir, pin.direction==='long'?'下影↑':pin.direction==='short'?'上影↓':'无', pinDir==='long'?'📈':pinDir==='short'?'📉':'⚪');
+  
+  // 放量
+  const volDir=pin.vol==='ok' ? 'long' : null;
+  setSignalBtn('sb-vol', volDir, pin.vol==='ok'?'放量':'正常', volDir==='long'?'📈':'⚪');
+  
+  // 资金费率
+  const fundDir=fr>0?'short':fr<0?'long':null;
+  setSignalBtn('sb-fund', fundDir, fr!==null?(fr*100).toFixed(3)+'%':'--', fundDir==='long'?'📈':fundDir==='short'?'📉':'⚪');
+  
+  // 综合评分和结果
+  const score=sg.score||0;
+  const scoreEl=document.getElementById('sb-score-text');
+  scoreEl.textContent=score;
+  scoreEl.style.color = score>=6?'var(--green)':score>=4?'var(--yellow)':'var(--text3)';
+  
+  const resultEl=document.getElementById('sb-result');
+  if (score>=7) {
+    resultEl.textContent='🚀 做多';
+    resultEl.className='long';
+  } else if (score>=5) {
+    resultEl.textContent='⚠️ 轻仓多';
+    resultEl.className='';
+    resultEl.style.cssText='background:rgba(255,209,102,.2);color:var(--yellow);';
+  } else if (score<=2) {
+    resultEl.textContent='📉 做空';
+    resultEl.className='short';
+  } else {
+    resultEl.textContent='👀 观望';
+    resultEl.className='';
+    resultEl.style.cssText='background:var(--bg2);color:var(--text3);';
+  }
+}
+
+function setSignalBtn(id, dir, val, arrow) {
+  const el=document.getElementById(id);
+  if (!el) return;
+  el.className='signal-btn'+(dir?' '+dir:'');
+  el.querySelector('.sb-val').textContent=val;
+  el.querySelector('.sb-arrow').textContent=arrow;
+}
+
 // ─── 更新指标卡 ───
 function updateStats(klines, ind, fr) {
   const closes=klines.map(k=>+k[4]), n=closes.length-1, cur=closes[n];
@@ -932,6 +1071,7 @@ async function loadAll() {
     renderCharts(klineData,ind);
     updateStats(klineData,ind,fr);
     updateBadges(sg);
+    updateSignalButtons(klineData,ind,sg,fr); // 新增：一键看多空
     updateDecCard(pin,sg,klineData);
     
     // ─── 金叉死叉震动检测 ───
