@@ -1,0 +1,10 @@
+﻿python :   File "<string>", line 45
+所在位置 C:\Users\admin\AppData\Local\Temp\genie-ps-1774424002164-qd6qi2.ps1:1 字符: 20
++ cd D:\btc_monitor; python -c "
++                    ~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (  File "<string>", line 45:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    print('-- 鎻掗拡K绾?, pin_k['ts'].strftime('%H:%M'), '--')
+                                                        ^
+SyntaxError: unterminated string literal (detected at line 45)
