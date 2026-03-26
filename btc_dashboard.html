@@ -139,13 +139,30 @@ body {
 @media (max-width: 700px) {
   body { height: auto; overflow: auto; }
   .main-body { flex-direction: column; overflow: visible; height: auto; }
-  .left-panel { width:100%; border-right:none; border-bottom:1px solid var(--border); height:500px; flex-shrink:0; }
+  /* 手机：右侧(决策+参数)在上，左侧(图表)在下 */
+  .left-panel  { order:2; width:100%; border-right:none; border-top:1px solid var(--border); height:480px; flex-shrink:0; }
+  .right-panel { order:1; width:100%; overflow-y:visible; padding:10px 10px 6px; }
   .chart-wrap { height:100%; }
-  .right-panel { width:100%; overflow-y:visible; padding:10px 10px 20px; }
   .cur-price { font-size:20px; }
   .toolbar { gap:4px; padding:5px 10px; }
   .toolbar-right { margin-left:0; width:100%; justify-content:flex-end; }
+  /* 手机端参数说明默认展开 */
+  #param-body { display:block !important; }
+  #param-arrow { display:none; }
 }
+
+/* ════ 参数说明内嵌面板 ════ */
+.param-panel { background:var(--bg1); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.param-header { padding:9px 14px; background:var(--bg2); border-bottom:1px solid var(--border); font-size:13px; font-weight:700; color:var(--text1); cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; }
+.param-header:hover { background:var(--bg3); }
+#param-body { padding:4px 0; }
+.param-section { padding:5px 14px 4px; border-bottom:1px solid rgba(255,255,255,.04); }
+.param-section:last-child { border-bottom:none; }
+.param-title { font-size:11px; font-weight:700; color:var(--blue); margin-bottom:4px; letter-spacing:.3px; }
+.param-row { display:flex; align-items:baseline; gap:8px; padding:2px 0; border-bottom:1px solid rgba(255,255,255,.03); }
+.param-row:last-child { border-bottom:none; }
+.param-key { font-size:12px; font-weight:700; color:var(--text1); min-width:72px; flex-shrink:0; }
+.param-val { font-size:11px; color:var(--text2); line-height:1.5; }
 
 /* ════ 决策大卡 ════ */
 .dec-card { border-radius:14px; border:1.5px solid var(--border); overflow:hidden; transition:all .4s; flex-shrink:0; box-shadow:0 4px 24px rgba(0,0,0,.3); }
@@ -343,6 +360,7 @@ body {
 
   <div class="toolbar-right">
     <span class="live-dot"></span>
+    <span id="data-source" style="font-size:10px;color:var(--blue);"></span>
     <button class="refresh-btn" onclick="loadAll()">🔄 刷新</button>
     <span class="last-upd" id="last-upd">--</span>
   </div>
@@ -502,13 +520,44 @@ body {
           </div>
         </div>
       </div>
-      <div class="bottom-deco" style="margin-top:8px">
-        <div class="deco-title">📚 插针策略小贴士</div>
-        <div class="deco-tips">
-          <div class="deco-tip"><span class="tip-icon">📌</span><b>插针必要条件</b><br>影线 ≥ 实体 1.5倍<br>成交量 ≥ 均量 1.3倍</div>
-          <div class="deco-tip"><span class="tip-icon">🎯</span><b>评分 ≥ 5 才入场</b><br>低点抬高/MACD各2分<br>KDJ 2分，其余各1分</div>
-          <div class="deco-tip"><span class="tip-icon">📉</span><b>做空信号</b><br>上影插针+高点不破<br>MACD死叉/KDJ超买</div>
-          <div class="deco-tip"><span class="tip-icon">⏰</span><b>最佳入场</b><br>插针K线收盘确认<br>下根K线低点不破前低</div>
+      <div class="param-panel" id="param-panel" style="margin-top:8px">
+        <div class="param-header" onclick="toggleParam()">
+          <span>📖 参数说明</span>
+          <span id="param-arrow" style="font-size:12px;color:var(--text3)">▼ 展开</span>
+        </div>
+        <div id="param-body" style="display:none">
+          <div class="param-section">
+            <div class="param-title">📊 周期选择</div>
+            <div class="param-row"><span class="param-key">1m / 5m</span><span class="param-val">超短线，极度敏感，噪音多</span></div>
+            <div class="param-row"><span class="param-key">15m</span><span class="param-val">⭐ 主策略，平衡灵敏度与稳定性</span></div>
+            <div class="param-row"><span class="param-key">30m / 1h</span><span class="param-val">短到中线，过滤噪音</span></div>
+            <div class="param-row"><span class="param-key">4h / 日线</span><span class="param-val">大趋势，适合做波段</span></div>
+          </div>
+          <div class="param-section">
+            <div class="param-title">📈 技术指标</div>
+            <div class="param-row"><span class="param-key">MA</span><span class="param-val">MA5黄/MA20蓝/MA60紫，短中长趋势线</span></div>
+            <div class="param-row"><span class="param-key">BOLL</span><span class="param-val">布林带，上轨压力/下轨支撑</span></div>
+            <div class="param-row"><span class="param-key">MACD</span><span class="param-val">金叉看涨/死叉看跌，柱状图动能</span></div>
+            <div class="param-row"><span class="param-key">KDJ</span><span class="param-val">三线交叉，超买&gt;80/超卖&lt;20</span></div>
+            <div class="param-row"><span class="param-key">RSI</span><span class="param-val">0-100，超买&gt;70，超卖&lt;30</span></div>
+            <div class="param-row"><span class="param-key">WR</span><span class="param-val">威廉，超卖&lt;-80，超买&gt;-20</span></div>
+          </div>
+          <div class="param-section">
+            <div class="param-title">🎯 插针形态</div>
+            <div class="param-row"><span class="param-key">下影插针</span><span class="param-val">下影线长，触底反弹，看涨 📈</span></div>
+            <div class="param-row"><span class="param-key">上影插针</span><span class="param-val">上影线长，冲高回落，看跌 📉</span></div>
+            <div class="param-row"><span class="param-key">有效条件</span><span class="param-val">影线≥实体1.5倍 + 成交量≥均量1.3倍</span></div>
+          </div>
+          <div class="param-section">
+            <div class="param-title">💯 评分系统</div>
+            <div class="param-row"><span class="param-key">低点抬高</span><span class="param-val">+2分（确认K线不破前低）</span></div>
+            <div class="param-row"><span class="param-key">MACD金叉</span><span class="param-val">+2分</span></div>
+            <div class="param-row"><span class="param-key">KDJ金叉</span><span class="param-val">+2分</span></div>
+            <div class="param-row"><span class="param-key">RSI/WR/BOLL</span><span class="param-val">各+1分，满分10分</span></div>
+            <div class="param-row"><span class="param-key" style="color:var(--red)">≥8分</span><span class="param-val">强烈推荐，仓位20~30%</span></div>
+            <div class="param-row"><span class="param-key" style="color:var(--yellow)">≥5分</span><span class="param-val">可以操作，轻仓进场</span></div>
+            <div class="param-row"><span class="param-key" style="color:var(--text3)">&lt;5分</span><span class="param-val">不建议，等待更好机会</span></div>
+          </div>
         </div>
       </div>
     </div>
@@ -516,69 +565,8 @@ body {
   </div><!-- /right -->
 </div><!-- /main -->
 
-<!-- 参数说明按钮 -->
-<button class="param-help-btn" onclick="document.getElementById('param-modal').classList.add('show')">📖 参数说明</button>
-
-<!-- 参数说明弹窗 -->
-<div class="param-modal" id="param-modal">
-  <div class="param-box">
-    <h3>📖 BTC插针监控 - 参数说明</h3>
-    
-    <div class="param-section">
-      <h4>📊 周期选择</h4>
-      <div class="param-item"><span class="p-name">1m/5m</span><span class="p-desc">超短线，极度敏感，噪音多</span></div>
-      <div class="param-item"><span class="p-name">15m</span><span class="p-desc">主策略周期，平衡灵敏度和稳定性</span></div>
-      <div class="param-item"><span class="p-name">30m/1h</span><span class="p-desc">短线到中线，过滤部分噪音</span></div>
-      <div class="param-item"><span class="p-name">4h/日线</span><span class="p-desc">大趋势判断，适合做波段</span></div>
-    </div>
-
-    <div class="param-section">
-      <h4>📈 技术指标详解</h4>
-      <div class="param-item"><span class="p-name">MA</span><span class="p-desc">均线族，MA5/20/60短期/中期/长期趋势线</span></div>
-      <div class="param-item"><span class="p-name">BOLL</span><span class="p-desc">布林带，上轨压力/下轨支撑，中间线参考</span></div>
-      <div class="param-item"><span class="p-name">MACD</span><span class="p-desc">指数平滑异同移动平均线</span></div>
-      <div class="param-item"><span class="p-name">KDJ</span><span class="p-desc">随机指标，K/D/J三线交叉判断超买超卖</span></div>
-      <div class="param-item"><span class="p-name">RSI</span><span class="p-desc">相对强弱指数，0-100，超买>70，超卖<30</span></div>
-    </div>
-
-    <div class="param-section">
-      <h4>🔑 金叉/死叉 - 核心信号</h4>
-      <div class="param-item"><span class="p-name">🔴 金叉</span><span class="p-desc">DIF从下穿上DEA，或K线上穿D线，预示上涨</span></div>
-      <div class="param-item"><span class="p-name">🟢 死叉</span><span class="p-desc">DIF从上穿下DEA，或K线下穿D线，预示下跌</span></div>
-    </div>
-
-    <div class="param-section">
-      <h4>🎯 插针形态</h4>
-      <div class="param-item"><span class="p-name">下影插针</span><span class="p-desc">下影线长，价格触底反弹，看涨信号</span></div>
-      <div class="param-item"><span class="p-name">上影插针</span><span class="p-desc">上影线长，价格冲高回落，看跌信号</span></div>
-      <div class="param-item"><span class="p-name">影线/实体</span><span class="p-desc">影线≥实体1.5倍才算有效插针</span></div>
-    </div>
-
-    <div class="param-section">
-      <h4>📊 评分系统</h4>
-      <div class="param-item"><span class="p-name">8-10分</span><span class="p-desc">强烈信号，可20-30%仓位</span></div>
-      <div class="param-item"><span class="p-name">6-7分</span><span class="p-desc">中等信号，可10-20%仓位</span></div>
-      <div class="param-item"><span class="p-name">5分</span><span class="p-desc">谨慎信号，超轻仓5-10%</span></div>
-      <div class="param-item"><span class="p-name">0-4分</span><span class="p-desc">不建议入场</span></div>
-    </div>
-
-    <div class="param-section">
-      <h4>⚠️ 专业术语</h4>
-      <div class="param-item"><span class="p-name">超买</span><span class="p-desc">价格过高，可能回调（KDJ/ RSI > 80）</span></div>
-      <div class="param-item"><span class="p-name">超卖</span><span class="p-desc">价格过低，可能反弹（KDJ/ RSI < 20）</span></div>
-      <div class="param-item"><span class="p-name">放量</span><span class="p-desc">成交量明显放大，确认信号强度</span></div>
-      <div class="param-item"><span class="p-name">止损</span><span class="p-desc">亏损到设定比例必须平仓，控制风险</span></div>
-      <div class="param-item"><span class="p-name">止盈</span><span class="p-desc">盈利到目标位了结，锁定利润</span></div>
-      <div class="param-item"><span class="p-name">盈亏比</span><span class="p-desc">止盈/止损，如2.5:1表示盈利是风险的2.5倍</span></div>
-    </div>
-
-    <button class="close-modal" onclick="document.getElementById('param-modal').classList.remove('show')">关闭</button>
-  </div>
-</div>
-
 <script>
 // ═══════════════ 配置 ═══════════════
-const API_BASE = 'https://data-api.binance.vision';
 const SYMBOL = 'BTCUSDT';
 let INTERVAL = '15m', LIMIT = 150, klineData = [];
 let chartMain, chartVol, chartMACD, chartKDJ, chartRSI;
@@ -596,6 +584,47 @@ const INTERVAL_CFG = {
   '1d':  { label:'日线 · 波段', limit:60  },
   '1w':  { label:'周线 · 长线', limit:52  },
 };
+
+// ─── 三源API自动切换 ───
+const HTX_IV  = {'1m':'1min','5m':'5min','15m':'15min','30m':'30min','1h':'60min','4h':'4hour','1d':'1day','1w':'1week'};
+const OKX_IV  = {'1m':'1m','5m':'5m','15m':'15m','30m':'30m','1h':'1H','4h':'4H','1d':'1D','1w':'1W'};
+
+async function _binance(iv,lim){
+  const r=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=${iv}&limit=${lim}`);
+  if(!r.ok) throw new Error('Binance '+r.status);
+  return await r.json();
+}
+async function _htx(iv,lim){
+  const p=HTX_IV[iv]||'15min';
+  const r=await fetch(`https://api.huobi.pro/market/history/kline?symbol=btcusdt&period=${p}&size=${lim}`);
+  if(!r.ok) throw new Error('HTX '+r.status);
+  const j=await r.json();
+  if(j.status!=='ok') throw new Error('HTX:'+j['err-msg']);
+  return j.data.reverse().map(k=>[k.id*1000,k.open,k.high,k.low,k.close,k.vol,k.id*1000+60000,k.amount]);
+}
+async function _okx(iv,lim){
+  const b=OKX_IV[iv]||'15m';
+  const r=await fetch(`https://www.okx.com/api/v5/market/candles?instId=BTC-USDT&bar=${b}&limit=${lim}`);
+  if(!r.ok) throw new Error('OKX '+r.status);
+  const j=await r.json();
+  if(j.code!=='0') throw new Error('OKX:'+j.msg);
+  return j.data.reverse().map(k=>[+k[0],+k[1],+k[2],+k[3],+k[4],+k[5],+k[0]+1000,+k[7]]);
+}
+async function fetchKlines(iv,lim){
+  const sources=[['币安',_binance],['火币',_htx],['OKX',_okx]];
+  let last;
+  for(const [name,fn] of sources){
+    try{
+      const d=await fn(iv,lim);
+      if(d&&d.length){
+        const el=document.getElementById('data-source');
+        if(el) el.textContent='源:'+name;
+        return d;
+      }
+    }catch(e){last=e;console.warn('['+name+']',e.message);}
+  }
+  throw new Error('全源失败:'+(last?.message||''));
+}
 
 const DECISION_MAP = {
   no:    { face:'😐', fbg:'wait-bg',  state:'wait',  hcls:'h-wait',  vcls:'v-wait',  verdict:'等待信号中',    sub:'暂无插针形态，持续监控中…' },
@@ -1053,9 +1082,8 @@ async function getFR() { try { const r=await fetch('https://fapi.binance.com/fap
 async function loadAll() {
   document.getElementById('last-upd').textContent='加载中…';
   try {
-    const resp=await fetch(`${API_BASE}/api/v3/klines?symbol=${SYMBOL}&interval=${INTERVAL}&limit=${LIMIT}`);
-    if (!resp.ok) throw new Error('API '+resp.status);
-    klineData=await resp.json();
+    klineData = await fetchKlines(INTERVAL, LIMIT);
+    if (!klineData || !klineData.length) throw new Error('空数据');
     const closes=klineData.map(k=>+k[4]),highs=klineData.map(k=>+k[2]),lows=klineData.map(k=>+k[3]),n=closes.length-1;
     const macd=calcMACD(closes),kdj=calcKDJ(highs,lows,closes),rsi=calcRSI(closes),wr=calcWR(highs,lows,closes),boll=calcBOLL(closes);
     const ind={macd,kdj,rsi,wr,boll,pinResult:{}}; window._ind=ind;
@@ -1109,6 +1137,15 @@ async function loadAll() {
 }
 
 initCharts(); loadAll(); setInterval(loadAll, 60*1000);
+
+// ─── 参数说明折叠 ───
+function toggleParam() {
+  const body=document.getElementById('param-body');
+  const arrow=document.getElementById('param-arrow');
+  const show=body.style.display==='none'||body.style.display==='';
+  body.style.display=show?'block':'none';
+  if(arrow) arrow.textContent=show?'▲ 收起':'▼ 展开';
+}
 </script>
 </body>
 </html>
