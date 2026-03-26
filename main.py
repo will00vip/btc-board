@@ -18,6 +18,7 @@ from data_fetcher import get_klines, get_price_change_pct, get_trend
 from signal_detector import detect_signal
 from notifier import send_all
 from trade_logger import log_signal
+from macd_watcher import detect_macd_cross, format_macd_message, update_macd_push_state, get_macd_status_line
 
 CST = timezone(timedelta(hours=8))
 
@@ -213,6 +214,25 @@ def run_once() -> None:
     drop_pct = get_price_change_pct(SYMBOL, hours=4)
     logger.info(f"4小时涨跌: {drop_pct:+.1f}%")
 
+    # ── MACD状态日志 ────────────────────────────────────────────
+    logger.info(get_macd_status_line(df))
+
+    # ══════════════════════════════════════════════════════════
+    # ① MACD 金叉/死叉独立监控（无需插针，有叉就推）
+    # ══════════════════════════════════════════════════════════
+    macd_cross = detect_macd_cross(df)
+    if macd_cross:
+        cross_name = "金叉📈" if macd_cross["type"] == "golden" else "死叉📉"
+        logger.info(f"🔔 MACD {cross_name}！强度:{macd_cross['strength']}  DIF:{macd_cross['dif']} DEA:{macd_cross['dea']}")
+        m_title, m_content = format_macd_message(macd_cross, current_price)
+        send_all(m_title, m_content)
+        update_macd_push_state(macd_cross["type"])
+    else:
+        logger.info("MACD：无新叉口")
+
+    # ══════════════════════════════════════════════════════════
+    # ② 插针形态检测（原有逻辑，不变）
+    # ══════════════════════════════════════════════════════════
     signal = detect_signal(df, drop_4h=drop_pct)
 
     if signal and signal.get("found"):
