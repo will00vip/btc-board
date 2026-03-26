@@ -1,0 +1,44 @@
+{
+  "appid": "wx3efdfda190796311",
+  "compileType": "miniprogram",
+  "libVersion": "3.3.4",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "coverView": true,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "enhance": true,
+    "showShadowRootInWxmlPanel": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": false,
+    "uglifyFileName": false,
+    "ignoreUploadUnusedFiles": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "compileWorklet": false,
+    "uploadWithSourceMap": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "urlCheck": false
+  },
+  "condition": {},
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  },
+  "projectname": "BTC插针监控",
+  "simulatorPluginLibVersion": {}
+}

@@ -1,0 +1,214 @@
+<!-- pages/index/index.wxml  v4 -->
+<view class="page">
+
+  <!-- ══ 顶部导航栏 ══ -->
+  <view class="navbar">
+    <view class="navbar-left">
+      <image class="nav-icon" src="/assets/logo.png" mode="aspectFit" />
+      <view>
+        <text class="nav-title">BTC/USDT 插针监控</text>
+        <text class="nav-sub">火币HTX · 实时数据</text>
+      </view>
+    </view>
+    <view class="navbar-right">
+      <view class="live-dot {{loading ? 'loading' : ''}}"></view>
+      <view class="nav-refresh-btn" bindtap="refresh">
+        <text>{{loading ? '···' : '↻ 刷新'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 价格大头 ══ -->
+  <view class="price-hero">
+    <view class="price-hero-left">
+      <text class="price-main {{priceDir}}">{{curPrice}}</text>
+      <view class="price-badges">
+        <text class="price-badge {{priceDir}}">{{priceChange}}</text>
+        <text class="price-badge-plain">4h {{price4hChange}}</text>
+        <text class="price-badge-plain">24h {{price24hChange}}</text>
+      </view>
+    </view>
+    <view class="price-hero-right">
+      <text class="vol-label">24h量</text>
+      <text class="vol-val">{{vol24h}}</text>
+    </view>
+  </view>
+
+  <!-- ══ 周期切换栏 ══ -->
+  <view class="period-bar">
+    <view
+      class="period-btn {{interval === item.iv ? 'active' : ''}}"
+      wx:for="{{periods}}" wx:key="iv" wx:item="item"
+      bindtap="switchInterval"
+      data-iv="{{item.iv}}"
+      data-label="{{item.label}}"
+    >{{item.iv}}</view>
+  </view>
+
+  <!-- ══ 决策大卡 ══ -->
+  <view class="decision-card {{decisionState}}">
+    <!-- 背景光晕 -->
+    <view class="decision-glow {{decisionState}}"></view>
+    <view class="decision-top">
+      <view class="decision-face-wrap {{decisionState}}">
+        <text class="decision-face">{{decisionFace}}</text>
+      </view>
+      <view class="decision-text">
+        <text class="decision-verdict">{{decisionVerdict}}</text>
+        <text class="decision-sub">{{decisionSub}}</text>
+        <view class="decision-meta" wx:if="{{hasSignal}}">
+          <text class="meta-tag">{{signalDir === 'long' ? '📈 做多' : '📉 做空'}}</text>
+          <text class="meta-tag accent">胜率 {{winRate}}%</text>
+          <text class="meta-tag">盈亏比 {{rrRatio}}</text>
+        </view>
+      </view>
+      <view class="score-circle {{decisionState}}">
+        <text class="score-num">{{score}}</text>
+        <text class="score-den">/10</text>
+      </view>
+    </view>
+    <view class="score-bar-wrap">
+      <view class="score-bar-fill {{decisionState}}" style="width:{{scoreBar}}%"></view>
+    </view>
+    <view class="decision-bottom">
+      <text class="score-stars">{{scoreStars}}</text>
+      <view class="score-label-wrap">
+        <text class="score-label {{decisionState}}">{{scoreLabel}}</text>
+        <text class="update-time">{{updateTime}} 更新</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 信号详情（有信号时） ══ -->
+  <view class="signal-detail {{signalDir}}" wx:if="{{hasSignal}}">
+    <view class="section-title">
+      <text>🔔 信号详情</text>
+      <text class="dir-tag {{signalDir}}">{{signalDir === 'long' ? '做多 ▲' : '做空 ▼'}}</text>
+    </view>
+    <view class="detail-grid">
+      <view class="detail-cell">
+        <text class="dc-label">📍 插针时间</text>
+        <text class="dc-val">{{pinTime}}</text>
+      </view>
+      <view class="detail-cell">
+        <text class="dc-label">🎯 胜率参考</text>
+        <text class="dc-val accent">{{winRate}}%</text>
+      </view>
+      <view class="detail-cell">
+        <text class="dc-label">🛑 止损位</text>
+        <text class="dc-val loss">{{stopLoss}}</text>
+      </view>
+      <view class="detail-cell">
+        <text class="dc-label">⚖️ 盈亏比</text>
+        <text class="dc-val">{{rrRatio}}</text>
+      </view>
+    </view>
+    <view class="tp-row">
+      <view class="tp-item tp1">
+        <text class="tp-label">TP1 +1倍</text>
+        <text class="tp-val">{{tp1}}</text>
+      </view>
+      <view class="tp-item tp2">
+        <text class="tp-label">TP2 +1.5倍</text>
+        <text class="tp-val">{{tp2}}</text>
+      </view>
+      <view class="tp-item tp3">
+        <text class="tp-label">TP3 +2.5倍</text>
+        <text class="tp-val">{{tp3}}</text>
+      </view>
+    </view>
+  </view>
+
+
+
+  <!-- ══ 多空条件感知 ══ -->
+  <view class="section-title-plain">
+    <text>🧭 实时多空条件感知</text>
+    <text class="section-sub">满足条件越多越强</text>
+  </view>
+  <view class="cond-wrap">
+    <view class="cond-col">
+      <view class="cond-col-title long-color">📈 做多条件</view>
+      <view class="cond-item {{item.ok ? 'ok' : 'no'}}" wx:for="{{longConditions}}" wx:key="label" wx:item="item">
+        <text class="cond-icon">{{item.ok ? '✅' : '⬜'}}</text>
+        <view class="cond-text">
+          <text class="cond-label">{{item.label}}</text>
+          <text class="cond-tip">{{item.tip}}</text>
+        </view>
+      </view>
+      <view class="cond-score-bar">
+        <view class="cond-score-fill long" style="width:{{longScore}}%"></view>
+        <text class="cond-score-txt">{{longOk}}/4</text>
+      </view>
+    </view>
+    <view class="cond-divider"></view>
+    <view class="cond-col">
+      <view class="cond-col-title short-color">📉 做空条件</view>
+      <view class="cond-item {{item.ok ? 'ok' : 'no'}}" wx:for="{{shortConditions}}" wx:key="label" wx:item="item">
+        <text class="cond-icon">{{item.ok ? '✅' : '⬜'}}</text>
+        <view class="cond-text">
+          <text class="cond-label">{{item.label}}</text>
+          <text class="cond-tip">{{item.tip}}</text>
+        </view>
+      </view>
+      <view class="cond-score-bar">
+        <view class="cond-score-fill short" style="width:{{shortScore}}%"></view>
+        <text class="cond-score-txt">{{shortOk}}/4</text>
+      </view>
+    </view>
+  </view>
+
+
+
+  <!-- ══ K线图 Canvas ══ -->
+  <view class="section-title-plain">
+    <text>📈 K线图</text>
+    <view style="display:flex;align-items:center;gap:10rpx;">
+      <text class="kview-badge">{{klineView}}根/屏</text>
+      <view class="chart-legend">
+        <text class="leg-boll-u">BOLL↑</text>
+        <text class="leg-boll-l">↓</text>
+        <text class="leg-ma5">MA5</text>
+        <text class="leg-ma10">MA10</text>
+      </view>
+    </view>
+  </view>
+  <view class="kcanvas-wrap" 
+    bindtouchmove="onKlineTouch" 
+    bindtouchstart="onKlineTouch" 
+    bindtouchend="onKlineTouchEnd"
+    catchtouchmove="onKlineTouch"
+  >
+    <canvas type="2d" id="klineCanvas" class="kcanvas"></canvas>
+    <!-- 操作提示 -->
+    <view class="kcanvas-hint" wx:if="{{touchIdx < 0}}">
+      <text>← 单指拖动  ·  双指缩放 →</text>
+    </view>
+    <!-- 触摸浮窗 -->
+    <view class="ktooltip" wx:if="{{touchIdx >= 0}}" style="left:{{tooltipLeft}}px">
+      <text class="ktt-time">{{touchTime}}</text>
+      <view class="ktt-row"><text class="ktt-l">开</text><text class="ktt-v">{{touchO}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">高</text><text class="ktt-v up">{{touchH}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">低</text><text class="ktt-v dn">{{touchL}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">收</text><text class="ktt-v">{{touchC}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">量</text><text class="ktt-v">{{touchV}}</text></view>
+      <view class="ktt-div"></view>
+      <view class="ktt-row"><text class="ktt-l">MACD</text><text class="ktt-v">{{touchMACD}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">DIF</text><text class="ktt-v">{{touchDIF}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">DEA</text><text class="ktt-v">{{touchDEA}}</text></view>
+    </view>
+  </view>
+
+  <!-- ══ 底部更新时间 ══ -->
+  <view class="footer">
+    <text class="footer-txt">最后更新 {{updateTime}}  ·  60秒自动刷新</text>
+    <text class="footer-txt">数据来源：火币HTX / 币安镜像</text>
+  </view>
+
+  <!-- ══ 错误提示 ══ -->
+  <view class="error-bar" wx:if="{{errorMsg}}">
+    <text>⚠️ {{errorMsg}}</text>
+    <text class="error-hint">开发模式请勾选「不校验合法域名」</text>
+  </view>
+
+</view>
