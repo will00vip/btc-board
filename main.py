@@ -11,10 +11,13 @@ from datetime import datetime, timezone, timedelta
 
 from config import (
     SYMBOL, INTERVAL, CHECK_INTERVAL,
+    DAILY_MAX_LOSS_PCT, COOLDOWN_LOSS_COUNT, COOLDOWN_HOURS,
+    ACCOUNT_BALANCE,
 )
 from data_fetcher import get_klines, get_price_change_pct, get_trend
 from signal_detector import detect_signal
 from notifier import send_all
+from trade_logger import log_signal
 
 CST = timezone(timedelta(hours=8))
 
@@ -34,6 +37,59 @@ logger = logging.getLogger("btc_monitor")
 # ── 信号去重：记录上次推送时间（方向 -> datetime） ─────────────────
 _last_signal_time: dict[str, datetime] = {}
 DEDUP_HOURS = 4   # 同方向信号 N 小时内只推一次
+
+# ── 单日风控状态 ────────────────────────────────────────────────
+_risk_state = {
+    "today_date":       "",        # 当日日期字符串，用于跨日重置
+    "today_loss_u":     0.0,       # 今日已亏损U数（手动回填，默认0）
+    "consecutive_loss": 0,         # 连续亏损笔数
+    "cooldown_until":   None,      # 冷却截止时间
+}
+
+
+def _risk_check() -> tuple[bool, str]:
+    """
+    风控检查，返回 (是否允许推送, 原因说明)
+    风控状态需外部手动更新（见 update_risk_state 函数）
+    """
+    now = datetime.now(CST)
+    today_str = now.strftime("%Y-%m-%d")
+
+    # 跨日自动重置
+    if _risk_state["today_date"] != today_str:
+        _risk_state["today_date"]       = today_str
+        _risk_state["today_loss_u"]     = 0.0
+        _risk_state["consecutive_loss"] = 0
+        _risk_state["cooldown_until"]   = None
+        logger.info(f"[风控] 新的一天 {today_str}，风控状态已重置")
+
+    # 冷却期检查
+    if _risk_state["cooldown_until"] and now < _risk_state["cooldown_until"]:
+        cd_end = _risk_state["cooldown_until"].strftime("%H:%M")
+        return False, f"🧊 冷却期中（连亏{_risk_state['consecutive_loss']}笔），{cd_end}前暂停推送"
+
+    # 单日亏损上限
+    max_loss_u = ACCOUNT_BALANCE * DAILY_MAX_LOSS_PCT
+    if _risk_state["today_loss_u"] >= max_loss_u:
+        return False, f"🛑 今日已亏{_risk_state['today_loss_u']:.0f}U，达单日上限({max_loss_u:.0f}U)，今日停止推送"
+
+    return True, ""
+
+
+def update_risk_state(is_win: bool, pnl_u: float = 0.0) -> None:
+    """
+    外部调用：更新风控状态（每笔交易结果后调用）
+    is_win: 盈利=True, 亏损=False
+    pnl_u:  盈亏U数（亏损传负值）
+    """
+    if not is_win and pnl_u < 0:
+        _risk_state["today_loss_u"] += abs(pnl_u)
+        _risk_state["consecutive_loss"] += 1
+        if _risk_state["consecutive_loss"] >= COOLDOWN_LOSS_COUNT:
+            _risk_state["cooldown_until"] = datetime.now(CST) + timedelta(hours=COOLDOWN_HOURS)
+            logger.warning(f"[风控] 连续亏损{_risk_state['consecutive_loss']}笔，冷却{COOLDOWN_HOURS}小时")
+    else:
+        _risk_state["consecutive_loss"] = 0  # 盈利则重置连亏计数
 
 
 def _is_duplicate(direction: str) -> bool:
@@ -102,6 +158,12 @@ def format_signal_message(signal: dict, drop_pct: float, trend: dict) -> tuple[s
         f"TP1 {signal.get('trade_tp_cons',0):,.0f}  TP2 {signal.get('trade_tp_std',0):,.0f}  TP3 {signal.get('trade_tp_agg',0):,.0f}",
         f"→ {rating}",
         f"",
+        # ── 仓位建议 ──────────────────────────────────────────────
+        f"【仓位建议】",
+        f"  开仓：{signal.get('pos_lots',1)}张  保证金：{signal.get('pos_margin',0):.0f}U ({signal.get('pos_ratio',0):.1f}%仓位)",
+        f"  杠杆：{signal.get('pos_leverage',10)}x  最大亏损：{signal.get('pos_risk_u',0):.0f}U",
+        f"  ⚠️ 仓位基于账户{ACCOUNT_BALANCE:.0f}U×2%风险，实际按自己账户调整",
+        f"",
         # ── 第二屏：大趋势背景 ───────────────────────────────────
         f"【大趋势背景】",
         f"  1H：{trend_1h}  |  4H：{trend_4h}",
@@ -163,6 +225,13 @@ def run_once() -> None:
             logger.info(f"[去重] {direction} 方向在 {last} 已推过，{DEDUP_HOURS}小时内不重复推送")
             return
 
+        # ── 风控检查 ──────────────────────────────────────────────
+        risk_ok, risk_msg = _risk_check()
+        if not risk_ok:
+            logger.warning(f"[风控拦截] {risk_msg}")
+            send_all(f"[风控] BTC有信号但被拦截", risk_msg)  # 依然推一条风控通知
+            return
+
         # 获取趋势（允许失败）
         try:
             trend = get_trend(SYMBOL)
@@ -175,7 +244,10 @@ def run_once() -> None:
         logger.info(content)
         send_all(title, content)
         _mark_sent(direction)
-        logger.info(f"✅ 推送完成")
+
+        # 自动写入交易记录
+        rec_id = log_signal(signal, trend)
+        logger.info(f"✅ 推送完成 | 记录已写入 #{rec_id}（事后用 python trade_logger.py fill 回填结果）")
     else:
         logger.info("无信号（插针形态或放量条件未满足）")
 

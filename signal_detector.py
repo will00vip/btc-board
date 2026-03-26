@@ -6,7 +6,9 @@ import pandas as pd
 import numpy as np
 from config import (
     PIN_BAR_RATIO, CLOSE_POSITION_RATIO,
-    VOLUME_AMPLIFY_RATIO, LOOKBACK_CANDLES
+    VOLUME_AMPLIFY_RATIO, LOOKBACK_CANDLES,
+    ACCOUNT_BALANCE, RISK_PER_TRADE, MAX_POSITION_PCT,
+    CONTRACT_SIZE, DEFAULT_LEVERAGE,
 )
 
 
@@ -323,6 +325,56 @@ def check_boll(df: pd.DataFrame, direction: str = "long") -> tuple[bool, str]:
             return False, f"BOLL正常区间 (上:{upper_val}, 中:{mid_val})"
 
 
+# ── 仓位计算器 ──────────────────────────────────────────────────
+
+def calc_position_size(
+    entry_price: float,
+    stop_loss: float,
+    account: float = ACCOUNT_BALANCE,
+    risk_pct: float = RISK_PER_TRADE,
+    leverage: int = DEFAULT_LEVERAGE,
+    contract_size: float = CONTRACT_SIZE,
+) -> dict:
+    """
+    根据止损距离计算合理仓位
+    逻辑：单笔最大亏损 = 账户 × risk_pct
+         止损距离（U） = |entry - stop_loss|
+         合约张数 = 最大亏损 / (止损距离 × contract_size) / leverage
+    返回：张数、保证金、仓位占比、杠杆
+    """
+    risk_amount = account * risk_pct          # 本次愿意亏的最多U数
+    sl_distance = abs(entry_price - stop_loss)
+    if sl_distance <= 0:
+        sl_distance = entry_price * 0.005
+
+    # 每张合约价值（U本位）= entry_price × contract_size
+    contract_value = entry_price * contract_size
+
+    # 不带杠杆时，N张止损亏损 = N × contract_size × sl_distance
+    # 带杠杆：所需保证金 = N × contract_value / leverage
+    lots = risk_amount / (contract_size * sl_distance)
+    lots = max(1, round(lots))  # 最少1张
+
+    margin = lots * contract_value / leverage
+    position_ratio = margin / account
+
+    # 防止超过最大仓位限制
+    max_margin = account * MAX_POSITION_PCT
+    if margin > max_margin:
+        lots = max(1, int(max_margin * leverage / contract_value))
+        margin = lots * contract_value / leverage
+        position_ratio = margin / account
+
+    return {
+        "lots":           lots,
+        "margin":         round(margin, 1),
+        "position_ratio": round(position_ratio * 100, 1),
+        "leverage":       leverage,
+        "risk_amount":    round(risk_amount, 1),
+        "sl_distance":    round(sl_distance, 1),
+    }
+
+
 # ── 交易价值评估 ────────────────────────────────────────────────
 
 def evaluate_trade_value(
@@ -500,6 +552,9 @@ def detect_signal(df: pd.DataFrame, drop_4h: float = 0.0) -> dict | None:
                 direction=direction,
             )
 
+            # 仓位计算
+            pos = calc_position_size(entry_price, stop_loss)
+
             return {
                 "found": True,
                 "direction": direction,   # "long" 或 "short"
@@ -531,6 +586,12 @@ def detect_signal(df: pd.DataFrame, drop_4h: float = 0.0) -> dict | None:
                 "trade_risk_per": trade_eval["risk_per_unit"],
                 "trade_conf":     trade_eval["confidence"],
                 "trade_risks":    trade_eval["risk_notes"],
+                # 仓位建议
+                "pos_lots":    pos["lots"],
+                "pos_margin":  pos["margin"],
+                "pos_ratio":   pos["position_ratio"],
+                "pos_leverage":pos["leverage"],
+                "pos_risk_u":  pos["risk_amount"],
             }
 
     return None
