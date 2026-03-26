@@ -219,4 +219,47 @@ async function detectSignal(interval) {
   }
 }
 
-module.exports = { fetchKlines, detectSignal }
+/**
+ * MACD金叉/死叉检测
+ * 返回 null（无叉口）或 { type:'golden'|'dead', strength:'弱'|'中等'|'强势', axisDesc, dif, dea, bar, prevDif, prevDea }
+ */
+function detectMacdCross(bars) {
+  if (!bars || bars.length < 30) return null
+  const closes  = bars.map(b => b.close)
+  const macdData = macd(closes)
+  const n = closes.length - 1
+
+  const currDif = macdData.dif[n]
+  const currDea = macdData.dea[n]
+  const prevDif = macdData.dif[n - 1]
+  const prevDea = macdData.dea[n - 1]
+  const currBar = macdData.bar[n]
+
+  if (!isFinite(currDif) || !isFinite(prevDif)) return null
+
+  let type = null
+  if (currDif >= currDea && prevDif < prevDea) type = 'golden'
+  else if (currDif <= currDea && prevDif > prevDea) type = 'dead'
+  if (!type) return null
+
+  const dist = Math.abs(currDif - currDea)
+  const strength = dist > 100 ? '强势' : dist > 30 ? '中等' : '弱'
+
+  let axisDesc = ''
+  if (type === 'golden') {
+    axisDesc = currDif < 0 ? '零轴下金叉·超卖反转' : '零轴上金叉·多头延续'
+  } else {
+    axisDesc = currDif > 0 ? '零轴上死叉·超买转弱' : '零轴下死叉·空头延续'
+  }
+
+  return {
+    type, strength, axisDesc,
+    dif:     Math.round(currDif * 10) / 10,
+    dea:     Math.round(currDea * 10) / 10,
+    bar:     Math.round(currBar * 10) / 10,
+    prevDif: Math.round(prevDif * 10) / 10,
+    prevDea: Math.round(prevDea * 10) / 10,
+  }
+}
+
+module.exports = { fetchKlines, detectSignal, detectMacdCross }

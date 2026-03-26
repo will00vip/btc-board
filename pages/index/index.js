@@ -1,6 +1,6 @@
-// pages/index/index.js  v5 - 火币K线风格 + 多周期缓存秒切
+// pages/index/index.js  v5.1 - 新增MACD金叉/死叉通知
 const { fetchKlines } = require('../../utils/detector')
-const { detectSignal } = require('../../utils/detector')
+const { detectSignal, detectMacdCross } = require('../../utils/detector')
 const { macd: calcMACD, boll: calcBOLL, ema: calcEMA } = require('../../utils/indicators')
 
 const PERIODS = [
@@ -152,6 +152,10 @@ Page({
     touchIdx: -1, tooltipLeft: 8,
     touchTime: '', touchO: '', touchH: '', touchL: '', touchC: '', touchV: '',
     touchMACD: '', touchDIF: '', touchDEA: '',
+
+    // MACD金叉/死叉通知条
+    macdCross: null,         // null | { type, strength, axisDesc, dif, dea, bar }
+    macdCrossShow: false,    // 是否显示通知条
   },
 
   onLoad() {
@@ -905,6 +909,9 @@ Page({
       riskMsg = `风控正常，今日已亏${todayLossU}U/${dailyMaxLossU}U`
     }
 
+    // ── MACD金叉/死叉检测 ──────────────────────────────────────
+    const macdCross = detectMacdCross(bars)
+
     this.setData({
       curPrice: fmtPrice(last.close),
       priceChange: (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%',
@@ -938,6 +945,10 @@ Page({
       updateTime,
       touchIdx: -1,
       
+      // MACD金叉/死叉通知条
+      macdCross: macdCross,
+      macdCrossShow: !!macdCross,
+
       // 风控状态
       riskStatus,
       riskMsg,

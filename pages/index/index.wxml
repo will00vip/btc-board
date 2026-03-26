@@ -79,6 +79,16 @@
     </view>
   </view>
 
+  <!-- ══ MACD金叉/死叉通知条 ══ -->
+  <view class="macd-cross-bar {{macdCross.type === 'golden' ? 'golden' : 'dead'}}" wx:if="{{macdCrossShow}}">
+    <text class="macd-cross-icon">{{macdCross.type === 'golden' ? '🟢' : '🔴'}}</text>
+    <view class="macd-cross-info">
+      <text class="macd-cross-title">MACD {{macdCross.type === 'golden' ? '金叉' : '死叉'}} · {{macdCross.strength}}叉</text>
+      <text class="macd-cross-desc">{{macdCross.axisDesc}} | DIF:{{macdCross.dif}} DEA:{{macdCross.dea}}</text>
+    </view>
+    <text class="macd-cross-hint">{{macdCross.type === 'golden' ? '看多▲' : '看空▼'}}</text>
+  </view>
+
   <!-- ══ 信号详情（有信号时） ══ -->
   <view class="signal-detail {{signalDir}}" wx:if="{{hasSignal}}">
     <view class="section-title">

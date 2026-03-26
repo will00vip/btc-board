@@ -380,6 +380,37 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
 .ktt-div  { height: 1rpx; background: #21262d; margin: 6rpx 0; }
 
 /* ═══════════════════════════════
+   MACD金叉/死叉通知条
+═══════════════════════════════ */
+.macd-cross-bar {
+  display: flex; align-items: center; gap: 16rpx;
+  margin: 0 20rpx 16rpx; padding: 16rpx 20rpx; border-radius: 16rpx;
+  border: 1rpx solid;
+}
+.macd-cross-bar.golden {
+  background: rgba(38,166,154,.12); border-color: rgba(38,166,154,.45);
+}
+.macd-cross-bar.dead {
+  background: rgba(239,83,80,.12); border-color: rgba(239,83,80,.45);
+}
+.macd-cross-icon { font-size: 36rpx; flex-shrink: 0; }
+.macd-cross-info { flex: 1; min-width: 0; }
+.macd-cross-title {
+  display: block; font-size: 26rpx; font-weight: 800; letter-spacing: 0.5rpx;
+}
+.macd-cross-bar.golden .macd-cross-title { color: #26a69a; }
+.macd-cross-bar.dead   .macd-cross-title { color: #ef5350; }
+.macd-cross-desc {
+  display: block; font-size: 20rpx; color: #8b949e; margin-top: 4rpx;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.macd-cross-hint {
+  font-size: 24rpx; font-weight: 800; flex-shrink: 0;
+}
+.macd-cross-bar.golden .macd-cross-hint { color: #26a69a; }
+.macd-cross-bar.dead   .macd-cross-hint { color: #ef5350; }
+
+/* ═══════════════════════════════
    风控状态栏
 ═══════════════════════════════ */
 .risk-bar {
