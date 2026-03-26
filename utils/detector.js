@@ -1,34 +1,11 @@
 // ───────────────────────────────────────────────
-// 数据获取 + 信号检测  v2
+// 数据获取 + 信号检测  v4
 // ───────────────────────────────────────────────
 const { macd, kdj, rsi, wr, boll, calcScore } = require('./indicators')
+const CONFIG = require('../config')
 
-// 数据源列表（依次尝试）— 火币HTX优先（有API Key更稳定）
-const HTX_ACCESS_KEY = '39e5870b-c24946b1-vfd5ghr532-ff3c3'
-
-const SOURCES = [
-  {
-    name: '火币HTX',
-    klineUrl: (iv, lim) => {
-      const m = { '1m':'1min','5m':'5min','15m':'15min','30m':'30min','1h':'60min','4h':'4hour','1d':'1day' }
-      return `https://api.huobi.pro/market/history/kline?symbol=btcusdt&period=${m[iv]||'15min'}&size=${lim}`
-    },
-    parse: raw => {
-      const d = raw.data || raw
-      if (!Array.isArray(d)) throw new Error('HTX格式错误')
-      return d.reverse().map(k => ({
-        time: k.id * 1000, open: k.open, high: k.high, low: k.low, close: k.close, volume: k.vol
-      }))
-    }
-  },
-  {
-    name: '币安镜像',
-    klineUrl: (iv, lim) => `https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=${iv}&limit=${lim}`,
-    parse: raw => raw.map(k => ({
-      time: k[0], open: +k[1], high: +k[2], low: +k[3], close: +k[4], volume: +k[5]
-    }))
-  }
-]
+// 数据源列表使用配置中的DATA_SOURCES
+const SOURCES = CONFIG.DATA_SOURCES || []
 
 /** wx.request 封装成 Promise，带超时 */
 function fetchJson(url, timeout = 8000) {
@@ -68,6 +45,51 @@ async function fetchKlines(interval, limit) {
   throw new Error('所有数据源失败: ' + (lastErr ? lastErr.message : ''))
 }
 
+/** 仓位计算器（根据止损距离计算最优仓位） */
+function calcPositionSize(entryPrice, stopLoss, config = CONFIG) {
+  const {
+    ACCOUNT_BALANCE: account,
+    RISK_PER_TRADE: riskPct,
+    MAX_POSITION_PCT: maxPosPct,
+    CONTRACT_SIZE: contractSize,
+    DEFAULT_LEVERAGE: leverage,
+  } = config
+  
+  const riskAmount = account * riskPct          // 本次愿意亏的最多U数
+  let slDistance = Math.abs(entryPrice - stopLoss)
+  if (slDistance <= 0) {
+    slDistance = entryPrice * 0.005
+  }
+
+  // 每张合约价值（U本位）= entryPrice × contractSize
+  const contractValue = entryPrice * contractSize
+
+  // 不带杠杆时，N张止损亏损 = N × contractSize × slDistance
+  // 带杠杆：所需保证金 = N × contractValue / leverage
+  let lots = riskAmount / (contractSize * slDistance)
+  lots = Math.max(1, Math.round(lots))  // 最少1张
+
+  let margin = lots * contractValue / leverage
+  let positionRatio = margin / account
+
+  // 防止超过最大仓位限制
+  const maxMargin = account * maxPosPct
+  if (margin > maxMargin) {
+    lots = Math.max(1, Math.floor(maxMargin * leverage / contractValue))
+    margin = lots * contractValue / leverage
+    positionRatio = margin / account
+  }
+
+  return {
+    lots:           lots,
+    margin:         Math.round(margin * 10) / 10,
+    positionRatio:  Math.round(positionRatio * 100 * 10) / 10,
+    leverage:       leverage,
+    riskAmount:     Math.round(riskAmount * 10) / 10,
+    slDistance:     Math.round(slDistance * 10) / 10,
+  }
+}
+
 /** 主检测函数，返回完整分析对象 */
 async function detectSignal(interval) {
   interval = interval || '15m'
@@ -81,16 +103,16 @@ async function detectSignal(interval) {
   const now = new Date()
   const h = now.getHours()
 
-  // 凌晨过滤
-  if (h >= 0 && h < 6) {
-    return { type: 'filtered', reason: '凌晨时段(0-6点)', bars, bars4h }
+  // 凌晨过滤（根据配置）
+  if (CONFIG.FILTER_NIGHT_HOURS && h >= CONFIG.NIGHT_HOURS_START && h < CONFIG.NIGHT_HOURS_END) {
+    return { type: 'filtered', reason: `凌晨时段(${CONFIG.NIGHT_HOURS_START}-${CONFIG.NIGHT_HOURS_END}点)`, bars, bars4h }
   }
 
-  // 4h暴跌过滤
+  // 4h暴跌过滤（根据配置）
   const b4hPrev = bars4h[bars4h.length - 2]
   const b4hLast = bars4h[bars4h.length - 1]
   const drop4h = (b4hLast.close - b4hPrev.open) / b4hPrev.open * 100
-  if (drop4h < -8) {
+  if (CONFIG.FILTER_4H_CRASH && drop4h < CONFIG.MAX_4H_DROP_PCT) {
     return { type: 'filtered', reason: `4小时跌幅${drop4h.toFixed(1)}%`, bars, bars4h, drop4h }
   }
 
@@ -104,8 +126,8 @@ async function detectSignal(interval) {
   const kRange      = pin.high - pin.low
 
   // C1: 下影插针（做多）/ 上影插针（做空）
-  const isLongPin  = lowerShadow >= body * 1.5 && pin.close > (pin.low  + kRange * 0.5)
-  const isShortPin = upperShadow >= body * 1.5 && pin.close < (pin.high - kRange * 0.5)
+  const isLongPin  = lowerShadow >= body * CONFIG.PIN_SHADOW_RATIO && pin.close > (pin.low  + kRange * 0.5)
+  const isShortPin = upperShadow >= body * CONFIG.PIN_SHADOW_RATIO && pin.close < (pin.high - kRange * 0.5)
 
   // C2: 低/高点确认
   const c2Long  = conf.low  > pin.low  && conf.close > conf.open
@@ -114,7 +136,7 @@ async function detectSignal(interval) {
   // C3: 放量
   const prev5vol = bars.slice(bars.length - 7, bars.length - 2).map(b => b.volume)
   const avgVol   = prev5vol.reduce((a, b) => a + b) / prev5vol.length
-  const c3       = pin.volume >= avgVol * 1.3
+  const c3       = pin.volume >= avgVol * CONFIG.VOLUME_AMPLIFY_RATIO
 
   // 技术指标
   const closes   = bars.map(b => b.close)
@@ -163,6 +185,14 @@ async function detectSignal(interval) {
     score = calcScore(bars, macdData, kdjData, rsiArr, wrArr, bollArr, signalType)
   }
 
+  // 仓位建议（如果有信号）
+  let positionAdvice = null
+  if (signalType && (signalType === 'long' || signalType === 'short')) {
+    const entryPrice = conf.close
+    const stopLoss = signalType === 'long' ? pin.low * 0.998 : pin.high * 1.002
+    positionAdvice = calcPositionSize(entryPrice, stopLoss, CONFIG)
+  }
+
   return {
     type: signalType,
     bars, bars4h,
@@ -182,6 +212,8 @@ async function detectSignal(interval) {
     kVal: kdjData.K[n], dVal: kdjData.D[n], jVal,
     rsiVal, wrVal,
     bollLast,
+    // 仓位建议
+    positionAdvice,
     // 原始指标数组
     macdData, kdjData, rsiArr, wrArr, bollArr
   }

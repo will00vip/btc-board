@@ -108,6 +108,13 @@ Page({
     tp1: '--', tp2: '--', tp3: '--',
     rrRatio: '--',
     winRate: '--',
+    
+    // 仓位建议
+    posLots: 0,
+    posMargin: 0,
+    posRatio: 0,
+    posLeverage: 0,
+    posRiskU: 0,
 
     // 多空条件感知
     longConditions: [],
@@ -132,6 +139,14 @@ Page({
     errorMsg: '',
     showTips: false,
     klineView: 40,    // 当前K线视窗根数
+    
+    // 风控状态
+    riskStatus: 'normal',        // 'normal'正常, 'cooldown'冷却中, 'max_loss'超日亏限
+    riskMsg: '',                 // 风控说明
+    todayLossU: 0,               // 今日已亏损U数
+    dailyMaxLossU: 0,            // 单日最大亏损U数
+    cooldownUntil: '--',         // 冷却截止时间
+    
     // canvas 触摸查价
     touchIdx: -1, tooltipLeft: 8,
     touchTime: '', touchO: '', touchH: '', touchL: '', touchC: '', touchV: '',
@@ -697,6 +712,7 @@ Page({
     let decisionVerdict = '等待信号中', decisionSub = '暂无插针形态，持续监控中…'
     let hasSignal = false, score = 0, scoreStars = '', scoreBar = 0, scoreLabel = '观望'
     let signalDir = '', pinTime = '--', stopLoss = '--', tp1='--', tp2='--', tp3='--', rrRatio='--', winRate='--'
+    let posLots = 0, posMargin = 0, posRatio = 0, posLeverage = 0, posRiskU = 0
 
     if (sig.type === 'filtered') {
       decisionSub = `已过滤：${sig.reason}`
@@ -726,6 +742,15 @@ Page({
         tp3 = fmtPrice(entry - dist * 2.5)
         stopLoss = fmtPrice(sl)
         rrRatio  = `1.5:1`
+      }
+
+      // 仓位建议
+      if (sig.positionAdvice) {
+        posLots = sig.positionAdvice.lots
+        posMargin = sig.positionAdvice.margin
+        posRatio = sig.positionAdvice.positionRatio
+        posLeverage = sig.positionAdvice.leverage
+        posRiskU = sig.positionAdvice.riskAmount
       }
 
       if (score >= 8) {
@@ -772,6 +797,22 @@ Page({
     const longOkN    = longConds.filter(c => c.ok).length
     const shortOkN   = shortConds.filter(c => c.ok).length
 
+    // 风控状态（小程序简化版，无法持久化存储）
+    // 这里只是模拟展示，实际需要配合后端或本地存储
+    const dailyMaxLossU = 1000 * 0.05  // 账户1000U * 5% = 50U
+    const todayLossU = 0               // 实际应用需要从存储中读取
+    const riskStatus = 'normal'        // normal, cooldown, max_loss
+    let riskMsg = '', cooldownUntil = '--'
+    
+    if (riskStatus === 'cooldown') {
+      riskMsg = `连亏3笔，冷却2小时`
+      cooldownUntil = `14:30`
+    } else if (riskStatus === 'max_loss') {
+      riskMsg = `今日已亏${todayLossU}U，达单日上限`
+    } else {
+      riskMsg = `风控正常，今日已亏${todayLossU}U/${dailyMaxLossU}U`
+    }
+
     this.setData({
       curPrice: fmtPrice(last.close),
       priceChange: (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%',
@@ -783,6 +824,7 @@ Page({
       decisionState, decisionFace, decisionVerdict, decisionSub,
       score, scoreBar, scoreStars, scoreLabel,
       hasSignal, signalDir, pinTime, stopLoss, tp1, tp2, tp3, rrRatio, winRate,
+      posLots, posMargin, posRatio, posLeverage, posRiskU,
 
       longConditions:  longConds,
       shortConditions: shortConds,
@@ -803,6 +845,13 @@ Page({
       klineRows,
       updateTime,
       touchIdx: -1,
+      
+      // 风控状态
+      riskStatus,
+      riskMsg,
+      todayLossU,
+      dailyMaxLossU,
+      cooldownUntil,
     })
 
     // 画 K线图

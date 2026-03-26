@@ -117,6 +117,30 @@
         <text class="tp-val">{{tp3}}</text>
       </view>
     </view>
+    
+    <!-- 仓位建议 -->
+    <view class="pos-row" wx:if="{{posLots > 0}}">
+      <view class="pos-item">
+        <text class="pos-label">📊 仓位建议</text>
+        <text class="pos-val">{{posLots}}张</text>
+      </view>
+      <view class="pos-item">
+        <text class="pos-label">保证金</text>
+        <text class="pos-val">{{posMargin}}U</text>
+      </view>
+      <view class="pos-item">
+        <text class="pos-label">仓位占比</text>
+        <text class="pos-val">{{posRatio}}%</text>
+      </view>
+      <view class="pos-item">
+        <text class="pos-label">杠杆</text>
+        <text class="pos-val">{{posLeverage}}x</text>
+      </view>
+      <view class="pos-item">
+        <text class="pos-label">最大亏损</text>
+        <text class="pos-val">{{posRiskU}}U</text>
+      </view>
+    </view>
   </view>
 
 
@@ -196,6 +220,17 @@
       <view class="ktt-row"><text class="ktt-l">MACD</text><text class="ktt-v">{{touchMACD}}</text></view>
       <view class="ktt-row"><text class="ktt-l">DIF</text><text class="ktt-v">{{touchDIF}}</text></view>
       <view class="ktt-row"><text class="ktt-l">DEA</text><text class="ktt-v">{{touchDEA}}</text></view>
+    </view>
+  </view>
+
+  <!-- ══ 风控状态栏 ══ -->
+  <view class="risk-bar {{riskStatus}}">
+    <view class="risk-left">
+      <text class="risk-icon">{{riskStatus === 'normal' ? '✅' : riskStatus === 'cooldown' ? '🧊' : '🛑'}}</text>
+      <text class="risk-txt">{{riskMsg}}</text>
+    </view>
+    <view class="risk-right" wx:if="{{riskStatus !== 'normal'}}">
+      <text class="risk-time">{{cooldownUntil}}</text>
     </view>
   </view>
 
