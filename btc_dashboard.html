@@ -516,14 +516,21 @@ const INTERVAL_CFG = {
 const HTX_IV  = {'1m':'1min','5m':'5min','15m':'15min','30m':'30min','1h':'60min','4h':'4hour','1d':'1day','1w':'1week'};
 const OKX_IV  = {'1m':'1m','5m':'5m','15m':'15m','30m':'30m','1h':'1H','4h':'4H','1d':'1D','1w':'1W'};
 
+// 带超时的fetch封装，默认5秒
+function fetchT(url, ms=5000) {
+  const ctrl = new AbortController();
+  const tid = setTimeout(()=>ctrl.abort(), ms);
+  return fetch(url, {signal:ctrl.signal}).finally(()=>clearTimeout(tid));
+}
+
 async function _binance(iv,lim){
-  const r=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=${iv}&limit=${lim}`);
+  const r=await fetchT(`https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=${iv}&limit=${lim}`);
   if(!r.ok) throw new Error('Binance '+r.status);
   return await r.json();
 }
 async function _htx(iv,lim){
   const p=HTX_IV[iv]||'15min';
-  const r=await fetch(`https://api.huobi.pro/market/history/kline?symbol=btcusdt&period=${p}&size=${lim}`);
+  const r=await fetchT(`https://api.huobi.pro/market/history/kline?symbol=btcusdt&period=${p}&size=${lim}`);
   if(!r.ok) throw new Error('HTX '+r.status);
   const j=await r.json();
   if(j.status!=='ok') throw new Error('HTX:'+j['err-msg']);
@@ -531,14 +538,24 @@ async function _htx(iv,lim){
 }
 async function _okx(iv,lim){
   const b=OKX_IV[iv]||'15m';
-  const r=await fetch(`https://www.okx.com/api/v5/market/candles?instId=BTC-USDT&bar=${b}&limit=${lim}`);
+  const r=await fetchT(`https://www.okx.com/api/v5/market/candles?instId=BTC-USDT&bar=${b}&limit=${lim}`);
   if(!r.ok) throw new Error('OKX '+r.status);
   const j=await r.json();
   if(j.code!=='0') throw new Error('OKX:'+j.msg);
   return j.data.reverse().map(k=>[+k[0],+k[1],+k[2],+k[3],+k[4],+k[5],+k[0]+1000,+k[7]]);
 }
+// Gate.io 第四备用源（公开API，CORS友好）
+async function _gate(iv,lim){
+  const gmap={'1m':'1m','5m':'5m','15m':'15m','30m':'30m','1h':'1h','4h':'4h','1d':'1d','1w':'7d'};
+  const b=gmap[iv]||'15m';
+  const r=await fetchT(`https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=BTC_USDT&interval=${b}&limit=${lim}`);
+  if(!r.ok) throw new Error('Gate '+r.status);
+  const j=await r.json();
+  // Gate格式: [timestamp_sec, vol, close, high, low, open, ...]
+  return j.map(k=>[+k[0]*1000,+k[5],+k[3],+k[4],+k[2],+k[1],+k[0]*1000+1000,+k[1]]).sort((a,b)=>a[0]-b[0]);
+}
 async function fetchKlines(iv,lim){
-  const sources=[['币安',_binance],['火币',_htx],['OKX',_okx]];
+  const sources=[['币安',_binance],['火币',_htx],['OKX',_okx],['Gate',_gate]];
   let last;
   for(const [name,fn] of sources){
     try{
