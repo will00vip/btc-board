@@ -33,7 +33,7 @@
     <view class="top-header-inner">
       <!-- LOGO -->
       <view class="top-frog-wrap">
-        <text class="top-frog-emoji">📡</text>
+        <text class="top-frog-emoji">🎯</text>
       </view>
       <!-- 标题文字 -->
       <view class="top-title-block">
