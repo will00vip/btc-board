@@ -3,12 +3,20 @@ const { fetchKlines, detectSignal } = require('../../utils/detector')
 const { macd: calcMACD, boll: calcBOLL, ema: calcEMA } = require('../../utils/indicators')
 
 const PERIODS = [
-  { iv: '1m',  label: '1m超短线',  limit: 200 },
-  { iv: '5m',  label: '5m短线',    limit: 180 },
-  { iv: '15m', label: '15m主策略', limit: 150 },
-  { iv: '30m', label: '30m中线',   limit: 120 },
-  { iv: '1h',  label: '1h趋势',    limit: 100 },
-  { iv: '4h',  label: '4h大趋势',  limit: 80  },
+  { iv: '1s',  label: '1s秒线',    limit: 500, base: true  },
+  { iv: '1m',  label: '1m超短线',  limit: 500, base: true  },
+  { iv: '3m',  label: '3m短线',    limit: 480, base: false },
+  { iv: '5m',  label: '5m短线',    limit: 480, base: false },
+  { iv: '15m', label: '15m主策略', limit: 480, base: true  },
+  { iv: '30m', label: '30m中线',   limit: 480, base: false },
+  { iv: '1h',  label: '1h趋势',    limit: 480, base: true  },
+  { iv: '2h',  label: '2h趋势',    limit: 480, base: false },
+  { iv: '4h',  label: '4h大趋势',  limit: 480, base: true  },
+  { iv: '6h',  label: '6h趋势',    limit: 480, base: false },
+  { iv: '12h', label: '12h趋势',   limit: 480, base: false },
+  { iv: '1d',  label: '1d日线',    limit: 480, base: true  },
+  { iv: '3d',  label: '3d三日线',  limit: 480, base: false },
+  { iv: '1w',  label: '1w周线',    limit: 480, base: false },
 ]
 
 const TIPS = [
@@ -143,7 +151,8 @@ Page({
     loading: false,
     errorMsg: '',
     showTips: false,
-    klineView: 40,    // 当前K线视窗根数
+    showMorePeriods: false,   // 展开更多周期
+    klineView: 120,   // 当前K线视窗根数
     
     // 会员 & 体验
     isVip: false,
@@ -182,9 +191,9 @@ Page({
     this._dragStartX  = 0
     this._dragStartOff= 0
     this._isDragging  = false
-    this._view        = 40
+    this._view        = 120
     this._pinchStartDist = 0
-    this._pinchStartView = 40
+    this._pinchStartView = 120
     this._isPinching  = false
 
     // ══ 免费体验60秒倒计时（每次进入重置） ══
@@ -270,7 +279,7 @@ Page({
     if (!this._allBars) return
 
     // 每屏显示VIEW根，拖动偏移控制从哪里切窗口
-    const VIEW  = this._view || 40
+    const VIEW  = this._view || 120
     const total = this._allBars.length
     const maxOff = Math.max(0, total - VIEW)
     const off   = Math.max(0, Math.min(Math.round(this._dragOffset), maxOff))
@@ -501,7 +510,7 @@ Page({
         this._isDragging     = false
         this._touchMoved     = false
         this._pinchStartDist = dist
-        this._pinchStartView = this._view || 40
+        this._pinchStartView = this._view || 120
         this.setData({ touchIdx: -1 })
         return
       }
@@ -511,7 +520,7 @@ Page({
         // 两指靠拢 → dist变小 → 缩小 → VIEW变大（看更多根，更全局）
         const scale   = this._pinchStartDist / dist  // <1拉开，>1靠拢
         const newView = Math.round(this._pinchStartView * scale)
-        this._view = Math.max(10, Math.min(120, newView))
+        this._view = Math.max(10, Math.min(240, newView))
         this.setData({ klineView: this._view })
         this._drawChart(null)
         return
@@ -536,7 +545,7 @@ Page({
       if (this._touchMoved) {
         this._isDragging  = true
         const rawOff = this._dragStartOff - dx / barW
-        const maxOff = Math.max(0, (this._allBars ? this._allBars.length : 40) - (this._view || 40))
+        const maxOff = Math.max(0, (this._allBars ? this._allBars.length : 120) - (this._view || 120))
         // 橡皮筋阻尼：超出边界时有0.25倍阻尼，给手指继续滑动的感觉
         let newOff
         if (rawOff < 0) {
@@ -609,7 +618,7 @@ Page({
     this._touchMoved = false
     this.setData({ touchIdx: -1 })
     // 弹回：如果拖过了边界，平滑动画回到边界
-    const maxOff = Math.max(0, (this._allBars ? this._allBars.length : 40) - (this._view || 40))
+    const maxOff = Math.max(0, (this._allBars ? this._allBars.length : 120) - (this._view || 120))
     const target = Math.max(0, Math.min(Math.round(this._dragOffsetRaw ?? this._dragOffset), maxOff))
     if (this._dragOffset !== target) {
       this._animateTo(target)
@@ -641,12 +650,13 @@ Page({
     this._dragOffset = 0
     this._allBars    = null
     this._chartData  = null
-    this._view       = 40
-    this.setData({ interval: e.currentTarget.dataset.iv, intervalLabel: e.currentTarget.dataset.label, klineView: 40 })
+    this._view       = 120
+    this.setData({ interval: e.currentTarget.dataset.iv, intervalLabel: e.currentTarget.dataset.label, klineView: 120 })
     this.loadData()
   },
   refresh() { this.loadData() },
   toggleTips() { this.setData({ showTips: !this.data.showTips }) },
+  toggleMorePeriods() { this.setData({ showMorePeriods: !this.data.showMorePeriods }) },
 
   async loadData() {
     if (this.data.loading) return

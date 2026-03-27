@@ -91,16 +91,8 @@
     </view>
   </view>
 
-  <!-- ══ 周期切换栏 ══ -->
-  <view class="period-bar">
-    <view
-      class="period-btn {{interval === item.iv ? 'active' : ''}}"
-      wx:for="{{periods}}" wx:key="iv" wx:item="item"
-      bindtap="switchInterval"
-      data-iv="{{item.iv}}"
-      data-label="{{item.label}}"
-    >{{item.iv}}</view>
-  </view>
+  <!-- ══ 周期切换（内嵌在K线图上方） ══ -->
+  <!-- 已移至K线图区域，见下方 -->
 
   <!-- ══ 决策大卡 ══ -->
   <view class="decision-card {{decisionState}}">
@@ -380,17 +372,34 @@
   </block>
 
   <!-- ══ K线图（始终可见） ══ -->
-  <view class="section-title-plain" style="margin-top:24rpx;">
-    <text>📈 K线图</text>
-    <view style="display:flex;align-items:center;gap:10rpx;">
-      <text class="kview-badge">{{klineView}}根/屏</text>
-      <view class="chart-legend">
-        <text class="leg-boll-u">BOLL↑</text>
-        <text class="leg-boll-l">↓</text>
-        <text class="leg-ma5">MA5</text>
-        <text class="leg-ma10">MA10</text>
+  <!-- 周期切换 + K线标题行 -->
+  <view class="kline-header">
+    <view class="kline-title-row">
+      <text class="kline-title-txt">📈 K线图</text>
+      <view style="display:flex;align-items:center;gap:10rpx;">
+        <text class="kview-badge">{{klineView}}根</text>
+        <view class="chart-legend">
+          <text class="leg-boll-u">BOLL↑</text>
+          <text class="leg-boll-l">↓</text>
+          <text class="leg-ma5">MA5</text>
+          <text class="leg-ma10">MA10</text>
+        </view>
       </view>
     </view>
+    <!-- 基础周期（常驻显示） -->
+    <scroll-view class="period-bar" scroll-x="true" enhanced="true" show-scrollbar="false">
+      <view
+        class="period-btn {{interval === item.iv ? 'active' : ''}}"
+        wx:for="{{periods}}" wx:key="iv" wx:item="item"
+        wx:if="{{item.base || showMorePeriods}}"
+        bindtap="switchInterval"
+        data-iv="{{item.iv}}"
+        data-label="{{item.label}}"
+      >{{item.iv}}</view>
+      <view class="period-more-btn" bindtap="toggleMorePeriods">
+        <text>{{showMorePeriods ? '收起↑' : '更多↓'}}</text>
+      </view>
+    </scroll-view>
   </view>
   <view class="kcanvas-wrap"
     bindtouchmove="onKlineTouch"
