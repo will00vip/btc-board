@@ -220,18 +220,23 @@
   <!-- ══ K线图区域（含周期切换 + 大趋势） ══ -->
   <view class="kline-section">
 
-    <!-- 行1：周期切换栏 + 图例 -->
+    <!-- 行1：周期切换栏（折叠下拉式） -->
     <view class="kline-title-row">
       <view class="kline-title-left">
         <text class="kline-section-icon">📈</text>
+        <!-- 基础周期：直接显示 -->
         <view class="period-bar-inline">
           <view
             class="period-btn-sm {{interval === item.iv ? 'active' : ''}}"
-            wx:for="{{periods}}" wx:key="iv" wx:item="item"
+            wx:for="{{basicPeriods}}" wx:key="iv" wx:item="item"
             bindtap="switchInterval"
             data-iv="{{item.iv}}"
             data-label="{{item.label}}"
           >{{item.label}}</view>
+          <!-- 更多按钮 -->
+          <view class="period-btn-sm more-btn {{periodMenuOpen ? 'active' : ''}}" bindtap="togglePeriodMenu">
+            <text>{{periodMenuOpen ? '收起' : '更多▾'}}</text>
+          </view>
         </view>
       </view>
       <view style="display:flex;align-items:center;gap:10rpx;flex-shrink:0;">
@@ -244,31 +249,59 @@
         </view>
       </view>
     </view>
-
-    <!-- 行2：大趋势内嵌条（跟随K线周期） -->
-    <view class="trend-inline-bar">
-      <view class="trend-inline-left">
-        <text class="trend-inline-icon">📊</text>
-        <text class="trend-inline-title">{{intervalLabel}} 趋势</text>
-        <text class="trend-inline-label {{trendColor}}">{{trendLabel}}</text>
-      </view>
-      <view class="trend-inline-right">
-        <text class="trend-inline-zone">🟢{{supportZone}}</text>
-        <text class="trend-inline-sep">·</text>
-        <text class="trend-inline-zone">🔴{{resistZone}}</text>
-      </view>
+    <!-- 展开的更多周期面板 -->
+    <view class="period-more-panel" wx:if="{{periodMenuOpen}}">
+      <view
+        class="period-more-btn {{interval === item.iv ? 'active' : ''}}"
+        wx:for="{{morePeriods}}" wx:key="iv" wx:item="item"
+        bindtap="switchIntervalFromMenu"
+        data-iv="{{item.iv}}"
+        data-label="{{item.label}}"
+      >{{item.label}}</view>
     </view>
 
-    <!-- 行3：大趋势详细（可折叠，默认折叠） -->
-    <view class="trend-detail-wrap {{trendExpanded ? 'expanded' : ''}}" bindtap="toggleTrendDetail">
-      <view class="trend-detail-inner" wx:if="{{trendExpanded}}">
-        <text class="trend-desc-inline">{{trendDesc}}</text>
-        <view class="trend-ma-row-inline">
-          <text class="ma-tag">MA20: {{trendMa20}}</text>
-          <text class="ma-tag">MA60: {{trendMa60}}</text>
+    <!-- 行2：大趋势卡片（升级版） -->
+    <view class="trend-card-v2 {{trendColor}}">
+      <!-- 顶部：方向 + 趋势标签 -->
+      <view class="trend-card-top">
+        <view class="trend-card-title-row">
+          <text class="trend-card-period">{{intervalLabel}} 大趋势</text>
+          <view class="trend-card-badge {{trendColor}}">
+            <text class="trend-badge-icon">{{trendColor === 'bull' ? '🚀' : trendColor === 'down' || trendColor === 'bear' ? '🐻' : trendColor === 'bull_weak' ? '📈' : '📉'}}</text>
+            <text class="trend-badge-text">{{trendLabel}}</text>
+          </view>
+        </view>
+        <text class="trend-card-desc">{{trendDesc}}</text>
+      </view>
+      <!-- 中部：MA20 / MA60 / 价格位置 -->
+      <view class="trend-card-mid">
+        <view class="trend-ma-item">
+          <text class="trend-ma-label">MA20</text>
+          <text class="trend-ma-val">{{trendMa20}}</text>
+        </view>
+        <view class="trend-ma-divider"></view>
+        <view class="trend-ma-item">
+          <text class="trend-ma-label">MA60</text>
+          <text class="trend-ma-val">{{trendMa60}}</text>
+        </view>
+        <view class="trend-ma-divider"></view>
+        <view class="trend-ma-item">
+          <text class="trend-ma-label">支撑区</text>
+          <text class="trend-ma-val green">{{supportZone}}</text>
+        </view>
+        <view class="trend-ma-divider"></view>
+        <view class="trend-ma-item">
+          <text class="trend-ma-label">压力区</text>
+          <text class="trend-ma-val red">{{resistZone}}</text>
         </view>
       </view>
-      <text class="trend-detail-toggle">{{trendExpanded ? '▲ 收起' : '▼ 详情'}}</text>
+      <!-- 底部：趋势强度进度条 -->
+      <view class="trend-card-bar-wrap">
+        <view class="trend-card-bar-track">
+          <view class="trend-card-bar-fill {{trendColor}}" style="width:{{trendStrength}}%"></view>
+        </view>
+        <text class="trend-card-bar-label">趋势强度 {{trendStrength}}%</text>
+      </view>
     </view>
 
   </view>

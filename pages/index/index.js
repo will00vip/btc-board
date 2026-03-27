@@ -114,12 +114,27 @@ function calcTrend(bars) {
   const resistLo  = (resistBase  * 0.997).toFixed(0)
   const resistHi  = (resistBase  * 1.003).toFixed(0)
 
+  // 趋势强度：MA20与MA60的偏离程度映射到0~100
+  const maDiff = Math.abs(ma20 - ma60) / ma60 * 100  // 百分比偏离
+  const rawStrength = Math.min(maDiff / 3 * 100, 100)  // 3%偏离 = 100%强度
+  // bull/bear强趋势从50起，弱趋势/震荡从0~50
+  let trendStrength = 50
+  if (trend === 'bull' || trend === 'bear') {
+    trendStrength = Math.round(50 + rawStrength / 2)
+  } else if (trend === 'bull_weak' || trend === 'down_weak') {
+    trendStrength = Math.round(25 + rawStrength / 4)
+  } else {
+    trendStrength = Math.round(rawStrength / 4)
+  }
+  trendStrength = Math.max(5, Math.min(100, trendStrength))
+
   return {
     trend, trendLabel, trendColor, trendDesc,
     supportZone: `${supportLo}~${supportHi}`,
     resistZone:  `${resistLo}~${resistHi}`,
     ma20: ma20.toFixed(0),
     ma60: ma60.toFixed(0),
+    trendStrength,
   }
 }
 
@@ -187,10 +202,16 @@ Page({
     interval: '15m',
     intervalLabel: '15分',
     periods: PERIODS,
+    // 基础周期（直接显示）
+    basicPeriods: PERIODS.filter(p => ['1m','5m','15m','1h','4h','1d'].includes(p.iv)),
+    // 更多周期（折叠展开）
+    morePeriods:  PERIODS.filter(p => !['1m','5m','15m','1h','4h','1d'].includes(p.iv)),
+    periodMenuOpen: false,  // 更多周期面板是否展开
     tips: TIPS,
 
-    // 大趋势折叠状态
+    // 大趋势折叠状态（已废弃，保留兼容）
     trendExpanded: false,
+    trendStrength: 50,  // 趋势强度 0~100
 
     // 价格
     curPrice: '--', priceChange: '--', priceDir: '',
@@ -757,9 +778,20 @@ Page({
     tick()
   },
 
-  // 大趋势详情折叠/展开
+  // 大趋势详情折叠/展开（兼容旧版，已废弃）
   toggleTrendDetail() {
     this.setData({ trendExpanded: !this.data.trendExpanded })
+  },
+
+  // 展开/收起更多周期面板
+  togglePeriodMenu() {
+    this.setData({ periodMenuOpen: !this.data.periodMenuOpen })
+  },
+
+  // 从更多面板切换周期（同时收起面板）
+  switchIntervalFromMenu(e) {
+    this.setData({ periodMenuOpen: false })
+    this.switchInterval(e)
   },
 
   switchInterval(e) {
@@ -1085,6 +1117,7 @@ Page({
       resistZone:  trendInfo ? trendInfo.resistZone  : '--',
       trendMa20:   trendInfo ? trendInfo.ma20 : '--',
       trendMa60:   trendInfo ? trendInfo.ma60 : '--',
+      trendStrength: trendInfo ? trendInfo.trendStrength : 50,
 
       // 多空能量
       bullPct:         energyInfo ? energyInfo.bullPct   : 50,
