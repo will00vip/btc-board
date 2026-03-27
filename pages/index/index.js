@@ -440,7 +440,7 @@ Page({
   },
 
   // ── 激活码验证 ──
-  // 月卡格式 BTC-M-YYYYMM-XXXX（¥88），季卡 BTC-Q-YYYYQn-XXXX（¥168），年卡 BTC-Y-YYYY-XXXX（¥688），永久卡 BTC-LT-XXXX（¥698）
+  // 月卡格式 BTC-M-YYYYMM-XXXX（¥88），季卡 BTC-Q-YYYYQn-XXXX（¥188），年卡 BTC-Y-YYYY-XXXX（¥688），永久卡 BTC-LT-XXXX（¥888）
   // 有效码列表（硬编码备用码，管理员动态生成的码另存extra_valid_codes）
   _validCodes() {
     return {

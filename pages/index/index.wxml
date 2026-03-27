@@ -139,52 +139,53 @@
     <!-- 非会员：模糊遮罩层 -->
     <view class="analysis-lock-wrap" wx:if="{{!isVip && !inTrial}}">
       <!-- 底层假数据（模糊显示，制造"就差一点"感） -->
+      <!-- 底层：上半部分清晰可见（趋势方向+决策评分），下半部分模糊 -->
       <view class="analysis-blur-bg">
-        <!-- 假趋势卡 -->
-        <view class="fake-trend-card">
-          <view class="fake-trend-top">
+        <!-- 清晰区：趋势标签+多空方向+评分（让用户看到信号但看不到具体数值） -->
+        <view class="fake-signal-clear">
+          <view class="fake-signal-row">
             <view class="fake-trend-badge bull"><text>🚀 强势多头</text></view>
-            <text class="fake-trend-desc">MA20上穿MA60，多头强势，支撑下方</text>
+            <view class="fake-trend-badge-sub"><text class="fake-trend-desc">MA20上穿MA60 · 多头强势</text></view>
           </view>
-          <view class="fake-trend-nums">
-            <view class="fake-num-item"><text class="fake-num-label">MA20</text><text class="fake-num-val">████</text></view>
-            <view class="fake-num-item"><text class="fake-num-label">MA60</text><text class="fake-num-val">████</text></view>
-            <view class="fake-num-item"><text class="fake-num-label">支撑</text><text class="fake-num-val green">████</text></view>
-            <view class="fake-num-item"><text class="fake-num-label">压力</text><text class="fake-num-val red">████</text></view>
-          </view>
-          <view class="fake-strength-bar">
-            <view class="fake-strength-fill" style="width:72%"></view>
-          </view>
-        </view>
-        <!-- 假多空能量条 -->
-        <view class="fake-energy-card">
-          <text class="fake-energy-title">⚡ 多空能量对比</text>
-          <view class="fake-energy-bar">
-            <view class="fake-energy-long" style="width:63%"></view>
-            <view class="fake-energy-short" style="width:37%"></view>
-          </view>
-          <view class="fake-energy-labels">
-            <text class="fake-el green">多头 63%</text>
-            <text class="fake-el red">空头 37%</text>
-          </view>
-        </view>
-        <!-- 假决策卡 -->
-        <view class="fake-decision-card">
-          <view class="fake-face-wrap"><text class="fake-face">🚀</text></view>
-          <view class="fake-decision-info">
-            <text class="fake-verdict">强势做多信号</text>
-            <view class="fake-meta-row">
-              <text class="fake-meta-tag">📈 做多</text>
-              <text class="fake-meta-tag accent">胜率 74%</text>
+          <view class="fake-energy-mini">
+            <view class="fake-energy-bar">
+              <view class="fake-energy-long" style="width:63%"></view>
+              <view class="fake-energy-short" style="width:37%"></view>
+            </view>
+            <view class="fake-energy-labels">
+              <text class="fake-el green">多头 63%</text>
+              <text class="fake-el red">空头 37%</text>
             </view>
           </view>
-          <view class="fake-score"><text class="fake-score-num">8</text><text class="fake-score-den">/10</text></view>
+          <view class="fake-decision-card">
+            <view class="fake-face-wrap"><text class="fake-face">🚀</text></view>
+            <view class="fake-decision-info">
+              <text class="fake-verdict">强势做多信号</text>
+              <view class="fake-meta-row">
+                <text class="fake-meta-tag">📈 做多</text>
+                <text class="fake-meta-tag accent">胜率 74%</text>
+                <text class="fake-meta-tag">盈亏比 1.8:1</text>
+              </view>
+            </view>
+            <view class="fake-score"><text class="fake-score-num">8</text><text class="fake-score-den">/10</text></view>
+          </view>
         </view>
-        <view class="fake-tp-row">
-          <view class="fake-tp-item stop"><text class="fake-tp-l">止损</text><text class="fake-tp-v">██████</text></view>
-          <view class="fake-tp-item tp1"><text class="fake-tp-l">TP1</text><text class="fake-tp-v">██████</text></view>
-          <view class="fake-tp-item tp2"><text class="fake-tp-l">TP2</text><text class="fake-tp-v">██████</text></view>
-          <view class="fake-tp-item tp3"><text class="fake-tp-l">TP3</text><text class="fake-tp-v">██████</text></view>
+        <!-- 模糊区：止盈止损具体数值 -->
+        <view class="fake-tp-blur-wrap">
+          <view class="fake-tp-row">
+            <view class="fake-tp-item stop"><text class="fake-tp-l">止损</text><text class="fake-tp-v">██████</text></view>
+            <view class="fake-tp-item tp1"><text class="fake-tp-l">TP1</text><text class="fake-tp-v">██████</text></view>
+            <view class="fake-tp-item tp2"><text class="fake-tp-l">TP2</text><text class="fake-tp-v">██████</text></view>
+            <view class="fake-tp-item tp3"><text class="fake-tp-l">TP3</text><text class="fake-tp-v">██████</text></view>
+          </view>
+          <view class="fake-indicators-blur">
+            <view class="fake-ind-row">
+              <view class="fake-ind-item" wx:for="{{['RSI','KDJ','MACD','BOLL','WR','VOL']}}" wx:key="*this">
+                <text class="fake-ind-label">{{item}}</text>
+                <text class="fake-ind-val">████</text>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
 
@@ -199,7 +200,7 @@
             <view class="unlock-price-item hot">
               <text class="unlock-hot-badge">最划算</text>
               <text class="unlock-price-tag">季卡</text>
-              <text class="unlock-price-num hot-num">¥168</text>
+              <text class="unlock-price-num hot-num">¥188</text>
             </view>
             <view class="unlock-price-item"><text class="unlock-price-tag">年卡</text><text class="unlock-price-num">¥688</text></view>
           </view>
@@ -221,6 +222,8 @@
             </view>
           </view>
           <text class="activate-err" wx:if="{{activateErr}}">{{activateErr}}</text>
+          <!-- 隐藏管理入口：连点3下触发密码框 -->
+          <text class="hidden-entry" bindtap="adminTap">· · ·</text>
         </view>
       </view>
     </view>
@@ -530,19 +533,24 @@
       <view class="vip-price-row">
         <view class="vip-price-card">
           <text class="vip-price-tag">月卡</text>
-          <text class="vip-price-num">¥68</text>
+          <text class="vip-price-num">¥88</text>
           <text class="vip-price-unit">/月</text>
         </view>
         <view class="vip-price-card hot">
           <text class="vip-hot-badge">最划算</text>
           <text class="vip-price-tag">季卡</text>
-          <text class="vip-price-num">¥168</text>
+          <text class="vip-price-num">¥188</text>
           <text class="vip-price-unit">/季</text>
         </view>
         <view class="vip-price-card">
           <text class="vip-price-tag">年卡</text>
           <text class="vip-price-num">¥688</text>
           <text class="vip-price-unit">/年</text>
+        </view>
+        <view class="vip-price-card">
+          <text class="vip-price-tag">永久</text>
+          <text class="vip-price-num">¥888</text>
+          <text class="vip-price-unit">买断</text>
         </view>
       </view>
       <view class="vip-cta" bindtap="contactVip">
