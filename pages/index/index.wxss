@@ -1289,6 +1289,59 @@ page {
   font-size: 22rpx; color: #ef5350; text-align: center;
 }
 
+/* ══ 止盈止损锁定区（非会员模糊引导） ══ */
+.sl-lock-wrap {
+  position: relative; overflow: hidden;
+  margin: 0 24rpx 16rpx; border-radius: 20rpx;
+}
+.sl-lock-blur-bg {
+  padding: 20rpx 18rpx 16rpx;
+  background: rgba(255,255,255,.04);
+  border: 1rpx solid rgba(255,255,255,.07);
+  border-radius: 20rpx;
+  filter: blur(3px); pointer-events: none; opacity: .5;
+}
+.fake-sl-title {
+  font-size: 24rpx; color: rgba(255,255,255,.4); margin-bottom: 12rpx; display: block;
+}
+.fake-sl-row { display: flex; gap: 10rpx; }
+.fake-sl-item {
+  flex: 1; background: rgba(255,255,255,.05);
+  border-radius: 14rpx; padding: 14rpx 0;
+  display: flex; flex-direction: column; align-items: center; gap: 8rpx;
+}
+.fake-sl-item.stop { border-top: 3rpx solid rgba(239,68,68,.4); }
+.fake-sl-item.tp1  { border-top: 3rpx solid rgba(251,191,36,.4); }
+.fake-sl-item.tp2  { border-top: 3rpx solid rgba(34,197,94,.4); }
+.fake-sl-item.tp3  { border-top: 3rpx solid rgba(99,102,241,.4); }
+.fake-sl-l { font-size: 18rpx; color: rgba(255,255,255,.3); }
+.fake-sl-v { font-size: 20rpx; color: rgba(255,255,255,.25); letter-spacing: 2rpx; }
+
+.sl-frosted-mask {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom,
+    rgba(10,16,28,0) 0%,
+    rgba(10,16,28,.6) 30%,
+    rgba(10,16,28,.97) 60%,
+    rgba(10,16,28,1) 100%
+  );
+  display: flex; align-items: flex-end;
+  padding: 0 0 20rpx;
+  z-index: 10;
+}
+.sl-unlock-box {
+  width: 100%;
+  background: rgba(13,20,38,.9);
+  border: 1.5rpx solid rgba(251,191,36,.3);
+  border-radius: 20rpx;
+  padding: 24rpx 24rpx 20rpx;
+  display: flex; flex-direction: column; align-items: center; gap: 12rpx;
+  box-shadow: 0 -8rpx 40rpx rgba(0,0,0,.4), 0 0 30rpx rgba(251,191,36,.05);
+}
+.sl-lock-icon  { font-size: 44rpx; line-height: 1; }
+.sl-lock-title { font-size: 30rpx; font-weight: 900; color: #fbbf24; letter-spacing: 1rpx; }
+.sl-lock-desc  { font-size: 21rpx; color: rgba(255,255,255,.45); text-align: center; line-height: 1.7; white-space: pre-line; }
+
 /* 管理员密码浮窗 */
 .admin-pwd-float {
   position: fixed; top: 50%; left: 50%;
