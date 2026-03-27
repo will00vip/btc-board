@@ -157,8 +157,10 @@ Page({
     // 会员 & 体验
     isVip: false,
     inTrial: false,
-    trialSecs: 60,
-    trialTotal: 60,
+    trialSecs: 120,
+    trialTotal: 120,
+    trialMin: 2,   // 分钟显示
+    trialSec: 0,   // 秒显示（0-59）
     codeInput: '',
     pwdInput: '',
     showPwdDialog: false,
@@ -202,8 +204,8 @@ Page({
     this._pinchStartView = 120
     this._isPinching  = false
 
-    // ══ 免费体验60秒倒计时（每次进入重置） ══
-    const TRIAL_SECS = 60
+    // ══ 免费体验2分钟倒计时（每次进入重置） ══
+    const TRIAL_SECS = 120
     // 检查会员有效期
     // 【开发调试用，上线前删掉这行】
     // wx.setStorageSync('isVip', true); wx.setStorageSync('vip_exp', 9999999999999)
@@ -216,11 +218,12 @@ Page({
         wx.removeStorageSync('isVip')
       }
     }
-    // 每次打开都重置体验时间（60s重新开始）
+    // 每次打开都重置体验时间（2分钟重新开始）
     const trialEnd = Date.now() + TRIAL_SECS * 1000
     wx.setStorageSync('trial_end_ts', trialEnd)
     const inTrial = !isVip
-    this.setData({ isVip, inTrial, trialSecs: TRIAL_SECS, trialTotal: TRIAL_SECS })
+    this.setData({ isVip, inTrial, trialSecs: TRIAL_SECS, trialTotal: TRIAL_SECS,
+      trialMin: Math.floor(TRIAL_SECS / 60), trialSec: TRIAL_SECS % 60 })
 
     // ══ 免责声明（首次进入显示） ══
     const agreed = wx.getStorageSync('disclaimer_agreed')
@@ -233,7 +236,9 @@ Page({
         const now = Date.now()
         const secs = Math.max(0, Math.ceil((wx.getStorageSync('trial_end_ts') - now) / 1000))
         const stillTrial = secs > 0
-        this.setData({ inTrial: stillTrial, trialSecs: secs })
+        const tMin = Math.floor(secs / 60)
+        const tSec = secs % 60
+        this.setData({ inTrial: stillTrial, trialSecs: secs, trialMin: tMin, trialSec: tSec })
         if (!stillTrial) {
           clearInterval(this._trialTimer)
           // 体验结束后延迟1s自动弹出升级抽屉（温和提示，而非直接跳付费墙）
@@ -972,7 +977,7 @@ Page({
 
     const trendInfo = sig.trendInfo || null
     const aiScoreHint = score >= 8 ? '强烈看好' : score >= 6 ? '中等把握' : score >= 4 ? '谨慎评估' : '信号偏弱'
-    const aiLabel = `AI量化 · ${aiScoreHint} · 胜率${winRateFromScore(score)}%`
+    const aiLabel = `AI量化 · ${aiScoreHint}`
 
     this.setData({
       curPrice: fmtPrice(last.close),

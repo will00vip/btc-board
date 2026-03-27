@@ -53,17 +53,67 @@
     </view>
   </view>
 
-  <!-- ══ 60秒倒计时条（非会员且在体验期时显示） ══ -->
+  <!-- ══ 2分钟倒计时条（非会员且在体验期时显示） ══ -->
   <view class="trial-bar" wx:if="{{!isVip && inTrial}}">
     <view class="trial-bar-fill" style="width:{{trialSecs / trialTotal * 100}}%"></view>
     <view class="trial-bar-content">
       <text class="trial-icon">⏳</text>
-      <text class="trial-txt">AI免费体验剩余 <text class="trial-secs {{trialSecs <= 10 ? 'urgent' : ''}}">{{trialSecs}}s</text></text>
-      <text class="trial-cta">开通会员 →</text>
+      <text class="trial-txt">免费体验剩余 <text class="trial-secs {{trialSecs <= 10 ? 'urgent' : ''}}">{{trialMin}}:{{trialSec < 10 ? '0' : ''}}{{trialSec}}</text></text>
+      <text class="trial-cta" bindtap="showVipDrawer">开通会员 →</text>
+    </view>
+  </view>
+
+  <!-- ══ 大趋势判断 + 周期切换（最顶部，所有内容之前） ══ -->
+  <view class="frog-trend-card">
+    <view class="ftc-left">
+      <view class="ftc-frog">{{trendIcon}}</view>
+      <view class="ftc-info">
+        <text class="ftc-title">大趋势判断</text>
+        <text class="ftc-period">{{intervalLabel}} · MA20/MA60</text>
+      </view>
+    </view>
+    <view class="ftc-right">
+      <view class="ftc-badge {{trendColor}}">
+        <text class="ftc-badge-txt">{{trendLabel}}</text>
+      </view>
+    </view>
+  </view>
+  <!-- 周期切换行（紧跟趋势卡） -->
+  <scroll-view class="period-bar-top" scroll-x="true" enhanced="true" show-scrollbar="false">
+    <view
+      class="period-btn-top {{interval === item.iv ? 'active' : ''}}"
+      wx:for="{{periods}}" wx:key="iv" wx:item="item"
+      wx:if="{{item.base || showMorePeriods}}"
+      bindtap="switchInterval"
+      data-iv="{{item.iv}}"
+      data-label="{{item.label}}"
+    >{{item.iv}}</view>
+    <view class="period-more-top" bindtap="toggleMorePeriods">
+      <text>{{showMorePeriods ? '↑' : '···'}}</text>
+    </view>
+  </scroll-view>
+  <!-- 趋势详情行（MA20/MA60/支撑/压力） -->
+  <view class="ftc-detail-row">
+    <view class="ftc-detail-item">
+      <text class="ftc-d-label">MA20</text>
+      <text class="ftc-d-val {{trendMa20Dir}}">{{trendMa20}}</text>
+    </view>
+    <view class="ftc-detail-item">
+      <text class="ftc-d-label">MA60</text>
+      <text class="ftc-d-val {{trendMa60Dir}}">{{trendMa60}}</text>
+    </view>
+    <view class="ftc-detail-item">
+      <text class="ftc-d-label">支撑</text>
+      <text class="ftc-d-val green">{{trendSupport}}</text>
+    </view>
+    <view class="ftc-detail-item">
+      <text class="ftc-d-label">压力</text>
+      <text class="ftc-d-val red">{{trendResist}}</text>
     </view>
   </view>
 
   <!-- ══ 价格大头 ══ -->
+
   <view class="price-hero">
     <view class="price-hero-left">
       <text class="price-main {{priceDir}}">{{curPrice}}</text>
@@ -102,7 +152,6 @@
         <text class="decision-sub">{{decisionSub}}</text>
         <view class="decision-meta" wx:if="{{hasSignal}}">
           <text class="meta-tag {{signalDir === 'long' ? 'long' : 'short'}}">{{signalDir === 'long' ? '📈 做多' : '📉 做空'}}</text>
-          <text class="meta-tag accent">胜率 {{winRate}}%</text>
           <text class="meta-tag">盈亏比 {{rrRatio}}</text>
         </view>
       </view>
@@ -137,10 +186,6 @@
         <view class="detail-cell">
           <text class="dc-label">📍 插针时间</text>
           <text class="dc-val">{{pinTime}}</text>
-        </view>
-        <view class="detail-cell">
-          <text class="dc-label">🎯 胜率参考</text>
-          <text class="dc-val accent">{{winRate}}%</text>
         </view>
         <view class="detail-cell">
           <text class="dc-label">🛑 止损位</text>
@@ -314,42 +359,7 @@
 
   <!-- ══ K线图区域（始终可见） ══ -->
 
-  <!-- 【1】青蛙趋势判断卡（周期跟着K线走） -->
-  <view class="frog-trend-card">
-    <view class="ftc-left">
-      <view class="ftc-frog">{{trendIcon}}</view>
-      <view class="ftc-info">
-        <text class="ftc-title">大趋势判断</text>
-        <text class="ftc-period">{{intervalLabel}} · MA20/MA60</text>
-      </view>
-    </view>
-    <view class="ftc-right">
-      <view class="ftc-badge {{trendColor}}">
-        <text class="ftc-badge-txt">{{trendLabel}}</text>
-      </view>
-    </view>
-  </view>
-  <!-- 趋势详情展开行 -->
-  <view class="ftc-detail-row">
-    <view class="ftc-detail-item">
-      <text class="ftc-d-label">MA20</text>
-      <text class="ftc-d-val {{trendMa20Dir}}">{{trendMa20}}</text>
-    </view>
-    <view class="ftc-detail-item">
-      <text class="ftc-d-label">MA60</text>
-      <text class="ftc-d-val {{trendMa60Dir}}">{{trendMa60}}</text>
-    </view>
-    <view class="ftc-detail-item">
-      <text class="ftc-d-label">支撑</text>
-      <text class="ftc-d-val green">{{trendSupport}}</text>
-    </view>
-    <view class="ftc-detail-item">
-      <text class="ftc-d-label">压力</text>
-      <text class="ftc-d-val red">{{trendResist}}</text>
-    </view>
-  </view>
-
-  <!-- 【2】K线图标题行 + 周期切换（同一区块） -->
+  <!-- 【K线图标题行 + 图例】 -->
   <view class="kline-header">
     <view class="kline-title-row">
       <text class="kline-title-txt">📈 K线 <text class="kview-badge">{{klineView}}根</text></text>
@@ -360,20 +370,6 @@
         <text class="leg-ma10">MA10</text>
       </view>
     </view>
-    <!-- 周期切换（直接嵌在K线图顶部） -->
-    <scroll-view class="period-bar-inline" scroll-x="true" enhanced="true" show-scrollbar="false">
-      <view
-        class="period-btn-inline {{interval === item.iv ? 'active' : ''}}"
-        wx:for="{{periods}}" wx:key="iv" wx:item="item"
-        wx:if="{{item.base || showMorePeriods}}"
-        bindtap="switchInterval"
-        data-iv="{{item.iv}}"
-        data-label="{{item.label}}"
-      >{{item.iv}}</view>
-      <view class="period-more-inline" bindtap="toggleMorePeriods">
-        <text>{{showMorePeriods ? '↑' : '···'}}</text>
-      </view>
-    </scroll-view>
   </view>
   <view class="kcanvas-wrap"
     bindtouchmove="onKlineTouch"
@@ -413,7 +409,7 @@
   <!-- ══ 底部 ══ -->
   <view class="footer" bindtap="onFooterTap">
     <text class="footer-logo">⚡ BTC AI Signal · 智能量化分析</text>
-    <text class="footer-txt">最后更新 {{updateTime}}  ·  60秒自动刷新</text>
+    <text class="footer-txt">最后更新 {{updateTime}}  ·  30秒自动刷新</text>
     <text class="footer-txt">数据来源：火币HTX / 币安镜像 · 仅供参考</text>
     <text class="footer-disclaimer">⚠️ 本工具仅供学习参考，不构成投资建议，投资有风险</text>
   </view>
