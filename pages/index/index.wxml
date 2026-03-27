@@ -162,7 +162,84 @@
     </view>
   </view>
 
-  <!-- ══ 多空能量对比（所有人可见） ══ -->
+  <!-- ══ 主分析区：空头趋势非会员整体锁定 ══ -->
+
+  <!-- 【情况A】非会员 + 空头趋势 → 整体锁定模糊 -->
+  <view class="bear-lock-wrap" wx:if="{{!isVip && !inTrial && isBearTrend}}">
+    <!-- 模糊底层（假数据预览） -->
+    <view class="bear-lock-blur-bg">
+      <!-- 假多空能量 -->
+      <view class="fake-energy-preview">
+        <view class="fake-ep-bar">
+          <view class="fake-ep-bull" style="width:38%"><text>多 38%</text></view>
+          <view class="fake-ep-bear" style="width:62%"><text>空 62%</text></view>
+        </view>
+      </view>
+      <!-- 假决策卡 -->
+      <view class="fake-decision-preview">
+        <view class="fake-dp-face">📉</view>
+        <view class="fake-dp-info">
+          <text class="fake-dp-verdict">空头信号检测中…</text>
+          <view class="fake-dp-meta">
+            <text class="fake-dp-tag red">📉 做空</text>
+            <text class="fake-dp-tag">胜率 ██%</text>
+            <text class="fake-dp-tag">评分 █/10</text>
+          </view>
+        </view>
+      </view>
+      <!-- 假止盈止损 -->
+      <view class="fake-sl-preview">
+        <view class="fake-slp-item stop"><text class="fake-slp-l">止损</text><text class="fake-slp-v">██████</text></view>
+        <view class="fake-slp-item tp1"><text class="fake-slp-l">TP1</text><text class="fake-slp-v">██████</text></view>
+        <view class="fake-slp-item tp2"><text class="fake-slp-l">TP2</text><text class="fake-slp-v">██████</text></view>
+        <view class="fake-slp-item tp3"><text class="fake-slp-l">TP3</text><text class="fake-slp-v">██████</text></view>
+      </view>
+    </view>
+    <!-- 毛玻璃遮罩 + 解锁CTA -->
+    <view class="bear-lock-mask">
+      <view class="bear-unlock-box">
+        <view class="bear-lock-alert">
+          <text class="bear-lock-alert-icon">🔴</text>
+          <text class="bear-lock-alert-txt">当前空头趋势 · 做空信号分析已就绪</text>
+        </view>
+        <text class="bear-lock-icon">🔐</text>
+        <text class="bear-lock-title">开通会员 · 解锁全部分析</text>
+        <text class="bear-lock-desc">多空能量 · 决策评分 · MACD叉口\n精准止损 · TP1/TP2/TP3 · 仓位建议</text>
+        <view class="unlock-price-row">
+          <view class="unlock-price-item"><text class="unlock-price-tag">月卡</text><text class="unlock-price-num">¥88</text></view>
+          <view class="unlock-price-item hot">
+            <text class="unlock-hot-badge">最划算</text>
+            <text class="unlock-price-tag">季卡</text>
+            <text class="unlock-price-num hot-num">¥188</text>
+          </view>
+          <view class="unlock-price-item"><text class="unlock-price-tag">年卡</text><text class="unlock-price-num">¥688</text></view>
+        </view>
+        <view class="unlock-cta" bindtap="showVipModal">
+          <text class="unlock-cta-text">👑 立即开通 →</text>
+        </view>
+        <view class="unlock-code-row">
+          <input
+            class="unlock-code-input"
+            placeholder="已有激活码？输入兑换"
+            placeholder-class="unlock-code-placeholder"
+            value="{{activateCode}}"
+            bindinput="onActivateInput"
+            maxlength="20"
+          />
+          <view class="unlock-code-btn {{activateCode ? 'active' : ''}}" bindtap="submitActivateCode">
+            <text>激活</text>
+          </view>
+        </view>
+        <text class="activate-err" wx:if="{{activateErr}}">{{activateErr}}</text>
+        <text class="hidden-entry" bindtap="adminTap">· · ·</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 【情况B】会员/体验期，或非会员但非空头趋势 → 正常显示全部内容 -->
+  <block wx:if="{{isVip || inTrial || !isBearTrend}}">
+
+  <!-- ══ 多空能量对比 ══ -->
   <view class="energy-card">
     <view class="energy-header">
       <text class="energy-title">⚡ 多空能量对比</text>
@@ -178,7 +255,7 @@
     </view>
   </view>
 
-  <!-- ══ 决策卡（所有人可见） ══ -->
+  <!-- ══ 决策卡 ══ -->
   <view class="decision-card {{decisionState}}">
     <view class="decision-glow {{decisionState}}"></view>
     <view class="decision-top">
@@ -211,7 +288,7 @@
     </view>
   </view>
 
-  <!-- ══ MACD金叉/死叉（所有人可见） ══ -->
+  <!-- ══ MACD金叉/死叉 ══ -->
   <view class="macd-cross-bar {{macdCross.type === 'golden' ? 'golden' : 'dead'}}" wx:if="{{macdCrossShow}}">
     <text class="macd-cross-icon">{{macdCross.type === 'golden' ? '🟢' : '🔴'}}</text>
     <view class="macd-cross-info">
@@ -221,7 +298,7 @@
     <text class="macd-cross-hint">{{macdCross.type === 'golden' ? '看多▲' : '看空▼'}}</text>
   </view>
 
-  <!-- ══ 多空条件感知（所有人可见） ══ -->
+  <!-- ══ 多空条件感知 ══ -->
   <view class="section-title-plain">
     <text>🧭 实时多空条件感知</text>
     <text class="section-sub">满足条件越多越强</text>
@@ -258,9 +335,8 @@
     </view>
   </view>
 
-  <!-- ══ 止盈止损区（会员完整，非会员模糊引导） ══ -->
-
-  <!-- 会员/体验期：真实止盈止损 -->
+  <!-- ══ 止盈止损区 ══ -->
+  <!-- 会员/体验期 -->
   <view wx:if="{{isVip || inTrial}}">
     <view class="signal-detail {{signalDir}}" wx:if="{{hasSignal}}">
       <view class="section-title">
@@ -317,7 +393,7 @@
     </view>
   </view>
 
-  <!-- 非会员：止盈止损模糊引导 -->
+  <!-- 非会员 + 非空头趋势：仅止盈止损模糊 -->
   <view class="sl-lock-wrap" wx:if="{{!isVip && !inTrial}}">
     <view class="sl-lock-blur-bg">
       <view class="fake-sl-title"><text>🎯 止盈止损参考（会员专属）</text></view>
@@ -363,6 +439,8 @@
       </view>
     </view>
   </view>
+
+  </block><!-- end 情况B -->
 
   <!-- ══ 底部更新时间 ══ -->
   <view class="footer">

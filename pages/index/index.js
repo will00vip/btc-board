@@ -299,6 +299,7 @@ Page({
     trendLabel: '--', trendColor: 'neutral', trendDesc: '--',
     supportZone: '--', resistZone: '--',
     trendMa20: '--', trendMa60: '--',
+    isBearTrend: false,
 
     // 多空能量对比
     bullPct: 50, bearPct: 50, domLabel: '均衡',
@@ -1312,6 +1313,7 @@ Page({
       trendMa20:   trendInfo ? trendInfo.ma20 : '--',
       trendMa60:   trendInfo ? trendInfo.ma60 : '--',
       trendStrength: trendInfo ? trendInfo.trendStrength : 50,
+      isBearTrend: trendInfo ? (trendInfo.trendColor === 'bear' || trendInfo.trendColor === 'bear_weak') : false,
 
       // 多空能量
       bullPct:         energyInfo ? energyInfo.bullPct   : 50,
