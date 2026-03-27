@@ -143,7 +143,7 @@
       <view class="paywall-price-row">
         <view class="paywall-price-item">
           <text class="paywall-price-tag">月卡</text>
-          <text class="paywall-price-num">¥68</text>
+          <text class="paywall-price-num">¥88</text>
         </view>
         <view class="paywall-price-item hot">
           <text class="paywall-hot-badge">最划算</text>
@@ -153,6 +153,10 @@
         <view class="paywall-price-item">
           <text class="paywall-price-tag">年卡</text>
           <text class="paywall-price-num">¥498</text>
+        </view>
+        <view class="paywall-price-item">
+          <text class="paywall-price-tag">永久</text>
+          <text class="paywall-price-num">¥698</text>
         </view>
       </view>
       <view class="paywall-cta" bindtap="showVipModal">

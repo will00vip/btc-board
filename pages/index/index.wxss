@@ -1038,8 +1038,10 @@ page {
   padding: 5rpx 20rpx; border-radius: 20rpx; white-space: nowrap;
 }
 .paywall-price-tag { display: block; font-size: 22rpx; color: rgba(255,255,255,.4); margin-bottom: 6rpx; }
-.paywall-price-num { display: block; font-size: 46rpx; font-weight: 900; color: rgba(255,255,255,.7); line-height: 1; }
+.paywall-price-num { display: block; font-size: 40rpx; font-weight: 900; color: rgba(255,255,255,.7); line-height: 1; }
 .paywall-price-num.hot-num { color: #fbbf24; }
+.paywall-price-item:last-child .paywall-price-num { color: #a78bfa; }
+.paywall-price-item:last-child { border-color: rgba(167,139,250,.4); background: rgba(167,139,250,.06); }
 
 /* CTA */
 .paywall-cta {

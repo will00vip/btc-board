@@ -376,8 +376,8 @@ Page({
   },
 
   // ── 激活码验证 ──
-  // 月卡格式 BTC-M-YYYYMM，季卡 BTC-Q-YYYYQn，年卡 BTC-Y-YYYY
-  // 有效码列表（自己收款后对应发哪个码，每期可以加新码进来）
+  // 月卡格式 BTC-M-YYYYMM-XXXX（¥88），季卡 BTC-Q-YYYYQn-XXXX（¥168），年卡 BTC-Y-YYYY-XXXX（¥498），永久卡 BTC-LT-XXXX（¥698）
+  // 有效码列表（硬编码备用码，管理员动态生成的码另存extra_valid_codes）
   _validCodes() {
     return {
       // 月卡（2026年各月）
@@ -394,6 +394,8 @@ Page({
       // 年卡
       'BTC-Y-2026':   { type: '年卡', days: 365 },
       'BTC-Y-2027':   { type: '年卡', days: 365 },
+      // 永久卡（动态生成，格式 BTC-LT-XXXX）
+      // 永久卡通过管理员后台动态生成，days=9999，无需在此硬编码
     }
   },
 

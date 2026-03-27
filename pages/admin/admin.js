@@ -3,11 +3,11 @@
 const ADMIN_PWD = '8888'
 
 // 各类型价格（用于统计收入）
-const PRICE_MAP = { month: 68, quarter: 168, year: 498 }
-// 各类型天数
-const DAYS_MAP  = { month: 31, quarter: 92, year: 365 }
+const PRICE_MAP = { month: 88, quarter: 168, year: 498, lifetime: 698 }
+// 各类型天数（永久卡用 9999 天）
+const DAYS_MAP  = { month: 31, quarter: 92, year: 365, lifetime: 9999 }
 // 各类型中文
-const LABEL_MAP = { month: '月卡', quarter: '季卡', year: '年卡' }
+const LABEL_MAP = { month: '月卡', quarter: '季卡', year: '年卡', lifetime: '永久卡' }
 
 Page({
   data: {
@@ -68,9 +68,10 @@ Page({
     const rand = String(Math.floor(1000 + Math.random() * 9000))
 
     let code = ''
-    if (type === 'month')   code = `BTC-M-${year}${month}-${rand}`
-    if (type === 'quarter') code = `BTC-Q-${year}Q${quarter}-${rand}`
-    if (type === 'year')    code = `BTC-Y-${year}-${rand}`
+    if (type === 'month')    code = `BTC-M-${year}${month}-${rand}`
+    if (type === 'quarter')  code = `BTC-Q-${year}Q${quarter}-${rand}`
+    if (type === 'year')     code = `BTC-Y-${year}-${rand}`
+    if (type === 'lifetime') code = `BTC-LT-${rand}`
 
     const days = DAYS_MAP[type]
     const expireDate = new Date(Date.now() + days * 86400000).toLocaleDateString('zh-CN')
