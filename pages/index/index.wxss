@@ -126,14 +126,22 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
 }
 .sl-tag.stop    { background: rgba(239,83,80,.2);  color: #ef5350; }
 .sl-tag.entry-tag { background: rgba(255,255,255,.08); color: #8b949e; }
+.sl-tag.tp1-tag.long  { background: rgba(38,166,154,.15); color: #26a69a; }
+.sl-tag.tp2-tag.long  { background: rgba(38,166,154,.25); color: #26a69a; }
+.sl-tag.tp3-tag.long  { background: rgba(38,166,154,.35); color: #4caf50; }
+.sl-tag.tp1-tag.short { background: rgba(239,83,80,.15);  color: #ef5350; }
+.sl-tag.tp2-tag.short { background: rgba(239,83,80,.25);  color: #ef5350; }
+.sl-tag.tp3-tag.short { background: rgba(239,83,80,.35);  color: #ff7043; }
+/* 兜底（无方向时沿用旧绿色） */
 .sl-tag.tp1-tag { background: rgba(38,166,154,.15); color: #26a69a; }
 .sl-tag.tp2-tag { background: rgba(38,166,154,.25); color: #26a69a; }
 .sl-tag.tp3-tag { background: rgba(38,166,154,.35); color: #4caf50; }
 .sl-price { font-size: 28rpx; font-weight: 900; flex: 1; }
-.sl-price.stop  { color: #ef5350; }
-.tp1-color { color: #26a69a; }
-.tp2-color { color: #26a69a; }
-.tp3-color { color: #4caf50; }
+.sl-price.stop { color: #ef5350; }
+.tp-long    { color: #26a69a; }   /* 做多止盈：绿 */
+.tp-long-hi { color: #4caf50; }   /* 做多激进止盈：亮绿 */
+.tp-short    { color: #ef5350; }  /* 做空止盈：红（价格向下） */
+.tp-short-hi { color: #ff7043; }  /* 做空激进止盈：橙红 */
 .sl-hint { font-size: 20rpx; color: #484f58; flex-shrink: 0; }
 
 

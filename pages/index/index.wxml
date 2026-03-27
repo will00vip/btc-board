@@ -164,20 +164,20 @@
       </view>
       <!-- TP1 -->
       <view class="sl-row tp">
-        <view class="sl-tag tp1-tag">🎯 保守止盈</view>
-        <text class="sl-price tp1-color">{{tp1}}</text>
+        <view class="sl-tag tp1-tag {{signalDir}}">🎯 保守止盈</view>
+        <text class="sl-price {{signalDir === 'long' ? 'tp-long' : 'tp-short'}}">{{tp1}}</text>
         <text class="sl-hint">1.0:1 盈亏比</text>
       </view>
       <!-- TP2 -->
       <view class="sl-row tp">
-        <view class="sl-tag tp2-tag">🎯 标准止盈</view>
-        <text class="sl-price tp2-color">{{tp2}}</text>
+        <view class="sl-tag tp2-tag {{signalDir}}">🎯 标准止盈</view>
+        <text class="sl-price {{signalDir === 'long' ? 'tp-long' : 'tp-short'}}">{{tp2}}</text>
         <text class="sl-hint">1.5:1 盈亏比</text>
       </view>
       <!-- TP3 -->
       <view class="sl-row tp">
-        <view class="sl-tag tp3-tag">🎯 激进止盈</view>
-        <text class="sl-price tp3-color">{{tp3}}</text>
+        <view class="sl-tag tp3-tag {{signalDir}}">🎯 激进止盈</view>
+        <text class="sl-price {{signalDir === 'long' ? 'tp-long-hi' : 'tp-short-hi'}}">{{tp3}}</text>
         <text class="sl-hint">2.5:1 盈亏比</text>
       </view>
     </view>

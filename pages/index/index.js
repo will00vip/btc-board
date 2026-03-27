@@ -1,6 +1,5 @@
-// pages/index/index.js  v6.0 - 大趋势/多空能量/止盈止损升级/布局调整
-const { fetchKlines } = require('../../utils/detector')
-const { detectSignal, detectMacdCross } = require('../../utils/detector')
+// pages/index/index.js  v6.1 - bugfix：去重import，清理dead code，止盈方向色修正，24h采样按周期动态计算
+const { fetchKlines, detectSignal, detectMacdCross } = require('../../utils/detector')
 const { macd: calcMACD, boll: calcBOLL, ema: calcEMA } = require('../../utils/indicators')
 
 const PERIODS = [
@@ -77,12 +76,7 @@ function calcTrend(bars) {
   const recentHigh = Math.max(...highs)
   const recentLow  = Math.min(...lows)
 
-  // 近5根高低点（短期）
-  const short5 = bars.slice(-5)
-  const s5high = Math.max(...short5.map(b=>b.high))
-  const s5low  = Math.min(...short5.map(b=>b.low))
-
-  // 支撑/压力区：取近20根的低点聚集区±0.5%
+  // 支撑/压力区：取近20根的低点聚集区±0.3%
   const supportBase = recentLow
   const resistBase  = recentHigh
 
@@ -767,16 +761,6 @@ Page({
     this.loadData(false)
   },
 
-  // 后台静默刷新（不显示loading）
-  _refreshInBackground(iv) {
-    const me = this
-    detectSignal(iv).then(sig => {
-      if (me.data.interval !== iv) return  // 用户已切换其他周期，丢弃结果
-      me._kvCache[iv] = { sig, ts: Date.now() }
-      me._renderAll(sig)
-    }).catch(e => console.warn('[后台刷新失败]', e.message))
-  },
-
   refresh() { this.loadData(false) },
   toggleTips() { this.setData({ showTips: !this.data.showTips }) },
 
@@ -804,12 +788,16 @@ Page({
     const chg = (last.close - prev.close) / prev.close * 100
     const dir = chg >= 0 ? 'up' : 'down'
 
-    // 24h / 4h 概况（用已有bars估算）
-    const bar24hAgo = bars[Math.max(0, bars.length - 96)]  // 15m×96=24h
-    const bar4hAgo  = bars[Math.max(0, bars.length - 16)]
+    // 24h / 4h 概况（按当前周期动态换算 bars 数量）
+    const ivMinMap = { '1m':1, '5m':5, '15m':15, '30m':30, '1h':60, '4h':240 }
+    const ivMin    = ivMinMap[this.data.interval] || 15
+    const bars24h  = Math.round(24 * 60 / ivMin)   // 24h对应多少根
+    const bars4h   = Math.round(4  * 60 / ivMin)   // 4h对应多少根
+    const bar24hAgo = bars[Math.max(0, bars.length - bars24h)]
+    const bar4hAgo  = bars[Math.max(0, bars.length - bars4h)]
     const chg24h    = (last.close - bar24hAgo.close) / bar24hAgo.close * 100
     const chg4h     = sig.drop4h !== undefined ? sig.drop4h : (last.close - bar4hAgo.close) / bar4hAgo.close * 100
-    const vol24hSum = bars.slice(-96).reduce((s,b) => s + b.volume, 0)
+    const vol24hSum = bars.slice(-bars24h).reduce((s,b) => s + b.volume, 0)
 
     // 指标值
     const n        = bars.length - 1
