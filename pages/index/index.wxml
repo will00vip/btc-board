@@ -201,7 +201,7 @@
               <text class="unlock-price-tag">季卡</text>
               <text class="unlock-price-num hot-num">¥168</text>
             </view>
-            <view class="unlock-price-item"><text class="unlock-price-tag">年卡</text><text class="unlock-price-num">¥498</text></view>
+            <view class="unlock-price-item"><text class="unlock-price-tag">年卡</text><text class="unlock-price-num">¥688</text></view>
           </view>
           <view class="unlock-cta" bindtap="showVipModal">
             <text class="unlock-cta-text">👑 立即开通 →</text>
@@ -541,7 +541,7 @@
         </view>
         <view class="vip-price-card">
           <text class="vip-price-tag">年卡</text>
-          <text class="vip-price-num">¥498</text>
+          <text class="vip-price-num">¥688</text>
           <text class="vip-price-unit">/年</text>
         </view>
       </view>
