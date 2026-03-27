@@ -213,6 +213,9 @@ Page({
     showDisclaimer: false,
     showVipModal: false,
     isVip: false,
+    inTrial: false,        // 正在20分钟免费体验中
+    trialLeft: 0,          // 剩余体验毫秒
+    trialLeftMin: 0,       // 剩余体验分钟（取整）
     activateCode: '',
     activateErr: '',
     showAdminPwdBox: false,
@@ -320,16 +323,49 @@ Page({
       this.setData({ showDisclaimer: true })
     }
 
-    // ── VIP状态 ── （开发模式强制true，上线前改回来）
-    const isVip = wx.getStorageSync('is_vip') || true   // TODO: 上线前改 false
-    // 检查是否到期
-    const expireTs = wx.getStorageSync('vip_expire_ts')
-    if (isVip && expireTs && Date.now() > expireTs) {
+    // ── VIP状态 ──
+    const isVipStored = wx.getStorageSync('is_vip') || false
+    const expireTs    = wx.getStorageSync('vip_expire_ts')
+    let   isVip       = false
+    if (isVipStored && expireTs && Date.now() > expireTs) {
+      // 付费VIP到期
       wx.removeStorageSync('is_vip')
       wx.removeStorageSync('vip_expire_ts')
-      this.setData({ isVip: false })
-    } else {
-      this.setData({ isVip })
+    } else if (isVipStored) {
+      isVip = true
+    }
+
+    // ── 20分钟免费体验 ──
+    const TRIAL_MS    = 20 * 60 * 1000  // 20分钟
+    let   trialEnd    = wx.getStorageSync('trial_end_ts')
+    const now         = Date.now()
+    if (!trialEnd) {
+      // 首次进入，开始体验计时
+      trialEnd = now + TRIAL_MS
+      wx.setStorageSync('trial_end_ts', trialEnd)
+    }
+    const trialLeft   = Math.max(0, trialEnd - now)  // ms
+    const inTrial     = trialLeft > 0
+
+    this.setData({
+      isVip,
+      inTrial,
+      trialLeft,
+      trialLeftMin: Math.ceil(trialLeft / 60000),
+    })
+
+    // ── 倒计时更新（每30秒刷新一次倒计时显示） ──
+    if (inTrial && !isVip) {
+      this._trialTimer = setInterval(() => {
+        const left    = Math.max(0, wx.getStorageSync('trial_end_ts') - Date.now())
+        const expired = left <= 0
+        this.setData({ trialLeft: left, trialLeftMin: Math.ceil(left / 60000), inTrial: !expired })
+        if (expired) {
+          clearInterval(this._trialTimer)
+          // 体验结束，强制刷新界面显示付费墙
+          this.setData({ inTrial: false })
+        }
+      }, 30 * 1000)
     }
 
     wx.createSelectorQuery()
@@ -354,7 +390,7 @@ Page({
     this.loadData(false)
     this._timer = setInterval(() => this.loadData(true), 60 * 1000)  // true=静默刷新
   },
-  onUnload() { clearInterval(this._timer) },
+  onUnload() { clearInterval(this._timer); clearInterval(this._trialTimer) },
   onPullDownRefresh() { this.loadData().finally(() => wx.stopPullDownRefresh()) },
 
   // ── 隐藏管理员入口（连点3下弹出密码框） ──

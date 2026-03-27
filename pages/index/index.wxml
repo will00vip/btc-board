@@ -42,6 +42,12 @@
     </view>
   </view>
 
+  <!-- ══ 免费体验倒计时横条 ══ -->
+  <view class="trial-bar" wx:if="{{inTrial && !isVip}}">
+    <text class="trial-bar-text">🎁 免费体验中 · 剩余 {{trialLeftMin}} 分钟</text>
+    <view class="trial-bar-cta" bindtap="showVipModal"><text>开通会员不中断 →</text></view>
+  </view>
+
   <!-- ══ 价格大头（全部左对齐，右边留白） ══ -->
   <view class="price-hero">
     <view class="price-hero-left">
@@ -183,7 +189,7 @@
   </view>
 
   <!-- ══ 非会员：轻量付费墙（K线以下内容锁住） ══ -->
-  <block wx:if="{{!isVip}}">
+  <block wx:if="{{!isVip && !inTrial}}">
     <view class="paywall-card">
       <!-- 模糊预览：让用户感觉数据就在下面 -->
       <view class="paywall-preview">
@@ -265,8 +271,8 @@
     </view>
   </block>
 
-  <!-- ══ 会员解锁内容（isVip=true 才显示） ══ -->
-  <block wx:if="{{isVip}}">
+  <!-- ══ 会员解锁内容（isVip=true 或 inTrial=true 才显示） ══ -->
+  <block wx:if="{{isVip || inTrial}}">
 
   <!-- ══ 多空能量对比 ══ -->
   <view class="energy-card">
