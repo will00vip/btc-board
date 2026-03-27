@@ -31,20 +31,22 @@
   <!-- ══ 合并顶部栏：信号雷达 + AI标识 + 激活状态 ══ -->
   <view class="top-header">
     <view class="top-header-inner">
-      <!-- LOGO -->
+      <!-- LOGO：萌萌雷达 -->
       <view class="top-frog-wrap">
-        <text class="top-frog-emoji">🎯</text>
+        <text class="top-frog-emoji radar-bounce">🛸</text>
       </view>
       <!-- 标题文字 -->
       <view class="top-title-block">
         <text class="top-title-main">大饼 AI 信号雷达</text>
-        <text class="top-title-sub">BTC量化精准信号 · 插针识别</text>
+        <view class="top-title-live">
+          <view class="title-live-dot"></view>
+          <text class="top-title-sub">BTC量化精准信号 · 插针识别</text>
+        </view>
       </view>
-      <!-- 右侧：状态点 + 刷新 + 会员 -->
+      <!-- 右侧：刷新 + 会员 -->
       <view class="top-right-area">
-        <view class="live-dot {{loading ? 'loading' : ''}}"></view>
         <view class="nav-refresh-btn" bindtap="refresh">
-          <text>{{loading ? '···' : '↻'}}</text>
+          <text>{{loading ? '⟳' : '↻'}}</text>
         </view>
         <view class="top-vip-btn" bindtap="showVipDrawer">
           <text>{{isVip ? '👑' : '🔒'}}</text>
@@ -74,19 +76,23 @@
     </view>
   </view>
 
-  <!-- ══ 大趋势判断卡 ══ -->
-  <view class="frog-trend-card">
-    <view class="ftc-left">
-      <view class="ftc-frog">{{trendIcon}}</view>
-      <view class="ftc-info">
-        <text class="ftc-title">大趋势判断</text>
-        <text class="ftc-period">{{intervalLabel}} · MA20/MA60</text>
-      </view>
+  <!-- ══ 大趋势判断卡（升级版） ══ -->
+  <view class="frog-trend-card {{trendColor}}">
+    <!-- 背景光晕 -->
+    <view class="ftc-glow {{trendColor}}"></view>
+    <!-- 左：大图标 -->
+    <view class="ftc-icon-wrap {{trendColor}}">
+      <text class="ftc-icon-big">{{trendIcon}}</text>
     </view>
-    <view class="ftc-right">
-      <view class="ftc-badge {{trendColor}}">
-        <text class="ftc-badge-txt">{{trendLabel}}</text>
-      </view>
+    <!-- 中：文字信息 -->
+    <view class="ftc-body">
+      <text class="ftc-label-trend">大趋势判断</text>
+      <text class="ftc-trend-big {{trendColor}}">{{trendLabel}}</text>
+      <text class="ftc-period">{{intervalLabel}} · MA20/MA60</text>
+    </view>
+    <!-- 右：徽章 -->
+    <view class="ftc-badge {{trendColor}}">
+      <text class="ftc-badge-txt">{{trendColor === 'bull' ? '做多↑' : trendColor === 'bear' ? '做空↓' : trendColor === 'bull_w' ? '弱多→' : trendColor === 'bear_w' ? '弱空→' : '观望'}}</text>
     </view>
   </view>
 
@@ -149,8 +155,20 @@
       <text>🤖 AI量化</text>
     </view>
     <view class="decision-top">
+      <!-- 无信号：雷达扫描动画；有信号：表情 -->
       <view class="decision-face-wrap {{decisionState}}">
-        <text class="decision-face">{{decisionFace}}</text>
+        <block wx:if="{{!hasSignal}}">
+          <view class="radar-scan-wrap">
+            <view class="radar-ring r1"></view>
+            <view class="radar-ring r2"></view>
+            <view class="radar-ring r3"></view>
+            <view class="radar-sweep"></view>
+            <text class="radar-center-icon">🛸</text>
+          </view>
+        </block>
+        <block wx:else>
+          <text class="decision-face">{{decisionFace}}</text>
+        </block>
       </view>
       <view class="decision-text">
         <text class="decision-verdict">{{decisionVerdict}}</text>

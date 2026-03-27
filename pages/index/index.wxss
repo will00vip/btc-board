@@ -10,32 +10,54 @@ page {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─────────── 合并顶部导航栏（原ai-banner + navbar合一） ─────────── */
+/* ─────────── 合并顶部导航栏 ─────────── */
 .top-header {
-  background: linear-gradient(180deg, #0a1628 0%, #080d1a 100%);
-  border-bottom: 1rpx solid rgba(59,130,246,.2);
-  padding: 20rpx 24rpx 16rpx;
+  background: linear-gradient(180deg, #08112a 0%, #050a18 100%);
+  border-bottom: 1rpx solid rgba(59,130,246,.25);
+  padding: 22rpx 24rpx 18rpx;
 }
 .top-header-inner {
-  display: flex; align-items: center; gap: 16rpx;
+  display: flex; align-items: center; gap: 18rpx;
 }
+
 .top-frog-wrap {
-  width: 72rpx; height: 72rpx; border-radius: 20rpx; flex-shrink: 0;
-  background: linear-gradient(135deg, #1e3a5f, #0c1f3a);
-  border: 1.5rpx solid rgba(96,165,250,.5);
+  width: 82rpx; height: 82rpx; border-radius: 22rpx; flex-shrink: 0;
+  background: linear-gradient(135deg, #1a2f52, #0c1a38);
+  border: 1.5rpx solid rgba(96,165,250,.55);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 20px rgba(59,130,246,.4);
+  box-shadow: 0 0 24px rgba(59,130,246,.45), inset 0 0 10px rgba(59,130,246,.1);
 }
-.top-frog-emoji { font-size: 44rpx; line-height: 1; }
+.top-frog-emoji { font-size: 46rpx; line-height: 1; }
+.radar-bounce {
+  display: inline-block;
+  animation: radar-bounce 2.4s ease-in-out infinite;
+}
+@keyframes radar-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30%       { transform: translateY(-5rpx) scale(1.1); }
+  60%       { transform: translateY(2rpx) scale(0.96); }
+}
 .top-title-block { flex: 1; }
 .top-title-main {
-  display: block; font-size: 30rpx; font-weight: 900;
-  background: linear-gradient(90deg, #60a5fa, #06b6d4);
+  display: block; font-size: 34rpx; font-weight: 900;
+  background: linear-gradient(90deg, #60a5fa 0%, #06b6d4 50%, #a78bfa 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  letter-spacing: 1rpx;
+  letter-spacing: 2rpx;
+}
+.top-title-live {
+  display: flex; align-items: center; gap: 8rpx; margin-top: 5rpx;
+}
+.title-live-dot {
+  width: 10rpx; height: 10rpx; border-radius: 50%; flex-shrink: 0;
+  background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,.9);
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(34,197,94,.8); }
+  50%       { opacity: .45; box-shadow: 0 0 14px rgba(34,197,94,.3); }
 }
 .top-title-sub {
-  display: block; font-size: 19rpx; color: rgba(96,165,250,.6); margin-top: 3rpx;
+  display: inline; font-size: 20rpx; color: rgba(96,165,250,.65);
 }
 .top-right-area { display: flex; align-items: center; gap: 14rpx; }
 .live-dot {
@@ -421,46 +443,100 @@ page {
   font-size: 22rpx; color: #fbbf24; font-weight: 700;
 }
 
-/* ─────────── 青蛙趋势判断卡 ─────────── */
+/* ─────────── 大趋势判断卡（升级版） ─────────── */
 .frog-trend-card {
-  margin: 12rpx 18rpx 0;
-  background: rgba(10,16,28,.85);
-  border: 1.5rpx solid rgba(59,130,246,.2);
-  border-radius: 22rpx 22rpx 0 0;
-  padding: 16rpx 20rpx;
-  display: flex; align-items: center; justify-content: space-between;
-  backdrop-filter: blur(8px);
+  margin: 14rpx 18rpx 0;
+  background: rgba(10,16,28,.88);
+  border: 1.5rpx solid rgba(59,130,246,.22);
+  border-radius: 24rpx;
+  padding: 18rpx 20rpx;
+  display: flex; align-items: center; gap: 16rpx;
+  position: relative; overflow: hidden;
+  backdrop-filter: blur(10px);
 }
-.ftc-left { display: flex; align-items: center; gap: 14rpx; }
-.ftc-frog {
-  font-size: 42rpx; width: 60rpx; height: 60rpx;
+.ftc-glow {
+  position: absolute; top: -40rpx; left: -30rpx;
+  width: 220rpx; height: 220rpx; border-radius: 50%;
+  opacity: .12; pointer-events: none;
+  background: #3b82f6;
+}
+.ftc-glow.bull     { background: #f87171; opacity: .2; }
+.ftc-glow.bear     { background: #34d399; opacity: .2; }
+.ftc-glow.bull_w   { background: #fbbf24; opacity: .15; }
+.ftc-glow.bear_w   { background: #94a3b8; opacity: .1; }
+.ftc-glow.sideways { background: #60a5fa; opacity: .12; }
+.ftc-icon-wrap {
+  width: 78rpx; height: 78rpx; border-radius: 20rpx; flex-shrink: 0;
+  background: rgba(59,130,246,.1);
+  border: 1.5rpx solid rgba(59,130,246,.28);
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #0f2744, #0a1e3a);
-  border: 1.5rpx solid rgba(59,130,246,.35);
-  border-radius: 16rpx;
-  box-shadow: 0 0 14px rgba(59,130,246,.25);
+  animation: ftc-icon-pulse 3s ease-in-out infinite;
 }
-.ftc-info { display: flex; flex-direction: column; gap: 3rpx; }
-.ftc-title { font-size: 26rpx; font-weight: 800; color: #e2e8f0; }
-.ftc-period { font-size: 19rpx; color: rgba(96,165,250,.6); }
-.ftc-right {}
+.ftc-icon-wrap.bull   { background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.38); box-shadow: 0 0 20px rgba(248,113,113,.2); }
+.ftc-icon-wrap.bear   { background: rgba(52,211,153,.12);  border-color: rgba(52,211,153,.38);  box-shadow: 0 0 20px rgba(52,211,153,.2); }
+.ftc-icon-wrap.bull_w { background: rgba(251,191,36,.1);   border-color: rgba(251,191,36,.3); }
+.ftc-icon-wrap.bear_w { background: rgba(148,163,184,.08); border-color: rgba(148,163,184,.2); }
+.ftc-icon-wrap.sideways { background: rgba(96,165,250,.08); border-color: rgba(96,165,250,.25); }
+@keyframes ftc-icon-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.07); }
+}
+.ftc-icon-big { font-size: 44rpx; line-height: 1; position: relative; z-index: 1; }
+.ftc-body { flex: 1; display: flex; flex-direction: column; gap: 4rpx; }
+.ftc-label-trend { font-size: 20rpx; color: #475569; font-weight: 700; letter-spacing: 1rpx; }
+.ftc-trend-big { font-size: 36rpx; font-weight: 900; color: #e2e8f0; }
+.ftc-trend-big.bull     { color: #f87171; }
+.ftc-trend-big.bear     { color: #34d399; }
+.ftc-trend-big.bull_w   { color: #fbbf24; }
+.ftc-trend-big.bear_w   { color: #94a3b8; }
+.ftc-trend-big.sideways { color: #60a5fa; }
+.ftc-period { font-size: 19rpx; color: rgba(96,165,250,.55); }
 .ftc-badge {
-  display: flex; align-items: center; gap: 8rpx;
-  padding: 8rpx 20rpx; border-radius: 20rpx;
-  border: 1.5rpx solid rgba(255,255,255,.1);
+  display: flex; align-items: center;
+  padding: 10rpx 22rpx; border-radius: 24rpx;
+  border: 1.5rpx solid rgba(255,255,255,.1); flex-shrink: 0;
 }
-.ftc-badge.bull     { background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.35); }
-.ftc-badge.bull_w   { background: rgba(251,191,36,.10);  border-color: rgba(251,191,36,.3); }
-.ftc-badge.bear     { background: rgba(52,211,153,.12);  border-color: rgba(52,211,153,.35); }
+.ftc-badge.bull     { background: rgba(248,113,113,.15); border-color: rgba(248,113,113,.4); }
+.ftc-badge.bull_w   { background: rgba(251,191,36,.12);  border-color: rgba(251,191,36,.35); }
+.ftc-badge.bear     { background: rgba(52,211,153,.15);  border-color: rgba(52,211,153,.4); }
 .ftc-badge.bear_w   { background: rgba(148,163,184,.1);  border-color: rgba(148,163,184,.25); }
-.ftc-badge.sideways { background: rgba(96,165,250,.1);   border-color: rgba(96,165,250,.25); }
-.ftc-badge-icon { font-size: 28rpx; }
-.ftc-badge-txt  { font-size: 24rpx; font-weight: 800; color: #e2e8f0; }
+.ftc-badge.sideways { background: rgba(96,165,250,.1);   border-color: rgba(96,165,250,.28); }
+.ftc-badge-txt { font-size: 24rpx; font-weight: 900; color: #e2e8f0; }
 .ftc-badge.bull     .ftc-badge-txt { color: #f87171; }
 .ftc-badge.bull_w   .ftc-badge-txt { color: #fbbf24; }
 .ftc-badge.bear     .ftc-badge-txt { color: #34d399; }
 .ftc-badge.bear_w   .ftc-badge-txt { color: #94a3b8; }
 .ftc-badge.sideways .ftc-badge-txt { color: #60a5fa; }
+
+/* ─────────── 雷达扫描动画（等待信号中） ─────────── */
+.radar-scan-wrap {
+  width: 90rpx; height: 90rpx; position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.radar-ring {
+  position: absolute; border-radius: 50%;
+  border: 1.5rpx solid rgba(96,165,250,.3);
+  animation: radar-expand 2.4s ease-out infinite;
+}
+.radar-ring.r1 { width: 90rpx; height: 90rpx; animation-delay: 0s; }
+.radar-ring.r2 { width: 62rpx; height: 62rpx; animation-delay: .7s; }
+.radar-ring.r3 { width: 36rpx; height: 36rpx; animation-delay: 1.4s; }
+@keyframes radar-expand {
+  0%   { opacity: .8; transform: scale(.55); }
+  70%  { opacity: .2; }
+  100% { opacity: 0;  transform: scale(1.15); }
+}
+.radar-sweep {
+  position: absolute; width: 46rpx; height: 46rpx; border-radius: 50%;
+  background: conic-gradient(rgba(96,165,250,.6) 0deg, transparent 65deg);
+  animation: radar-rotate 1.8s linear infinite;
+  transform-origin: center;
+}
+@keyframes radar-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.radar-center-icon { position: relative; z-index: 2; font-size: 28rpx; }
 
 .ftc-detail-row {
   margin: 0 18rpx;
