@@ -37,7 +37,7 @@
       </view>
       <view class="nav-refresh-btn" bindtap="refresh">
         <text class="nav-refresh-text">{{loading ? '⏳' : '🔄'}}</text>
-        <text class="nav-refresh-label">{{loading ? '加载中' : '刷新'}}</text>
+        <text class="nav-refresh-label">{{loading ? '连接中' : '正常'}}</text>
       </view>
     </view>
   </view>
