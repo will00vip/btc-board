@@ -278,6 +278,28 @@ Page({
   //  量图(14%): 成交量柱
   //  副图(26%): MACD 柱 + DIF线 + DEA线
   // ══════════════════════════════════════════
+  // 切换周期时立刻在canvas画loading占位，让用户感知响应
+  _drawLoading(label) {
+    if (!this._canvasReady) return
+    const ctx = this._ctx
+    const W = this._canvasW
+    const H = this._canvasH
+    ctx.clearRect(0, 0, W, H)
+    ctx.fillStyle = '#07090f'
+    ctx.fillRect(0, 0, W, H)
+    ctx.fillStyle = 'rgba(59,130,246,0.15)'
+    ctx.fillRect(0, 0, W, H)
+    ctx.font = `bold ${Math.round(W * 0.045)}px sans-serif`
+    ctx.fillStyle = '#60a5fa'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(`${label || ''} 加载中...`, W / 2, H / 2)
+    ctx.font = `${Math.round(W * 0.03)}px sans-serif`
+    ctx.fillStyle = '#475569'
+    ctx.fillText('正在拉取最新K线数据', W / 2, H / 2 + W * 0.065)
+    ctx.draw && ctx.draw()
+  },
+
   _drawChart(bars) {
     if (!this._canvasReady) { this._pendingBars = bars; return }
     const ctx = this._ctx
@@ -656,31 +678,46 @@ Page({
   },
 
   switchInterval(e) {
-    // 切换周期：清缓存、重置拖动偏移和图表数据，强制刷新
-    const iv = e.currentTarget.dataset.iv
-    clearSignalCache(iv)  // 清除该周期缓存，保证拿到最新数据
-    this._dragOffset = 0
-    this._allBars    = null
-    this._chartData  = null
-    this._view       = 120
-    this.setData({ interval: iv, intervalLabel: e.currentTarget.dataset.label, klineView: 120 })
-    this.loadData()
+    const iv    = e.currentTarget.dataset.iv
+    const label = e.currentTarget.dataset.label
+    if (iv === this.data.interval) return  // 同一周期不重复加载
+
+    clearSignalCache(iv)        // 清该周期缓存，保证拿最新
+    this._loadAborted = true    // 标记中断旧请求（loadData 里判断）
+    this._dragOffset  = 0
+    this._allBars     = null
+    this._chartData   = null
+    this._view        = 120
+    // 先强制清loading状态，再同步切周期+立即开始新请求
+    this.setData({ loading: false, interval: iv, intervalLabel: label, klineView: 120 })
+    this._drawLoading(iv)       // 立刻在canvas画"加载中"，用户有即时反馈
+    this._loadAborted = false   // 复位中断标记
+    this._loadData(iv)          // 直接传入iv，不依赖异步setData
   },
-  refresh() { this.loadData() },
+  refresh() { clearSignalCache(this.data.interval); this._loadData(this.data.interval) },
   toggleTips() { this.setData({ showTips: !this.data.showTips }) },
   toggleMorePeriods() { this.setData({ showMorePeriods: !this.data.showMorePeriods }) },
 
-  async loadData() {
-    if (this.data.loading) return
+  // 公开入口（定时器/下拉刷新用）
+  loadData() { this._loadData(this.data.interval) },
+
+  async _loadData(iv) {
+    // 用传入的iv而不是this.data.interval，避免setData异步未完成时读到旧值
+    if (this._loading) {
+      // 如果已有请求在跑，先取消它的结果（通过_loadSeq版本号）
+    }
+    const seq = (this._loadSeq = (this._loadSeq || 0) + 1)
     this.setData({ loading: true, errorMsg: '' })
     try {
-      const iv  = this.data.interval
       const sig = await detectSignal(iv)
+      // 版本号不对说明又切换了周期，丢弃这次结果
+      if (seq !== this._loadSeq) return
       this._renderAll(sig)
     } catch (e) {
+      if (seq !== this._loadSeq) return
       this.setData({ errorMsg: e.message || '数据获取失败，请检查网络' })
     } finally {
-      this.setData({ loading: false })
+      if (seq === this._loadSeq) this.setData({ loading: false })
     }
   },
 

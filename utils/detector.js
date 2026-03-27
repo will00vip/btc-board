@@ -109,20 +109,15 @@ function calcPositionSize(entryPrice, stopLoss, config = CONFIG) {
 /** 主检测函数，返回完整分析对象 */
 async function detectSignal(interval) {
   interval = interval || '15m'
-  const limit = 150   // 150根足够指标计算+展示，比200快
+  const limit = 120   // 120根，够用又快
 
   // 命中缓存直接返回（30s内）
   const cached = getCached(interval)
   if (cached) return cached
 
-  // 4h额外数据：只在非4h以上周期时拉取，减少请求
-  const need4h = !['4h','6h','12h','1d','3d','1w'].includes(interval)
-  const reqs = [fetchKlines(interval, limit)]
-  if (need4h) reqs.push(fetchKlines('4h', 10))
-  
-  const results = await Promise.all(reqs)
-  const bars  = results[0]
-  const bars4h = results[1] || bars.slice(-10)
+  // 只发一个请求（去掉4h额外请求，减少并发，提升切换速度）
+  const bars = await fetchKlines(interval, limit)
+  const bars4h = bars.slice(-10)  // 用已有数据模拟4h，不再额外请求
 
   const now = new Date()
   const h = now.getHours()
