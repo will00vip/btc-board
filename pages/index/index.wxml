@@ -31,16 +31,19 @@
   <!-- ══ 合并顶部栏：信号雷达 + AI标识 + 激活状态 ══ -->
   <view class="top-header">
     <view class="top-header-inner">
-      <!-- LOGO：萌萌雷达 -->
-      <view class="top-frog-wrap">
-        <text class="top-frog-emoji radar-bounce">🛸</text>
+      <!-- LOGO：萌萌大饼脸 -->
+      <view class="top-logo-wrap">
+        <view class="top-logo-coin logo-spin">
+          <text class="top-logo-inner">₿</text>
+        </view>
+        <view class="top-logo-pulse"></view>
       </view>
       <!-- 标题文字 -->
       <view class="top-title-block">
         <text class="top-title-main">大饼 AI 信号雷达</text>
         <view class="top-title-live">
           <view class="title-live-dot"></view>
-          <text class="top-title-sub">BTC量化精准信号 · 插针识别</text>
+          <text class="top-title-sub">🔥 实时量化 · 插针精准识别</text>
         </view>
       </view>
       <!-- 右侧：刷新 + 会员 -->
@@ -155,15 +158,43 @@
       <text>🤖 AI量化</text>
     </view>
     <view class="decision-top">
-      <!-- 无信号：雷达扫描动画；有信号：表情 -->
+      <!-- 无信号：动态表情；有信号：表情 -->
       <view class="decision-face-wrap {{decisionState}}">
         <block wx:if="{{!hasSignal}}">
-          <view class="radar-scan-wrap">
-            <view class="radar-ring r1"></view>
-            <view class="radar-ring r2"></view>
-            <view class="radar-ring r3"></view>
-            <view class="radar-sweep"></view>
-            <text class="radar-center-icon">🛸</text>
+          <!-- 等待信号：根据趋势显示不同动态脸 -->
+          <view class="wait-face-wrap">
+            <!-- 空头趋势：小哭脸 -->
+            <block wx:if="{{trendColor === 'bear' || trendColor === 'bear_w'}}">
+              <view class="wait-face-container bear-mode">
+                <view class="face-circle bear-face">
+                  <view class="face-eyes">
+                    <view class="face-eye left"></view>
+                    <view class="face-eye right"></view>
+                  </view>
+                  <view class="face-tear left-tear"></view>
+                  <view class="face-tear right-tear"></view>
+                  <view class="face-mouth sad-mouth"></view>
+                </view>
+                <view class="wait-face-ripple bear-ripple r1"></view>
+                <view class="wait-face-ripple bear-ripple r2"></view>
+              </view>
+            </block>
+            <!-- 多头/震荡趋势：大笑脸 -->
+            <block wx:else>
+              <view class="wait-face-container bull-mode">
+                <view class="face-circle bull-face">
+                  <view class="face-eyes">
+                    <view class="face-eye left"></view>
+                    <view class="face-eye right"></view>
+                  </view>
+                  <view class="face-mouth smile-mouth"></view>
+                  <view class="face-cheek left-cheek"></view>
+                  <view class="face-cheek right-cheek"></view>
+                </view>
+                <view class="wait-face-ripple bull-ripple r1"></view>
+                <view class="wait-face-ripple bull-ripple r2"></view>
+              </view>
+            </block>
           </view>
         </block>
         <block wx:else>
