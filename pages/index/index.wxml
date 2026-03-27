@@ -112,10 +112,17 @@
     </view>
   </view>
 
-  <!-- ══ 价格大头 ══ -->
-
+  <!-- ══ 价格大头（AI评分左侧大圆圈 + 价格右侧） ══ -->
   <view class="price-hero">
     <view class="price-hero-left">
+      <!-- AI评分大圆圈放最左 -->
+      <view class="ai-score-ring-big {{decisionState}}">
+        <text class="ai-ring-num-big">{{score}}</text>
+        <text class="ai-ring-den-big">/10</text>
+        <text class="ai-ring-label-big">AI评分</text>
+      </view>
+    </view>
+    <view class="price-hero-right">
       <text class="price-main {{priceDir}}">{{curPrice}}</text>
       <view class="price-badges">
         <text class="price-badge {{priceDir}}">{{priceChange}}</text>
@@ -124,17 +131,45 @@
         <text class="price-badge-plain">量 {{vol24h}}</text>
       </view>
     </view>
-    <view class="price-hero-right">
-      <view class="ai-score-ring">
-        <text class="ai-ring-num">{{score}}</text>
-        <text class="ai-ring-den">/10</text>
-        <text class="ai-ring-label">AI评分</text>
+  </view>
+
+  <!-- ══ K线图区域（始终可见，在决策卡上方） ══ -->
+
+  <!-- 【K线图标题行 + 图例】 -->
+  <view class="kline-header">
+    <view class="kline-title-row">
+      <text class="kline-title-txt">📈 K线 <text class="kview-badge">{{klineView}}根</text></text>
+      <view class="chart-legend">
+        <text class="leg-boll-u">BOLL↑</text>
+        <text class="leg-boll-l">↓</text>
+        <text class="leg-ma5">MA5</text>
+        <text class="leg-ma10">MA10</text>
       </view>
     </view>
   </view>
-
-  <!-- ══ 周期切换（内嵌在K线图上方） ══ -->
-  <!-- 已移至K线图区域，见下方 -->
+  <view class="kcanvas-wrap"
+    bindtouchmove="onKlineTouch"
+    bindtouchstart="onKlineTouch"
+    bindtouchend="onKlineTouchEnd"
+    catchtouchmove="onKlineTouch"
+  >
+    <canvas type="2d" id="klineCanvas" class="kcanvas"></canvas>
+    <view class="kcanvas-hint" wx:if="{{touchIdx < 0}}">
+      <text>← 单指拖动  ·  双指缩放 →</text>
+    </view>
+    <view class="ktooltip" wx:if="{{touchIdx >= 0}}" style="left:{{tooltipLeft}}px">
+      <text class="ktt-time">{{touchTime}}</text>
+      <view class="ktt-row"><text class="ktt-l">开</text><text class="ktt-v">{{touchO}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">高</text><text class="ktt-v up">{{touchH}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">低</text><text class="ktt-v dn">{{touchL}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">收</text><text class="ktt-v">{{touchC}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">量</text><text class="ktt-v">{{touchV}}</text></view>
+      <view class="ktt-div"></view>
+      <view class="ktt-row"><text class="ktt-l">MACD</text><text class="ktt-v">{{touchMACD}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">DIF</text><text class="ktt-v">{{touchDIF}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">DEA</text><text class="ktt-v">{{touchDEA}}</text></view>
+    </view>
+  </view>
 
   <!-- ══ 决策大卡 ══ -->
   <view class="decision-card {{decisionState}}">
@@ -154,10 +189,6 @@
           <text class="meta-tag {{signalDir === 'long' ? 'long' : 'short'}}">{{signalDir === 'long' ? '📈 做多' : '📉 做空'}}</text>
           <text class="meta-tag">盈亏比 {{rrRatio}}</text>
         </view>
-      </view>
-      <view class="score-circle {{decisionState}}">
-        <text class="score-num">{{score}}</text>
-        <text class="score-den">/10</text>
       </view>
     </view>
     <view class="score-bar-wrap">
@@ -357,54 +388,6 @@
     </view>
   </block>
 
-  <!-- ══ K线图区域（始终可见） ══ -->
-
-  <!-- 【K线图标题行 + 图例】 -->
-  <view class="kline-header">
-    <view class="kline-title-row">
-      <text class="kline-title-txt">📈 K线 <text class="kview-badge">{{klineView}}根</text></text>
-      <view class="chart-legend">
-        <text class="leg-boll-u">BOLL↑</text>
-        <text class="leg-boll-l">↓</text>
-        <text class="leg-ma5">MA5</text>
-        <text class="leg-ma10">MA10</text>
-      </view>
-    </view>
-  </view>
-  <view class="kcanvas-wrap"
-    bindtouchmove="onKlineTouch"
-    bindtouchstart="onKlineTouch"
-    bindtouchend="onKlineTouchEnd"
-    catchtouchmove="onKlineTouch"
-  >
-    <canvas type="2d" id="klineCanvas" class="kcanvas"></canvas>
-    <view class="kcanvas-hint" wx:if="{{touchIdx < 0}}">
-      <text>← 单指拖动  ·  双指缩放 →</text>
-    </view>
-    <view class="ktooltip" wx:if="{{touchIdx >= 0}}" style="left:{{tooltipLeft}}px">
-      <text class="ktt-time">{{touchTime}}</text>
-      <view class="ktt-row"><text class="ktt-l">开</text><text class="ktt-v">{{touchO}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">高</text><text class="ktt-v up">{{touchH}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">低</text><text class="ktt-v dn">{{touchL}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">收</text><text class="ktt-v">{{touchC}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">量</text><text class="ktt-v">{{touchV}}</text></view>
-      <view class="ktt-div"></view>
-      <view class="ktt-row"><text class="ktt-l">MACD</text><text class="ktt-v">{{touchMACD}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">DIF</text><text class="ktt-v">{{touchDIF}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">DEA</text><text class="ktt-v">{{touchDEA}}</text></view>
-    </view>
-  </view>
-
-  <!-- ══ 风控状态栏 ══ -->
-  <view class="risk-bar {{riskStatus}}">
-    <view class="risk-left">
-      <text class="risk-icon">{{riskStatus === 'normal' ? '✅' : riskStatus === 'cooldown' ? '🧊' : '🛑'}}</text>
-      <text class="risk-txt">{{riskMsg}}</text>
-    </view>
-    <view class="risk-right" wx:if="{{riskStatus !== 'normal'}}">
-      <text class="risk-time">{{cooldownUntil}}</text>
-    </view>
-  </view>
 
   <!-- ══ 底部 ══ -->
   <view class="footer" bindtap="onFooterTap">

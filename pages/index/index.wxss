@@ -96,14 +96,17 @@ page {
 
 /* ─────────── 价格大头 ─────────── */
 .price-hero {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 20rpx 24rpx 14rpx;
+  display: flex; justify-content: flex-start; align-items: center;
+  padding: 16rpx 24rpx 12rpx;
   background: linear-gradient(180deg, rgba(8,13,26,.9) 0%, transparent 100%);
+  gap: 24rpx;
 }
-.price-hero-left { display: flex; flex-direction: column; gap: 8rpx; }
+.price-hero-left { display: flex; align-items: center; flex-shrink: 0; }
+.price-hero-right { display: flex; flex-direction: column; gap: 8rpx; flex: 1; }
 .price-main { font-size: 54rpx; font-weight: 900; letter-spacing: 1rpx; color: #e4ecf7; }
 .price-main.up   { color: #f87171; }
 .price-main.down { color: #34d399; }
+
 .price-badges { display: flex; gap: 8rpx; flex-wrap: wrap; }
 .price-badge {
   font-size: 20rpx; padding: 4rpx 12rpx; border-radius: 12rpx; font-weight: 700;
@@ -115,7 +118,7 @@ page {
   background: rgba(255,255,255,.06); color: #94a3b8;
 }
 
-/* AI评分环（右上角） */
+/* AI评分环（右上角，小版，保留兼容） */
 .ai-score-ring {
   display: flex; flex-direction: column; align-items: center;
   width: 100rpx; height: 100rpx; border-radius: 50%;
@@ -138,6 +141,40 @@ page {
 .ai-ring-label {
   position: relative; z-index: 1; font-size: 16rpx; color: #3b82f6; font-weight: 700; margin-top: 2rpx;
 }
+
+/* AI评分环（大版，price-hero左侧主显示） */
+.ai-score-ring-big {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 130rpx; height: 130rpx; border-radius: 50%;
+  background: conic-gradient(#3b82f6 0%, #06b6d4 60%, rgba(255,255,255,.06) 60%);
+  box-shadow: 0 0 28px rgba(59,130,246,.5);
+  position: relative;
+}
+.ai-score-ring-big::before {
+  content: ''; position: absolute; width: 100rpx; height: 100rpx;
+  border-radius: 50%; background: #07090f;
+}
+/* 有信号时颜色变化 */
+.ai-score-ring-big.signal-long {
+  background: conic-gradient(#f87171 0%, #fb923c 70%, rgba(255,255,255,.06) 70%);
+  box-shadow: 0 0 28px rgba(248,113,113,.5);
+}
+.ai-score-ring-big.signal-short {
+  background: conic-gradient(#34d399 0%, #06b6d4 70%, rgba(255,255,255,.06) 70%);
+  box-shadow: 0 0 28px rgba(52,211,153,.5);
+}
+.ai-ring-num-big {
+  position: relative; z-index: 1; font-size: 46rpx; font-weight: 900;
+  color: #93c5fd; line-height: 1;
+}
+.ai-ring-den-big {
+  position: relative; z-index: 1; font-size: 18rpx; color: #64748b; margin-top: -2rpx;
+}
+.ai-ring-label-big {
+  position: relative; z-index: 1; font-size: 20rpx; color: #3b82f6; font-weight: 700; margin-top: 3rpx;
+}
+
+
 
 /* ─────────── 周期切换（顶部大行，内嵌K线图顶部旧样式保留兼容） ─────────── */
 .period-bar-top {

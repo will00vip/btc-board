@@ -180,13 +180,6 @@ Page({
     // 免责声明
     showDisclaimer: false,
 
-    // 风控状态
-    riskStatus: 'normal',        // 'normal'正常, 'cooldown'冷却中, 'max_loss'超日亏限
-    riskMsg: '',                 // 风控说明
-    todayLossU: 0,               // 今日已亏损U数
-    dailyMaxLossU: 0,            // 单日最大亏损U数
-    cooldownUntil: '--',         // 冷却截止时间
-    
     // canvas 触摸查价
     touchIdx: -1, tooltipLeft: 8,
     touchTime: '', touchO: '', touchH: '', touchL: '', touchC: '', touchV: '',
@@ -926,21 +919,6 @@ Page({
     const longOkN    = longConds.filter(c => c.ok).length
     const shortOkN   = shortConds.filter(c => c.ok).length
 
-    // 风控状态（小程序简化版，无法持久化存储）
-    // 这里只是模拟展示，实际需要配合后端或本地存储
-    const dailyMaxLossU = 1000 * 0.05  // 账户1000U * 5% = 50U
-    const todayLossU = 0               // 实际应用需要从存储中读取
-    const riskStatus = 'normal'        // normal, cooldown, max_loss
-    let riskMsg = '', cooldownUntil = '--'
-    
-    if (riskStatus === 'cooldown') {
-      riskMsg = `连亏3笔，冷却2小时`
-      cooldownUntil = `14:30`
-    } else if (riskStatus === 'max_loss') {
-      riskMsg = `今日已亏${todayLossU}U，达单日上限`
-    } else {
-      riskMsg = `风控正常，今日已亏${todayLossU}U/${dailyMaxLossU}U`
-    }
 
     // 趋势信息（MA20/MA60计算）
     const closes = bars.map(b => b.close)
@@ -1011,13 +989,6 @@ Page({
       klineRows,
       updateTime,
       touchIdx: -1,
-      
-      // 风控状态
-      riskStatus,
-      riskMsg,
-      todayLossU,
-      dailyMaxLossU,
-      cooldownUntil,
 
       // AI & 趋势
       isBearTrend,
