@@ -107,49 +107,6 @@
       >{{item.label}}</view>
     </view>
 
-    <!-- 行2：大趋势卡片（升级版） -->
-    <view class="trend-card-v2 {{trendColor}}">
-      <!-- 顶部：方向 + 趋势标签 -->
-      <view class="trend-card-top">
-        <view class="trend-card-title-row">
-          <text class="trend-card-period">{{intervalLabel}} 大趋势</text>
-          <view class="trend-card-badge {{trendColor}}">
-            <text class="trend-badge-icon">{{trendColor === 'bull' ? '🚀' : trendColor === 'down' || trendColor === 'bear' ? '🐸' : trendColor === 'bull_weak' ? '🌤' : '🌧'}}</text>
-            <text class="trend-badge-text">{{trendLabel}}</text>
-          </view>
-        </view>
-        <text class="trend-card-desc">{{trendDesc}}</text>
-      </view>
-      <!-- 中部：MA20 / MA60 / 价格位置 -->
-      <view class="trend-card-mid">
-        <view class="trend-ma-item">
-          <text class="trend-ma-label">MA20</text>
-          <text class="trend-ma-val">{{trendMa20}}</text>
-        </view>
-        <view class="trend-ma-divider"></view>
-        <view class="trend-ma-item">
-          <text class="trend-ma-label">MA60</text>
-          <text class="trend-ma-val">{{trendMa60}}</text>
-        </view>
-        <view class="trend-ma-divider"></view>
-        <view class="trend-ma-item">
-          <text class="trend-ma-label">支撑区</text>
-          <text class="trend-ma-val green">{{supportZone}}</text>
-        </view>
-        <view class="trend-ma-divider"></view>
-        <view class="trend-ma-item">
-          <text class="trend-ma-label">压力区</text>
-          <text class="trend-ma-val red">{{resistZone}}</text>
-        </view>
-      </view>
-      <!-- 底部：趋势强度进度条 -->
-      <view class="trend-card-bar-wrap">
-        <view class="trend-card-bar-track">
-          <view class="trend-card-bar-fill {{trendColor}}" style="width:{{trendStrength}}%"></view>
-        </view>
-        <text class="trend-card-bar-label">趋势强度 {{trendStrength}}%</text>
-      </view>
-    </view>
   </view>
   <view class="kcanvas-wrap"
     bindtouchmove="onKlineTouch"
@@ -176,6 +133,133 @@
     </view>
   </view>
 
+  <!-- ══ 趋势分析区（非会员模糊诱导，会员完整显示） ══ -->
+  <view class="analysis-section">
+
+    <!-- 非会员：模糊遮罩层 -->
+    <view class="analysis-lock-wrap" wx:if="{{!isVip && !inTrial}}">
+      <!-- 底层假数据（模糊显示，制造"就差一点"感） -->
+      <view class="analysis-blur-bg">
+        <!-- 假趋势卡 -->
+        <view class="fake-trend-card">
+          <view class="fake-trend-top">
+            <view class="fake-trend-badge bull"><text>🚀 强势多头</text></view>
+            <text class="fake-trend-desc">MA20上穿MA60，多头强势，支撑下方</text>
+          </view>
+          <view class="fake-trend-nums">
+            <view class="fake-num-item"><text class="fake-num-label">MA20</text><text class="fake-num-val">████</text></view>
+            <view class="fake-num-item"><text class="fake-num-label">MA60</text><text class="fake-num-val">████</text></view>
+            <view class="fake-num-item"><text class="fake-num-label">支撑</text><text class="fake-num-val green">████</text></view>
+            <view class="fake-num-item"><text class="fake-num-label">压力</text><text class="fake-num-val red">████</text></view>
+          </view>
+          <view class="fake-strength-bar">
+            <view class="fake-strength-fill" style="width:72%"></view>
+          </view>
+        </view>
+        <!-- 假多空能量条 -->
+        <view class="fake-energy-card">
+          <text class="fake-energy-title">⚡ 多空能量对比</text>
+          <view class="fake-energy-bar">
+            <view class="fake-energy-long" style="width:63%"></view>
+            <view class="fake-energy-short" style="width:37%"></view>
+          </view>
+          <view class="fake-energy-labels">
+            <text class="fake-el green">多头 63%</text>
+            <text class="fake-el red">空头 37%</text>
+          </view>
+        </view>
+        <!-- 假决策卡 -->
+        <view class="fake-decision-card">
+          <view class="fake-face-wrap"><text class="fake-face">🚀</text></view>
+          <view class="fake-decision-info">
+            <text class="fake-verdict">强势做多信号</text>
+            <view class="fake-meta-row">
+              <text class="fake-meta-tag">📈 做多</text>
+              <text class="fake-meta-tag accent">胜率 74%</text>
+            </view>
+          </view>
+          <view class="fake-score"><text class="fake-score-num">8</text><text class="fake-score-den">/10</text></view>
+        </view>
+        <view class="fake-tp-row">
+          <view class="fake-tp-item stop"><text class="fake-tp-l">止损</text><text class="fake-tp-v">██████</text></view>
+          <view class="fake-tp-item tp1"><text class="fake-tp-l">TP1</text><text class="fake-tp-v">██████</text></view>
+          <view class="fake-tp-item tp2"><text class="fake-tp-l">TP2</text><text class="fake-tp-v">██████</text></view>
+          <view class="fake-tp-item tp3"><text class="fake-tp-l">TP3</text><text class="fake-tp-v">██████</text></view>
+        </view>
+      </view>
+
+      <!-- 毛玻璃遮罩 + 解锁CTA -->
+      <view class="analysis-frosted-mask">
+        <view class="analysis-unlock-box">
+          <text class="unlock-icon">🔐</text>
+          <text class="unlock-title">解锁完整分析</text>
+          <text class="unlock-desc">趋势判断 · 多空能量 · 决策评分\n精准止盈止损 · 六维指标共振</text>
+          <view class="unlock-price-row">
+            <view class="unlock-price-item"><text class="unlock-price-tag">月卡</text><text class="unlock-price-num">¥88</text></view>
+            <view class="unlock-price-item hot">
+              <text class="unlock-hot-badge">最划算</text>
+              <text class="unlock-price-tag">季卡</text>
+              <text class="unlock-price-num hot-num">¥168</text>
+            </view>
+            <view class="unlock-price-item"><text class="unlock-price-tag">年卡</text><text class="unlock-price-num">¥498</text></view>
+          </view>
+          <view class="unlock-cta" bindtap="showVipModal">
+            <text class="unlock-cta-text">👑 立即开通 →</text>
+          </view>
+          <!-- 激活码 -->
+          <view class="unlock-code-row">
+            <input
+              class="unlock-code-input"
+              placeholder="已有激活码？输入兑换"
+              placeholder-class="unlock-code-placeholder"
+              value="{{activateCode}}"
+              bindinput="onActivateInput"
+              maxlength="20"
+            />
+            <view class="unlock-code-btn {{activateCode ? 'active' : ''}}" bindtap="submitActivateCode">
+              <text>激活</text>
+            </view>
+          </view>
+          <text class="activate-err" wx:if="{{activateErr}}">{{activateErr}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 会员/体验期：完整数据 -->
+    <block wx:if="{{isVip || inTrial}}">
+
+    <!-- 大趋势卡片 -->
+    <view class="trend-card-v2 {{trendColor}}">
+      <view class="trend-card-top">
+        <view class="trend-card-title-row">
+          <text class="trend-card-period">{{intervalLabel}} 大趋势</text>
+          <view class="trend-card-badge {{trendColor}}">
+            <text class="trend-badge-icon">{{trendColor === 'bull' ? '🚀' : trendColor === 'down' || trendColor === 'bear' ? '🐸' : trendColor === 'bull_weak' ? '🌤' : '🌧'}}</text>
+            <text class="trend-badge-text">{{trendLabel}}</text>
+          </view>
+        </view>
+        <text class="trend-card-desc">{{trendDesc}}</text>
+      </view>
+      <view class="trend-card-mid">
+        <view class="trend-ma-item"><text class="trend-ma-label">MA20</text><text class="trend-ma-val">{{trendMa20}}</text></view>
+        <view class="trend-ma-divider"></view>
+        <view class="trend-ma-item"><text class="trend-ma-label">MA60</text><text class="trend-ma-val">{{trendMa60}}</text></view>
+        <view class="trend-ma-divider"></view>
+        <view class="trend-ma-item"><text class="trend-ma-label">支撑区</text><text class="trend-ma-val green">{{supportZone}}</text></view>
+        <view class="trend-ma-divider"></view>
+        <view class="trend-ma-item"><text class="trend-ma-label">压力区</text><text class="trend-ma-val red">{{resistZone}}</text></view>
+      </view>
+      <view class="trend-card-bar-wrap">
+        <view class="trend-card-bar-track">
+          <view class="trend-card-bar-fill {{trendColor}}" style="width:{{trendStrength}}%"></view>
+        </view>
+        <text class="trend-card-bar-label">趋势强度 {{trendStrength}}%</text>
+      </view>
+    </view>
+
+    </block>
+  </view>
+
   <!-- ══ 风控状态栏（全部用户可见） ══ -->
   <view class="risk-bar {{riskStatus}}">
     <view class="risk-left">
@@ -187,88 +271,6 @@
     </view>
   </view>
 
-  <!-- ══ 非会员：轻量付费墙（K线以下内容锁住） ══ -->
-  <block wx:if="{{!isVip && !inTrial}}">
-    <view class="paywall-card">
-      <!-- 模糊预览：让用户感觉数据就在下面 -->
-      <view class="paywall-preview">
-        <view class="preview-decision-card">
-          <view class="preview-face-wrap">
-            <text class="preview-face">🚀</text>
-          </view>
-          <view class="preview-info">
-            <text class="preview-verdict">强势做多信号</text>
-            <view class="preview-meta-row">
-              <text class="preview-meta-tag">📈 做多</text>
-              <text class="preview-meta-tag accent">胜率 74%</text>
-              <text class="preview-meta-tag">盈亏比 1.8:1</text>
-            </view>
-          </view>
-          <view class="preview-score-circle">
-            <text class="preview-score-num">8</text>
-            <text class="preview-score-den">/10</text>
-          </view>
-        </view>
-        <view class="preview-tp-row">
-          <view class="preview-tp-item stop"><text>止损</text><text class="preview-tp-val">██████</text></view>
-          <view class="preview-tp-item tp1"><text>TP1</text><text class="preview-tp-val">██████</text></view>
-          <view class="preview-tp-item tp2"><text>TP2</text><text class="preview-tp-val">██████</text></view>
-          <view class="preview-tp-item tp3"><text>TP3</text><text class="preview-tp-val">██████</text></view>
-        </view>
-        <view class="paywall-blur-mask"></view>
-      </view>
-
-      <!-- 解锁文案 -->
-      <view class="paywall-header">
-        <text class="paywall-lock">🔐</text>
-        <text class="paywall-title">解锁实时信号</text>
-        <text class="paywall-sub">决策评分 · 精准止盈 · 多指标六维共振</text>
-      </view>
-
-      <!-- 价格 -->
-      <view class="paywall-price-row">
-        <view class="paywall-price-item">
-          <text class="paywall-price-tag">月卡</text>
-          <text class="paywall-price-num">¥88</text>
-        </view>
-        <view class="paywall-price-item hot">
-          <text class="paywall-hot-badge">最划算</text>
-          <text class="paywall-price-tag">季卡</text>
-          <text class="paywall-price-num hot-num">¥168</text>
-        </view>
-        <view class="paywall-price-item">
-          <text class="paywall-price-tag">年卡</text>
-          <text class="paywall-price-num">¥498</text>
-        </view>
-        <view class="paywall-price-item">
-          <text class="paywall-price-tag">永久</text>
-          <text class="paywall-price-num">¥698</text>
-        </view>
-      </view>
-      <view class="paywall-cta" bindtap="showVipModal">
-        <text class="paywall-cta-text">👑 立即开通 · 查看实时信号 →</text>
-      </view>
-      <text class="paywall-hint">开通后即时解锁 · 联系作者激活</text>
-
-      <!-- 激活码输入区 -->
-      <view class="activate-wrap">
-        <view class="activate-row">
-          <input
-            class="activate-input"
-            placeholder="输入激活码"
-            placeholder-class="activate-placeholder"
-            value="{{activateCode}}"
-            bindinput="onActivateInput"
-            maxlength="20"
-          />
-          <view class="activate-btn {{activateCode ? 'active' : ''}}" bindtap="submitActivateCode">
-            <text>激活</text>
-          </view>
-        </view>
-        <text class="activate-err" wx:if="{{activateErr}}">{{activateErr}}</text>
-      </view>
-    </view>
-  </block>
 
   <!-- ══ 会员解锁内容（isVip=true 或 inTrial=true 才显示） ══ -->
   <block wx:if="{{isVip || inTrial}}">
