@@ -1,4 +1,4 @@
-// pages/index/index.js  v5.1 - 新增MACD金叉/死叉通知
+// pages/index/index.js  v6.0 - 大趋势/多空能量/止盈止损升级/布局调整
 const { fetchKlines } = require('../../utils/detector')
 const { detectSignal, detectMacdCross } = require('../../utils/detector')
 const { macd: calcMACD, boll: calcBOLL, ema: calcEMA } = require('../../utils/indicators')
@@ -54,6 +54,105 @@ const TIPS = [
     cls: 'tip-rr', tag: '盈亏比'
   },
 ]
+
+/**
+ * 大趋势判断（基于4h K线数据）
+ * 返回 { trend, trendLabel, trendColor, supportZone, resistZone, trendDesc }
+ */
+function calcTrend(bars) {
+  if (!bars || bars.length < 20) return null
+  const closes = bars.map(b => b.close)
+  const n = closes.length
+
+  // MA20 / MA60 简易计算
+  const ma20 = closes.slice(-20).reduce((s,v)=>s+v,0)/20
+  const ma60slice = closes.slice(-Math.min(60,n))
+  const ma60 = ma60slice.reduce((s,v)=>s+v,0)/ma60slice.length
+  const last = closes[n-1]
+
+  // 近20根高低点
+  const recent = bars.slice(-20)
+  const highs = recent.map(b=>b.high)
+  const lows  = recent.map(b=>b.low)
+  const recentHigh = Math.max(...highs)
+  const recentLow  = Math.min(...lows)
+
+  // 近5根高低点（短期）
+  const short5 = bars.slice(-5)
+  const s5high = Math.max(...short5.map(b=>b.high))
+  const s5low  = Math.min(...short5.map(b=>b.low))
+
+  // 支撑/压力区：取近20根的低点聚集区±0.5%
+  const supportBase = recentLow
+  const resistBase  = recentHigh
+
+  // 判断趋势
+  let trend = 'sideways', trendLabel = '震荡', trendColor = 'neutral'
+  let trendDesc = ''
+
+  if (last > ma20 && ma20 > ma60) {
+    trend = 'up'; trendLabel = '多头趋势'; trendColor = 'bull'
+    trendDesc = 'MA20>MA60 价格站上均线，多头占优'
+  } else if (last < ma20 && ma20 < ma60) {
+    trend = 'down'; trendLabel = '空头趋势'; trendColor = 'bear'
+    trendDesc = 'MA20<MA60 价格跌破均线，空头占优'
+  } else if (last > ma20) {
+    trend = 'up_weak'; trendLabel = '偏多震荡'; trendColor = 'bull_weak'
+    trendDesc = '价格站上MA20，但MA20/60交叉不明确'
+  } else {
+    trend = 'down_weak'; trendLabel = '偏空震荡'; trendColor = 'bear_weak'
+    trendDesc = '价格跌破MA20，短期偏弱'
+  }
+
+  // 支撑区间（近低点±0.3%）
+  const supportLo = (supportBase * 0.997).toFixed(0)
+  const supportHi = (supportBase * 1.003).toFixed(0)
+  // 压力区间
+  const resistLo  = (resistBase  * 0.997).toFixed(0)
+  const resistHi  = (resistBase  * 1.003).toFixed(0)
+
+  return {
+    trend, trendLabel, trendColor, trendDesc,
+    supportZone: `${supportLo}~${supportHi}`,
+    resistZone:  `${resistLo}~${resistHi}`,
+    ma20: ma20.toFixed(0),
+    ma60: ma60.toFixed(0),
+  }
+}
+
+/**
+ * 多空能量对比
+ * 返回 { bullPower, bearPower, bullPct, bearPct, dominance }
+ * bullPct/bearPct: 0~100，用于进度条
+ */
+function calcEnergyBalance(bars) {
+  if (!bars || bars.length < 10) return null
+  const recent = bars.slice(-20)
+
+  let bullEnergy = 0, bearEnergy = 0
+  recent.forEach(b => {
+    const body = Math.abs(b.close - b.open)
+    const range = b.high - b.low || 1
+    const vol = b.volume || 1
+    if (b.close >= b.open) {
+      bullEnergy += body * vol
+    } else {
+      bearEnergy += body * vol
+    }
+  })
+
+  const total = bullEnergy + bearEnergy || 1
+  const bullPct = Math.round(bullEnergy / total * 100)
+  const bearPct = 100 - bullPct
+
+  let dominance = 'neutral', domLabel = '多空均衡'
+  if (bullPct >= 65) { dominance = 'bull'; domLabel = '多头强势' }
+  else if (bullPct >= 55) { dominance = 'bull_weak'; domLabel = '多头偏强' }
+  else if (bearPct >= 65) { dominance = 'bear'; domLabel = '空头强势' }
+  else if (bearPct >= 55) { dominance = 'bear_weak'; domLabel = '空头偏强' }
+
+  return { bullPct, bearPct, dominance, domLabel }
+}
 
 function winRateFromScore(s) {
   return ({0:28,1:30,2:32,3:35,4:38,5:48,6:55,7:63,8:72,9:80,10:85})[Math.min(10,Math.max(0,s))] || 35
@@ -154,8 +253,17 @@ Page({
     touchMACD: '', touchDIF: '', touchDEA: '',
 
     // MACD金叉/死叉通知条
-    macdCross: null,         // null | { type, strength, axisDesc, dif, dea, bar }
-    macdCrossShow: false,    // 是否显示通知条
+    macdCross: null,
+    macdCrossShow: false,
+
+    // 大趋势判断
+    trendLabel: '--', trendColor: 'neutral', trendDesc: '--',
+    supportZone: '--', resistZone: '--',
+    trendMa20: '--', trendMa60: '--',
+
+    // 多空能量对比
+    bullPct: 50, bearPct: 50, domLabel: '均衡',
+    energyDominance: 'neutral',
   },
 
   onLoad() {
@@ -646,7 +754,7 @@ Page({
   switchInterval(e) {
     const iv    = e.currentTarget.dataset.iv
     const label = e.currentTarget.dataset.label
-    // 先重置拖动偏移和视窗
+    // 重置拖动偏移和视窗
     this._dragOffset = 0
     this._allBars    = null
     this._chartData  = null
@@ -654,15 +762,9 @@ Page({
 
     this.setData({ interval: iv, intervalLabel: label, klineView: 60 })
 
-    // 有缓存（且不超60秒）：立刻渲染，同时后台静默刷新
-    const cached = this._kvCache[iv]
-    const now = Date.now()
-    if (cached && now - cached.ts < 60000) {
-      this._renderAll(cached.sig)   // 立刻显示
-      this._refreshInBackground(iv) // 后台悄悄拉最新
-    } else {
-      this.loadData(false)          // 无缓存才走普通加载
-    }
+    // 直接强制拉最新数据（不走缓存），保证切换立刻刷新
+    this._kvCache[iv] = null
+    this.loadData(false)
   },
 
   // 后台静默刷新（不显示loading）
@@ -909,6 +1011,10 @@ Page({
       riskMsg = `风控正常，今日已亏${todayLossU}U/${dailyMaxLossU}U`
     }
 
+    // ── 大趋势判断 ────────────────────────────────────────────
+    const trendInfo  = calcTrend(bars)
+    const energyInfo = calcEnergyBalance(bars)
+
     // ── MACD金叉/死叉检测 ──────────────────────────────────────
     const macdCross = detectMacdCross(bars)
 
@@ -948,6 +1054,21 @@ Page({
       // MACD金叉/死叉通知条
       macdCross: macdCross,
       macdCrossShow: !!macdCross,
+
+      // 大趋势
+      trendLabel:  trendInfo ? trendInfo.trendLabel : '--',
+      trendColor:  trendInfo ? trendInfo.trendColor  : 'neutral',
+      trendDesc:   trendInfo ? trendInfo.trendDesc   : '--',
+      supportZone: trendInfo ? trendInfo.supportZone : '--',
+      resistZone:  trendInfo ? trendInfo.resistZone  : '--',
+      trendMa20:   trendInfo ? trendInfo.ma20 : '--',
+      trendMa60:   trendInfo ? trendInfo.ma60 : '--',
+
+      // 多空能量
+      bullPct:         energyInfo ? energyInfo.bullPct   : 50,
+      bearPct:         energyInfo ? energyInfo.bearPct   : 50,
+      domLabel:        energyInfo ? energyInfo.domLabel  : '均衡',
+      energyDominance: energyInfo ? energyInfo.dominance : 'neutral',
 
       // 风控状态
       riskStatus,

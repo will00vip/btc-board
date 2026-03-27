@@ -1,8 +1,8 @@
-/* pages/index/index.wxss  v4 */
+/* pages/index/index.wxss  v6 */
 page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
 
 /* ═══════════════════════════════
-   导航栏
+   导航栏（刷新按钮移到左边）
 ═══════════════════════════════ */
 .navbar {
   display: flex; justify-content: space-between; align-items: center;
@@ -10,14 +10,14 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
   background: linear-gradient(135deg, #0f1923 0%, #161b22 100%);
   border-bottom: 1rpx solid #21262d;
 }
-.navbar-left { display: flex; align-items: center; gap: 14rpx; }
+.navbar-left { display: flex; align-items: center; gap: 14rpx; flex: 1; }
 .nav-icon { width: 48rpx; height: 48rpx; border-radius: 10rpx; }
 .nav-title { display: block; font-size: 30rpx; font-weight: 800; color: #58a6ff; letter-spacing: 1rpx; }
 .nav-sub   { display: block; font-size: 18rpx; color: #484f58; margin-top: 2rpx; }
-.navbar-right { display: flex; align-items: center; gap: 16rpx; }
+.navbar-right-space { width: 60rpx; }
 .live-dot {
   width: 14rpx; height: 14rpx; border-radius: 50%; background: #3fb950;
-  box-shadow: 0 0 6px #3fb950;
+  box-shadow: 0 0 6px #3fb950; flex-shrink: 0;
 }
 .live-dot.loading { background: #ffa657; box-shadow: 0 0 6px #ffa657; animation: blink 0.8s infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
@@ -27,7 +27,7 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
 }
 
 /* ═══════════════════════════════
-   价格大头
+   价格大头（全左对齐，右边留白）
 ═══════════════════════════════ */
 .price-hero {
   display: flex; justify-content: space-between; align-items: center;
@@ -35,6 +35,7 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
   background: linear-gradient(180deg, #0f1923 0%, transparent 100%);
 }
 .price-hero-left { display: flex; flex-direction: column; gap: 8rpx; }
+.price-hero-right-blank { width: 60rpx; }
 .price-main { font-size: 52rpx; font-weight: 900; letter-spacing: 1rpx; color: #e6edf3; }
 .price-main.up   { color: #ff4d6d; }
 .price-main.down { color: #00d68f; }
@@ -45,9 +46,97 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
 .price-badge.up   { background: rgba(255,77,109,.2);  color: #ff4d6d; }
 .price-badge.down { background: rgba(0,214,143,.2);   color: #00d68f; }
 .price-badge-plain { font-size: 20rpx; padding: 3rpx 12rpx; border-radius: 12rpx; background: rgba(255,255,255,.07); color: #8b949e; }
-.price-hero-right { text-align: right; }
-.vol-label { display: block; font-size: 18rpx; color: #484f58; margin-bottom: 4rpx; }
-.vol-val   { display: block; font-size: 26rpx; font-weight: 700; color: #8b949e; }
+
+/* ═══════════════════════════════
+   大趋势卡
+═══════════════════════════════ */
+.trend-card {
+  margin: 0 20rpx 16rpx; padding: 20rpx 24rpx;
+  background: #161b22; border-radius: 20rpx;
+  border: 1rpx solid #21262d;
+}
+.trend-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10rpx; }
+.trend-card-title { font-size: 26rpx; font-weight: 700; color: #8b949e; }
+.trend-label { font-size: 26rpx; font-weight: 800; padding: 4rpx 16rpx; border-radius: 12rpx; }
+.trend-label.bull      { color: #ff4d6d; background: rgba(255,77,109,.15); }
+.trend-label.bull_weak { color: #ffa657; background: rgba(255,166,87,.15); }
+.trend-label.bear      { color: #26a69a; background: rgba(38,166,154,.15); }
+.trend-label.bear_weak { color: #6e7681; background: rgba(110,118,129,.15); }
+.trend-label.neutral   { color: #8b949e; background: rgba(139,148,158,.12); }
+.trend-desc { font-size: 22rpx; color: #6e7681; display: block; margin-bottom: 16rpx; }
+.trend-zones { display: flex; align-items: center; gap: 0; margin-bottom: 12rpx; }
+.trend-zone-item { flex: 1; }
+.tz-label { display: block; font-size: 20rpx; color: #6e7681; margin-bottom: 4rpx; }
+.tz-val { display: block; font-size: 24rpx; font-weight: 700; }
+.tz-val.support { color: #26a69a; }
+.tz-val.resist  { color: #ef5350; }
+.trend-zone-divider { width: 1rpx; height: 48rpx; background: #21262d; margin: 0 20rpx; }
+.trend-ma-row { display: flex; gap: 16rpx; }
+.ma-tag { font-size: 20rpx; color: #484f58; background: rgba(255,255,255,.04); padding: 4rpx 12rpx; border-radius: 8rpx; }
+
+/* ═══════════════════════════════
+   多空能量对比
+═══════════════════════════════ */
+.energy-card {
+  margin: 0 20rpx 16rpx; padding: 18rpx 24rpx;
+  background: #161b22; border-radius: 20rpx;
+  border: 1rpx solid #21262d;
+}
+.energy-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14rpx; }
+.energy-title { font-size: 26rpx; font-weight: 700; color: #8b949e; }
+.energy-dom { font-size: 24rpx; font-weight: 800; padding: 4rpx 14rpx; border-radius: 10rpx; }
+.energy-dom.bull      { color: #ff4d6d; background: rgba(255,77,109,.15); }
+.energy-dom.bull_weak { color: #ffa657; background: rgba(255,166,87,.15); }
+.energy-dom.bear      { color: #26a69a; background: rgba(38,166,154,.15); }
+.energy-dom.bear_weak { color: #6e7681; background: rgba(110,118,129,.15); }
+.energy-dom.neutral   { color: #8b949e; background: rgba(139,148,158,.12); }
+.energy-bar-wrap { display: flex; height: 44rpx; border-radius: 10rpx; overflow: hidden; }
+.energy-bull-bar {
+  background: linear-gradient(90deg, #c62828, #ff4d6d);
+  display: flex; align-items: center; justify-content: center;
+  transition: width 0.4s ease; min-width: 60rpx;
+}
+.energy-bear-bar {
+  background: linear-gradient(90deg, #26a69a, #00897b);
+  display: flex; align-items: center; justify-content: center;
+  transition: width 0.4s ease; min-width: 60rpx;
+}
+.energy-bar-label { font-size: 20rpx; font-weight: 800; color: #fff; }
+
+/* ═══════════════════════════════
+   止盈止损升级样式
+═══════════════════════════════ */
+.sl-tp-block {
+  background: #0d1117; border-radius: 16rpx;
+  border: 1rpx solid #21262d; margin-top: 16rpx; overflow: hidden;
+}
+.sl-tp-title {
+  padding: 14rpx 20rpx; background: rgba(88,166,255,.08);
+  font-size: 24rpx; font-weight: 800; color: #58a6ff;
+  border-bottom: 1rpx solid #21262d;
+}
+.sl-row {
+  display: flex; align-items: center; padding: 14rpx 20rpx;
+  border-bottom: 1rpx solid rgba(255,255,255,.04); gap: 16rpx;
+}
+.sl-row:last-child { border-bottom: none; }
+.sl-tag {
+  font-size: 20rpx; font-weight: 700; padding: 4rpx 14rpx; border-radius: 8rpx;
+  flex-shrink: 0; min-width: 120rpx; text-align: center;
+}
+.sl-tag.stop    { background: rgba(239,83,80,.2);  color: #ef5350; }
+.sl-tag.entry-tag { background: rgba(255,255,255,.08); color: #8b949e; }
+.sl-tag.tp1-tag { background: rgba(38,166,154,.15); color: #26a69a; }
+.sl-tag.tp2-tag { background: rgba(38,166,154,.25); color: #26a69a; }
+.sl-tag.tp3-tag { background: rgba(38,166,154,.35); color: #4caf50; }
+.sl-price { font-size: 28rpx; font-weight: 900; flex: 1; }
+.sl-price.stop  { color: #ef5350; }
+.tp1-color { color: #26a69a; }
+.tp2-color { color: #26a69a; }
+.tp3-color { color: #4caf50; }
+.sl-hint { font-size: 20rpx; color: #484f58; flex-shrink: 0; }
+
+
 
 /* ═══════════════════════════════
    周期切换
