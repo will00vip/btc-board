@@ -8,7 +8,7 @@ const CONFIG = require('../config')
 const SOURCES = CONFIG.DATA_SOURCES || []
 
 /** wx.request 封装成 Promise，带超时 */
-function fetchJson(url, timeout = 8000) {
+function fetchJson(url, timeout = 6000) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('timeout')), timeout)
     wx.request({
@@ -24,6 +24,22 @@ function fetchJson(url, timeout = 8000) {
       fail: err => { clearTimeout(timer); reject(new Error(err.errMsg || 'request fail')) }
     })
   })
+}
+
+// 内存缓存（30s内复用，切换周期时清空）
+const _cache = {}
+function getCacheKey(interval) { return interval }
+function getCached(interval) {
+  const c = _cache[getCacheKey(interval)]
+  if (c && Date.now() - c.ts < 30000) return c.data
+  return null
+}
+function setCache(interval, data) {
+  _cache[getCacheKey(interval)] = { ts: Date.now(), data }
+}
+function clearCache(interval) {
+  if (interval) delete _cache[getCacheKey(interval)]
+  else Object.keys(_cache).forEach(k => delete _cache[k])
 }
 
 /** 多源拉K线，返回 bar 数组 */
@@ -93,12 +109,20 @@ function calcPositionSize(entryPrice, stopLoss, config = CONFIG) {
 /** 主检测函数，返回完整分析对象 */
 async function detectSignal(interval) {
   interval = interval || '15m'
-  const limit = 200   // 拉足够多数据，支持左右拖动看历史
+  const limit = 150   // 150根足够指标计算+展示，比200快
 
-  const [bars, bars4h] = await Promise.all([
-    fetchKlines(interval, limit),
-    fetchKlines('4h', 10)
-  ])
+  // 命中缓存直接返回（30s内）
+  const cached = getCached(interval)
+  if (cached) return cached
+
+  // 4h额外数据：只在非4h以上周期时拉取，减少请求
+  const need4h = !['4h','6h','12h','1d','3d','1w'].includes(interval)
+  const reqs = [fetchKlines(interval, limit)]
+  if (need4h) reqs.push(fetchKlines('4h', 10))
+  
+  const results = await Promise.all(reqs)
+  const bars  = results[0]
+  const bars4h = results[1] || bars.slice(-10)
 
   const now = new Date()
   const h = now.getHours()
@@ -217,6 +241,9 @@ async function detectSignal(interval) {
     // 原始指标数组
     macdData, kdjData, rsiArr, wrArr, bollArr
   }
+  // 写入缓存
+  setCache(interval, result)
+  return result
 }
 
-module.exports = { fetchKlines, detectSignal }
+module.exports = { fetchKlines, detectSignal, clearSignalCache: clearCache }

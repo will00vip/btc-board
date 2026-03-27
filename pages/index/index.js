@@ -1,5 +1,5 @@
 // pages/index/index.js  v3
-const { fetchKlines, detectSignal } = require('../../utils/detector')
+const { fetchKlines, detectSignal, clearSignalCache } = require('../../utils/detector')
 const { macd: calcMACD, boll: calcBOLL, ema: calcEMA } = require('../../utils/indicators')
 
 const PERIODS = [
@@ -236,6 +236,10 @@ Page({
         this.setData({ inTrial: stillTrial, trialSecs: secs })
         if (!stillTrial) {
           clearInterval(this._trialTimer)
+          // 体验结束后延迟1s自动弹出升级抽屉（温和提示，而非直接跳付费墙）
+          setTimeout(() => {
+            if (!this.data.isVip) this.setData({ showVipDrawer: true })
+          }, 1000)
         }
       }, 1000)
     }
@@ -260,7 +264,7 @@ Page({
         if (this._pendingBars) { this._drawChart(this._pendingBars); this._pendingBars = null }
       })
     this.loadData()
-    this._timer = setInterval(() => this.loadData(), 60 * 1000)
+    this._timer = setInterval(() => this.loadData(), 30 * 1000)  // 30s自动刷新
   },
   onUnload() { 
     clearInterval(this._timer)
@@ -652,12 +656,14 @@ Page({
   },
 
   switchInterval(e) {
-    // 切换周期：重置拖动偏移和缓存数据，强制刷新图表
+    // 切换周期：清缓存、重置拖动偏移和图表数据，强制刷新
+    const iv = e.currentTarget.dataset.iv
+    clearSignalCache(iv)  // 清除该周期缓存，保证拿到最新数据
     this._dragOffset = 0
     this._allBars    = null
     this._chartData  = null
     this._view       = 120
-    this.setData({ interval: e.currentTarget.dataset.iv, intervalLabel: e.currentTarget.dataset.label, klineView: 120 })
+    this.setData({ interval: iv, intervalLabel: e.currentTarget.dataset.label, klineView: 120 })
     this.loadData()
   },
   refresh() { this.loadData() },
@@ -1039,12 +1045,12 @@ Page({
       showCancel: false
     })
   },
-  // 隐藏入口：footer连点5次
+  // 隐藏入口：footer连点5次 → 管理后台
   _footerTaps: 0,
   onFooterTap() {
     this._footerTaps = (this._footerTaps || 0) + 1
     if (this._footerTaps >= 5) { this._footerTaps = 0; wx.navigateTo({ url: '/pages/admin/admin' }) }
-    setTimeout(() => { this._footerTaps = 0 }, 2000)
+    setTimeout(() => { this._footerTaps = 0 }, 3000)  // 3s内完成5次点击
   },
   // 密码输入（弹框，6666=临时体验，8888=管理后台）
   onPasswordInput(e) { this.setData({ pwdInput: e.detail.value }) },

@@ -19,7 +19,13 @@ module.exports = {
     {
       name: '火币HTX',
       klineUrl: (iv, lim) => {
-        const m = { '1m':'1min','5m':'5min','15m':'15min','30m':'30min','1h':'60min','4h':'4hour','1d':'1day' }
+        // 完整14档周期映射（火币HTX支持的period值）
+        const m = {
+          '1m':'1min','3m':'3min','5m':'5min','15m':'15min','30m':'30min',
+          '1h':'60min','2h':'2hour','4h':'4hour','6h':'6hour','12h':'12hour',
+          '1d':'1day','3d':'3day','1w':'1week',
+          '1s':'1min'  // 秒线HTX不支持，降级到1min
+        }
         return `https://api.huobi.pro/market/history/kline?symbol=btcusdt&period=${m[iv]||'15min'}&size=${lim}`
       },
       parse: raw => {

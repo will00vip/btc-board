@@ -480,6 +480,8 @@
           <input class="vip-code-input" placeholder="输入激活码" bindinput="onCodeInput" value="{{codeInput}}" />
           <view class="vip-code-btn" bindtap="submitCode"><text>激活</text></view>
         </view>
+        <!-- 隐藏密码入口（内部使用） -->
+        <text class="vip-pwd-hint" bindtap="showPwdEntry">···</text>
       </view>
     </view>
   </view>

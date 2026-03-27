@@ -819,6 +819,10 @@ page {
   border-radius: 14rpx; padding: 16rpx 28rpx;
   font-size: 26rpx; color: #fff; font-weight: 700; flex-shrink: 0;
 }
+.vip-pwd-hint {
+  display: block; text-align: right; margin-top: 12rpx;
+  font-size: 20rpx; color: rgba(71,85,105,.4); letter-spacing: 4rpx;
+}
 .error-bar {
   margin: 0 18rpx 24rpx; padding: 18rpx 20rpx;
   background: rgba(248,113,113,.07); border: 1rpx solid rgba(248,113,113,.3);
