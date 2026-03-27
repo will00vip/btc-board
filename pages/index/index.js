@@ -108,6 +108,11 @@ Page({
     tp1: '--', tp2: '--', tp3: '--',
     rrRatio: '--',
     winRate: '--',
+    // 无信号时的参考位
+    refSL: '--', refSLPct: '',
+    refTP1: '--', refTP1Pct: '',
+    refTP2: '--', refTP2Pct: '',
+    refTP3: '--', refTP3Pct: '',
     
     // 仓位建议
     posLots: 0,
@@ -922,6 +927,22 @@ Page({
       // AI & 趋势
       isBearTrend,
       aiLabel,
+
+      // 无信号时的参考止盈止损（基于当前价±0.3%）
+      ...(() => {
+        const p = last.close
+        const dist = p * 0.003   // 0.3% 作为参考止损距离
+        const sl  = fmtPrice(p - dist)
+        const tp1r = fmtPrice(p + dist * 1.0)
+        const tp2r = fmtPrice(p + dist * 1.5)
+        const tp3r = fmtPrice(p + dist * 2.5)
+        return {
+          refSL:     sl,    refSLPct:  '-0.30%',
+          refTP1:    tp1r,  refTP1Pct: '+0.30%',
+          refTP2:    tp2r,  refTP2Pct: '+0.45%',
+          refTP3:    tp3r,  refTP3Pct: '+0.75%',
+        }
+      })(),
     })
 
     // 画 K线图

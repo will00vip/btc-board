@@ -280,6 +280,77 @@ page {
 .dc-val.accent { color: #fbbf24; }
 .dc-val.loss   { color: #fb923c; }
 
+/* ─────────── 止盈止损常驻卡 ─────────── */
+.tp-card {
+  margin: 0 18rpx 20rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  border: 1rpx solid rgba(124,58,237,.25);
+  background: rgba(15,25,41,.8);
+}
+.tp-card.long  { border-color: rgba(248,113,113,.35); }
+.tp-card.short { border-color: rgba(52,211,153,.35); }
+.tp-card.ref   { border-color: rgba(96,165,250,.25); }
+
+.tp-card-header {
+  padding: 18rpx 22rpx 14rpx;
+  background: rgba(255,255,255,.03);
+  border-bottom: 1rpx solid rgba(255,255,255,.06);
+}
+.tp-card-title-row {
+  display: flex; align-items: center; gap: 10rpx; margin-bottom: 8rpx;
+}
+.tp-card-icon { font-size: 28rpx; }
+.tp-card-title {
+  font-size: 26rpx; font-weight: 800; color: #e2e8f0; flex: 1;
+}
+.tp-card-badge {
+  padding: 4rpx 14rpx; border-radius: 20rpx; font-size: 20rpx; font-weight: 700;
+}
+.tp-card-badge.signal {
+  background: rgba(248,113,113,.15); color: #fb923c; border: 1rpx solid rgba(248,113,113,.3);
+}
+.tp-card-badge.ref {
+  background: rgba(96,165,250,.12); color: #60a5fa; border: 1rpx solid rgba(96,165,250,.25);
+}
+.tp-meta-row { display: flex; align-items: center; gap: 8rpx; flex-wrap: wrap; }
+.tp-meta-item { font-size: 22rpx; color: #94a3b8; }
+.tp-meta-item.loss   { color: #fb923c; }
+.tp-meta-item.accent { color: #34d399; }
+.tp-meta-item.muted  { color: #475569; }
+.tp-meta-sep { font-size: 20rpx; color: #334155; }
+
+.tp-levels {
+  display: flex; border-top: 1rpx solid rgba(255,255,255,.05);
+}
+.tp-level-item {
+  flex: 1; padding: 16rpx 0 14rpx; text-align: center;
+  border-right: 1rpx solid rgba(255,255,255,.05);
+}
+.tp-level-item:last-child { border-right: none; }
+.tp-level-item.sl { background: rgba(251,146,60,.04); }
+.tp-level-item.t1 { background: rgba(52,211,153,.03); }
+.tp-level-item.t2 { background: rgba(52,211,153,.05); }
+.tp-level-item.t3 { background: rgba(52,211,153,.08); }
+
+.tp-level-label {
+  display: block; font-size: 18rpx; color: #64748b; margin-bottom: 4rpx;
+}
+.tp-level-val {
+  display: block; font-size: 26rpx; font-weight: 900; margin-bottom: 3rpx;
+}
+.tp-level-val.loss   { color: #fb923c; }
+.tp-level-val.profit { color: #34d399; }
+.tp-level-pct {
+  display: block; font-size: 18rpx; color: #475569;
+}
+.tp-no-signal-tip {
+  padding: 12rpx 22rpx; text-align: center;
+  font-size: 20rpx; color: #475569;
+  border-top: 1rpx solid rgba(255,255,255,.04);
+}
+
+/* 旧tp-row（信号详情里不再用，保留兼容） */
 .tp-row { display: flex; border-top: 1rpx solid #1e293b; }
 .tp-item { flex: 1; padding: 14rpx 0; text-align: center; border-right: 1rpx solid #1e293b; }
 .tp-item:last-child { border-right: none; }
@@ -287,6 +358,8 @@ page {
 .tp-val   { display: block; font-size: 24rpx; font-weight: 800; }
 .tp-val.long  { color: #f87171; }
 .tp-val.short { color: #34d399; }
+
+
 
 /* ─────────── 指标卡 2×4 ─────────── */
 .ind-grid {
