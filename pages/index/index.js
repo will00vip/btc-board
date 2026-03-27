@@ -180,6 +180,14 @@ Page({
     periods: PERIODS,
     tips: TIPS,
 
+    // 大趋势独立周期
+    trendInterval: '4h',
+    trendPeriods: [
+      { iv: '4h',  label: '4小时' },
+      { iv: '1d',  label: '日线' },
+      { iv: '1w',  label: '周线' },
+    ],
+
     // 价格
     curPrice: '--', priceChange: '--', priceDir: '',
     price4hChange: '--', price24hChange: '--', vol24h: '--',
@@ -743,6 +751,34 @@ Page({
       setTimeout(tick, 16)
     }
     tick()
+  },
+
+  // 大趋势独立周期切换
+  async switchTrendInterval(e) {
+    const iv = e.currentTarget.dataset.iv
+    this.setData({ trendInterval: iv, trendLabel: '加载中…', trendDesc: '' })
+    try {
+      // 拉对应周期 K 线（取 120 根够算 MA60）
+      const limitMap = { '4h': 120, '1d': 120, '1w': 60 }
+      const bars = await fetchKlines(iv, limitMap[iv] || 120)
+      const trendInfo  = calcTrend(bars)
+      const energyInfo = calcEnergyBalance(bars)
+      this.setData({
+        trendLabel:  trendInfo ? trendInfo.trendLabel : '--',
+        trendColor:  trendInfo ? trendInfo.trendColor  : 'neutral',
+        trendDesc:   trendInfo ? trendInfo.trendDesc   : '--',
+        supportZone: trendInfo ? trendInfo.supportZone : '--',
+        resistZone:  trendInfo ? trendInfo.resistZone  : '--',
+        trendMa20:   trendInfo ? trendInfo.ma20 : '--',
+        trendMa60:   trendInfo ? trendInfo.ma60 : '--',
+        bullPct:         energyInfo ? energyInfo.bullPct   : 50,
+        bearPct:         energyInfo ? energyInfo.bearPct   : 50,
+        domLabel:        energyInfo ? energyInfo.domLabel  : '均衡',
+        energyDominance: energyInfo ? energyInfo.dominance : 'neutral',
+      })
+    } catch(e) {
+      this.setData({ trendLabel: '加载失败', trendDesc: e.message || '网络错误' })
+    }
   },
 
   switchInterval(e) {

@@ -33,22 +33,20 @@
     <view class="price-hero-right-blank"></view>
   </view>
 
-  <!-- ══ 周期切换栏 ══ -->
-  <view class="period-bar">
-    <view
-      class="period-btn {{interval === item.iv ? 'active' : ''}}"
-      wx:for="{{periods}}" wx:key="iv" wx:item="item"
-      bindtap="switchInterval"
-      data-iv="{{item.iv}}"
-      data-label="{{item.label}}"
-    >{{item.iv}}</view>
-  </view>
-
   <!-- ══ 大趋势判断卡 ══ -->
   <view class="trend-card">
     <view class="trend-card-header">
       <text class="trend-card-title">📊 近期大趋势</text>
       <text class="trend-label {{trendColor}}">{{trendLabel}}</text>
+    </view>
+    <!-- 大趋势独立周期切换 -->
+    <view class="trend-period-bar">
+      <view
+        class="trend-period-btn {{trendInterval === item.iv ? 'active' : ''}}"
+        wx:for="{{trendPeriods}}" wx:key="iv" wx:item="item"
+        bindtap="switchTrendInterval"
+        data-iv="{{item.iv}}"
+      >{{item.label}}</view>
     </view>
     <text class="trend-desc">{{trendDesc}}</text>
     <view class="trend-zones">
@@ -251,8 +249,20 @@
 
 
   <!-- ══ K线图 Canvas ══ -->
-  <view class="section-title-plain">
-    <text>📈 K线图</text>
+  <view class="section-title-plain kline-title-row">
+    <view class="kline-title-left">
+      <text class="kline-section-icon">📈</text>
+      <!-- 周期切换按钮（紧贴K线图标题） -->
+      <view class="period-bar-inline">
+        <view
+          class="period-btn-sm {{interval === item.iv ? 'active' : ''}}"
+          wx:for="{{periods}}" wx:key="iv" wx:item="item"
+          bindtap="switchInterval"
+          data-iv="{{item.iv}}"
+          data-label="{{item.label}}"
+        >{{item.iv}}</view>
+      </view>
+    </view>
     <view style="display:flex;align-items:center;gap:10rpx;">
       <text class="kview-badge">{{klineView}}根/屏</text>
       <view class="chart-legend">

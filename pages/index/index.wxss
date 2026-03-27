@@ -63,6 +63,18 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
 .trend-label.bear      { color: #26a69a; background: rgba(38,166,154,.15); }
 .trend-label.bear_weak { color: #6e7681; background: rgba(110,118,129,.15); }
 .trend-label.neutral   { color: #8b949e; background: rgba(139,148,158,.12); }
+
+/* 大趋势独立周期切换 */
+.trend-period-bar { display: flex; gap: 10rpx; margin-bottom: 14rpx; }
+.trend-period-btn {
+  font-size: 22rpx; padding: 6rpx 20rpx; border-radius: 14rpx;
+  background: rgba(255,255,255,.06); color: #6e7681; border: 1rpx solid #21262d;
+}
+.trend-period-btn.active {
+  background: rgba(88,166,255,.18); color: #58a6ff; border-color: rgba(88,166,255,.4);
+  font-weight: 700;
+}
+
 .trend-desc { font-size: 22rpx; color: #6e7681; display: block; margin-bottom: 16rpx; }
 .trend-zones { display: flex; align-items: center; gap: 0; margin-bottom: 12rpx; }
 .trend-zone-item { flex: 1; }
@@ -149,20 +161,27 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
 /* ═══════════════════════════════
    周期切换
 ═══════════════════════════════ */
-.period-bar {
-  display: flex; gap: 10rpx; padding: 0 24rpx 16rpx;
-  background: transparent; overflow-x: auto;
-}
-.period-btn {
+/* K线图标题行（含内联周期切换） */
+.kline-title-row { flex-wrap: wrap; gap: 8rpx; }
+.kline-title-left { display: flex; align-items: center; gap: 12rpx; flex: 1; min-width: 0; }
+.kline-section-icon { font-size: 28rpx; flex-shrink: 0; }
+
+/* 内联周期按钮（紧凑小号，贴K线图） */
+.period-bar-inline { display: flex; gap: 6rpx; flex-wrap: nowrap; overflow-x: auto; }
+.period-btn-sm {
   flex-shrink: 0; background: rgba(255,255,255,.05); border: 1rpx solid #21262d;
-  border-radius: 12rpx; padding: 10rpx 22rpx; font-size: 24rpx; color: #484f58;
-  transition: all .2s;
+  border-radius: 10rpx; padding: 6rpx 16rpx; font-size: 22rpx; color: #484f58;
 }
-.period-btn.active {
+.period-btn-sm.active {
   background: linear-gradient(135deg,rgba(88,166,255,.25),rgba(88,166,255,.1));
   border-color: #58a6ff; color: #58a6ff; font-weight: 800;
-  box-shadow: 0 0 12px rgba(88,166,255,.2);
 }
+
+/* 旧 period-bar 保留兜底（已无独立渲染，仅防止报错） */
+.period-bar { display: none; }
+.period-btn { display: none; }
+
+
 
 /* ═══════════════════════════════
    决策大卡
