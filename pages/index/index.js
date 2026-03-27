@@ -745,6 +745,46 @@ Page({
     const boll     = sig.bollLast ?? { upper: last.close*1.02, mid: last.close, lower: last.close*0.98 }
 
     // 指标卡（2行×4列）—— try/catch防止任何字段缺失导致崩溃
+    // 计算各指标对当前信号方向的贡献分（与calcScore对齐，100分制）
+    const pinDir = (sig.type === 'long' || sig.type === 'short') ? sig.type : null
+    const _scoreMACD = (() => {
+      if (!pinDir) return 0
+      if (sig.dif > sig.dea && sig.dif_prev <= sig.dea_prev) return 20  // 金叉
+      const bar = macdBar
+      if (pinDir === 'long' && bar > 0) return 10
+      if (pinDir === 'short' && bar < 0) return 10
+      return 0
+    })()
+    const _scoreKDJ = (() => {
+      if (!pinDir) return 0
+      if (pinDir === 'long') {
+        if (jVal < 20) return 20
+        if (sig.kVal > sig.dVal && (sig.kVal_prev||0) <= (sig.dVal_prev||0)) return 20
+        if (sig.kVal > sig.dVal) return 10
+      } else {
+        if (jVal > 80) return 20
+        if (sig.kVal < sig.dVal && (sig.kVal_prev||0) >= (sig.dVal_prev||0)) return 20
+        if (sig.kVal < sig.dVal) return 10
+      }
+      return 0
+    })()
+    const _scoreRSI = (() => {
+      if (!pinDir) return 0
+      if (pinDir === 'long') return rsiV < 35 ? 15 : rsiV < 45 ? 8 : 0
+      return rsiV > 65 ? 15 : rsiV > 55 ? 8 : 0
+    })()
+    const _scoreWR = (() => {
+      if (!pinDir) return 0
+      if (pinDir === 'long') return wrV < -80 ? 15 : wrV < -60 ? 8 : 0
+      return wrV > -20 ? 15 : wrV > -40 ? 8 : 0
+    })()
+    const _scoreBOLL = (() => {
+      if (!pinDir) return 0
+      if (pinDir === 'long' && last.close <= boll.lower * 1.005) return 10
+      if (pinDir === 'short' && last.close >= boll.upper * 0.995) return 10
+      return 0
+    })()
+
     let indCards = []
     try { indCards = [
       {
@@ -754,7 +794,8 @@ Page({
         cls: sig.dif > sig.dea ? 'long' : sig.dif < sig.dea ? 'short' : '',
         dot: sig.dif > sig.dea ? 'red' : sig.dif < sig.dea ? 'green' : 'gray',
         state: sig.dif > sig.dea ? '金叉↑多头' : sig.dif < sig.dea ? '死叉↓空头' : '中性',
-        progress: clamp(50 + macdBar / last.close * 5000, 0, 100)
+        progress: clamp(50 + macdBar / last.close * 5000, 0, 100),
+        score: _scoreMACD, maxScore: 20
       },
       {
         name: 'KDJ·J', 
@@ -763,7 +804,8 @@ Page({
         cls: jVal < 20 ? 'long' : jVal > 80 ? 'short' : '',
         dot: jVal < 20 ? 'red' : jVal > 80 ? 'green' : 'gray',
         state: jVal < 20 ? '超卖↑做多' : jVal > 80 ? '超买↓做空' : '中性区',
-        progress: kdjProgress(jVal)
+        progress: kdjProgress(jVal),
+        score: _scoreKDJ, maxScore: 20
       },
       {
         name: 'RSI(14)', 
@@ -772,7 +814,8 @@ Page({
         cls: rsiV < 30 ? 'long' : rsiV > 70 ? 'short' : '',
         dot: rsiV < 30 ? 'red' : rsiV > 70 ? 'green' : 'gray',
         state: rsiV < 30 ? '超卖 做多' : rsiV > 70 ? '超买 做空' : '观望',
-        progress: rsiProgress(rsiV)
+        progress: rsiProgress(rsiV),
+        score: _scoreRSI, maxScore: 15
       },
       {
         name: 'W&R', 
@@ -781,7 +824,8 @@ Page({
         cls: wrV < -80 ? 'long' : wrV > -20 ? 'short' : '',
         dot: wrV < -80 ? 'red' : wrV > -20 ? 'green' : 'gray',
         state: wrV < -80 ? '超卖↑做多' : wrV > -20 ? '超买↓做空' : '观望',
-        progress: wrProgress(wrV)
+        progress: wrProgress(wrV),
+        score: _scoreWR, maxScore: 15
       },
       {
         name: 'BOLL', 
@@ -790,7 +834,8 @@ Page({
         cls: last.close <= boll.lower*1.005 ? 'long' : last.close >= boll.upper*0.995 ? 'short' : '',
         dot: last.close <= boll.lower*1.005 ? 'red' : last.close >= boll.upper*0.995 ? 'green' : 'gray',
         state: last.close <= boll.lower*1.005 ? '下轨↑做多' : last.close >= boll.upper*0.995 ? '上轨↓做空' : '中轨观望',
-        progress: bollProgress(last.close, boll.upper, boll.lower)
+        progress: bollProgress(last.close, boll.upper, boll.lower),
+        score: _scoreBOLL, maxScore: 10
       },
       {
         name: '插针', 
@@ -799,7 +844,8 @@ Page({
         cls: sig.isLongPin ? 'long' : sig.isShortPin ? 'short' : '',
         dot: sig.isLongPin ? 'red' : sig.isShortPin ? 'green' : 'gray',
         state: sig.isLongPin ? '做多信号' : sig.isShortPin ? '做空信号' : '等待插针',
-        progress: 50
+        progress: sig.isLongPin || sig.isShortPin ? 100 : 0,
+        score: sig.isLongPin || sig.isShortPin ? 30 : 0, maxScore: 30
       },
       {
         name: '量比', 
@@ -808,7 +854,7 @@ Page({
           const lastVol = bars[bars.length-2]?.volume ?? 0
           return vol5avg > 0 ? (lastVol/vol5avg).toFixed(2)+'x' : '--'
         })(),
-        tip: sig.c3 ? '✅ 已放量 进场有效' : '❌ 量不足 信号偏弱',
+        tip: sig.c3 ? '✅ 已放量 进场有效' : '量能不足',
         cls: sig.c3 ? 'long' : '',
         dot: sig.c3 ? 'red' : 'gray',
         state: sig.c3 ? '放量有效' : '量能不足',
@@ -816,7 +862,8 @@ Page({
           const vol5avg = bars.slice(-7,-2).reduce((s,b)=>s+b.volume,0)/5
           const lastVol = bars[bars.length-2]?.volume ?? 0
           return vol5avg > 0 ? clamp(lastVol/vol5avg/2*100, 0, 100) : 50
-        })()
+        })(),
+        score: sig.c3 ? (sig.vol_strong ? 30 : 20) : 0, maxScore: 30
       },
       {
         name: '4h趋势', 
@@ -825,7 +872,8 @@ Page({
         cls: chg4h > 2 ? 'long' : chg4h < -2 ? 'short' : '',
         dot: chg4h > 2 ? 'red' : chg4h < -2 ? 'green' : 'gray',
         state: chg4h > 2 ? '多头市场' : chg4h < -2 ? '空头市场' : '震荡观望',
-        progress: clamp(50 + chg4h * 3, 0, 100)
+        progress: clamp(50 + chg4h * 3, 0, 100),
+        score: 0, maxScore: 0
       },
     ] } catch(e) { console.error('indCards build error:', e) }
 

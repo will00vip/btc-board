@@ -94,12 +94,85 @@ page {
 .nav-title { display: none; }
 .nav-sub { display: none; }
 
-/* ─────────── AI评分顶部栏 ─────────── */
+
+/* ─────────── AI评分+指标 合并大卡 ─────────── */
+.ai-ind-card {
+  margin: 0 18rpx 18rpx;
+  background: linear-gradient(160deg, rgba(10,14,28,.96) 0%, rgba(15,20,40,.92) 100%);
+  border: 1rpx solid rgba(59,130,246,.2);
+  border-radius: 24rpx;
+  padding: 20rpx 18rpx 16rpx;
+  box-shadow: 0 4px 24px rgba(0,0,0,.4);
+}
+/* 顶部评分行 */
+.ai-ind-top {
+  display: flex; align-items: flex-start; gap: 20rpx; margin-bottom: 4rpx;
+}
+.ai-ind-right {
+  flex: 1; display: flex; flex-direction: column; gap: 7rpx; padding-top: 4rpx;
+}
+.ai-ind-verdict {
+  font-size: 34rpx; font-weight: 900; color: #64748b;
+}
+.ai-ind-verdict.buy  { color: #f87171; }
+.ai-ind-verdict.short_s { color: #34d399; }
+.ai-ind-verdict.ok   { color: #60a5fa; }
+.ai-ind-verdict.watch{ color: #fbbf24; }
+.ai-ind-verdict.wait, .ai-ind-verdict.no { color: #475569; }
+.ai-ind-signal {
+  font-size: 26rpx; font-weight: 800; color: #60a5fa; letter-spacing: 1rpx;
+}
+/* 入场门槛三行 */
+.ai-ind-threshold {
+  display: flex; flex-direction: row; flex-wrap: wrap; gap: 8rpx; margin-top: 4rpx;
+}
+.ai-thr-item {
+  display: flex; align-items: center; gap: 6rpx; opacity: .45;
+  transition: opacity .3s;
+}
+.ai-thr-item.active-strong, .ai-thr-item.active-ok, .ai-thr-item.active-wait {
+  opacity: 1;
+}
+.ai-thr-dot {
+  width: 12rpx; height: 12rpx; border-radius: 50%; flex-shrink: 0;
+}
+.ai-thr-dot.strong { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,.6); }
+.ai-thr-dot.ok     { background: #60a5fa; box-shadow: 0 0 6px rgba(96,165,250,.6); }
+.ai-thr-dot.wait   { background: #475569; }
+.ai-thr-txt { font-size: 20rpx; color: #94a3b8; font-weight: 600; }
+.ai-thr-item.active-strong .ai-thr-txt { color: #f87171; font-weight: 900; }
+.ai-thr-item.active-ok .ai-thr-txt     { color: #60a5fa; font-weight: 900; }
+.ai-thr-item.active-wait .ai-thr-txt   { color: #64748b; }
+
+/* 分割线 */
+.ai-ind-divider {
+  display: flex; align-items: center; gap: 12rpx;
+  margin: 14rpx 0 12rpx; 
+  border-top: 1rpx solid rgba(59,130,246,.12);
+  padding-top: 12rpx;
+}
+.ai-ind-divider-txt {
+  font-size: 22rpx; color: #475569; font-weight: 700; letter-spacing: 1rpx;
+}
+
+/* 指标分值角标 */
+.ind-score-badge {
+  position: absolute; top: 6rpx; right: 6rpx;
+  background: rgba(255,255,255,.06);
+  border: 1rpx solid rgba(255,255,255,.1);
+  border-radius: 8rpx; padding: 2rpx 7rpx;
+}
+.ind-score-badge.has-score {
+  background: rgba(59,130,246,.18); border-color: rgba(59,130,246,.4);
+}
+.ind-score-num {
+  font-size: 18rpx; font-weight: 900; color: #64748b;
+}
+.ind-score-badge.has-score .ind-score-num { color: #93c5fd; }
+
+/* 旧的顶部栏样式保留（兼容，不影响新卡） */
 .ai-score-top-bar {
-  display: flex; align-items: center; gap: 24rpx;
-  padding: 16rpx 24rpx 12rpx;
-  background: linear-gradient(135deg, rgba(10,14,28,.95) 0%, rgba(15,20,40,.9) 100%);
-  border-bottom: 1rpx solid rgba(59,130,246,.15);
+  display: none;
 }
 .ai-score-top-info {
   flex: 1; display: flex; flex-direction: column; gap: 6rpx;
@@ -607,7 +680,7 @@ page {
 /* ─────────── 指标卡 2×4 ─────────── */
 .ind-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 10rpx; margin: 0 18rpx;
+  gap: 10rpx;
 }
 .ind-card {
   background: rgba(15,20,35,.9); border: 1rpx solid #1e293b;

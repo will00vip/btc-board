@@ -64,18 +64,61 @@
     </view>
   </view>
 
-  <!-- ══ AI评分大圆圈（价格下方） ══ -->
-  <view class="ai-score-top-bar">
-    <view class="ai-score-ring-big {{decisionState}}">
-      <text class="ai-ring-num-big">{{score}}</text>
-      <text class="ai-ring-den-big">/100</text>
-      <text class="ai-ring-label-big">AI评分</text>
+  <!-- ══ AI评分 + 指标卡 合并大卡 ══ -->
+  <view class="ai-ind-card">
+    <!-- 顶部：圆圈 + 评分说明 + 入场建议 -->
+    <view class="ai-ind-top">
+      <view class="ai-score-ring-big {{decisionState}}">
+        <text class="ai-ring-num-big">{{score}}</text>
+        <text class="ai-ring-den-big">/100</text>
+        <text class="ai-ring-label-big">AI评分</text>
+      </view>
+      <view class="ai-ind-right">
+        <text class="ai-ind-verdict {{decisionState}}">{{scoreLabel}}</text>
+        <text class="ai-ind-signal" wx:if="{{aiLabel}}">{{aiLabel}}</text>
+        <view class="ai-score-bar-wrap">
+          <view class="ai-score-bar-fill {{decisionState}}" style="width:{{scoreBar}}%"></view>
+        </view>
+        <!-- 入场分值门槛说明 -->
+        <view class="ai-ind-threshold">
+          <view class="ai-thr-item {{score >= 80 ? 'active-strong' : ''}}">
+            <text class="ai-thr-dot strong"></text>
+            <text class="ai-thr-txt">≥80 强烈推荐</text>
+          </view>
+          <view class="ai-thr-item {{score >= 60 && score < 80 ? 'active-ok' : ''}}">
+            <text class="ai-thr-dot ok"></text>
+            <text class="ai-thr-txt">60~79 建议入场</text>
+          </view>
+          <view class="ai-thr-item {{score < 60 ? 'active-wait' : ''}}">
+            <text class="ai-thr-dot wait"></text>
+            <text class="ai-thr-txt">&lt;60 观望等待</text>
+          </view>
+        </view>
+      </view>
     </view>
-    <view class="ai-score-top-info">
-      <text class="ai-score-top-label {{decisionState}}">{{scoreLabel}}</text>
-      <text class="ai-score-signal-dir" wx:if="{{aiLabel}}">{{aiLabel}}</text>
-      <view class="ai-score-bar-wrap">
-        <view class="ai-score-bar-fill {{decisionState}}" style="width:{{scoreBar}}%"></view>
+
+    <!-- 分割线 -->
+    <view class="ai-ind-divider">
+      <text class="ai-ind-divider-txt">📊 指标评分明细</text>
+    </view>
+
+    <!-- 指标卡片 2×4 网格 -->
+    <view class="ind-grid">
+      <view class="ind-card {{item.cls}}" wx:for="{{indCards}}" wx:key="name" wx:item="item">
+        <!-- 分值角标 -->
+        <view class="ind-score-badge {{item.score > 0 ? 'has-score' : ''}}" wx:if="{{item.maxScore > 0}}">
+          <text class="ind-score-num">+{{item.score}}</text>
+        </view>
+        <view class="ind-top">
+          <view class="ind-dot {{item.dot}}"></view>
+          <text class="ind-name">{{item.name}}</text>
+        </view>
+        <text class="ind-val {{item.cls}}">{{item.val}}</text>
+        <text class="ind-tip">{{item.tip}}</text>
+        <view class="ind-prog-wrap">
+          <view class="ind-prog-fill {{item.cls}}" style="width:{{item.progress}}%"></view>
+        </view>
+        <text class="ind-state {{item.dot}}">{{item.state}}</text>
       </view>
     </view>
   </view>
@@ -251,26 +294,6 @@
           <view class="cond-score-fill short" style="width:{{shortScore}}%"></view>
           <text class="cond-score-txt">{{shortOk}}/4</text>
         </view>
-      </view>
-    </view>
-
-    <!-- 指标卡 -->
-    <view class="section-title-plain" style="margin-top:24rpx;">
-      <text>📊 AI指标分析</text>
-      <text class="section-sub">8项综合评估</text>
-    </view>
-    <view class="ind-grid">
-      <view class="ind-card {{item.cls}}" wx:for="{{indCards}}" wx:key="name" wx:item="item">
-        <view class="ind-top">
-          <view class="ind-dot {{item.dot}}"></view>
-          <text class="ind-name">{{item.name}}</text>
-        </view>
-        <text class="ind-val {{item.cls}}">{{item.val}}</text>
-        <text class="ind-tip">{{item.tip}}</text>
-        <view class="ind-prog-wrap">
-          <view class="ind-prog-fill {{item.cls}}" style="width:{{item.progress}}%"></view>
-        </view>
-        <text class="ind-state {{item.dot}}">{{item.state}}</text>
       </view>
     </view>
 
