@@ -546,20 +546,20 @@ let chartMain, chartVol, chartMACD, chartKDJ, chartRSI;
 const indState = { ma: true, boll: true, macd: true, kdj: true, rsi: false };
 
 const INTERVAL_CFG = {
-  '1s':  { label:'1秒 · 超高频', limit:200 },
-  '1m':  { label:'1分 · 超短线', limit:200 },
-  '3m':  { label:'3分 · 短线',   limit:200 },
-  '5m':  { label:'5分 · 短线',   limit:180 },
-  '15m': { label:'15分 · 主策略',limit:150 },
-  '30m': { label:'30分 · 中线',  limit:120 },
-  '1h':  { label:'1时 · 趋势',   limit:100 },
-  '2h':  { label:'2时 · 趋势',   limit:100 },
-  '4h':  { label:'4时 · 大趋势', limit:80  },
-  '6h':  { label:'6时 · 大趋势', limit:80  },
-  '12h': { label:'12时 · 波段',  limit:60  },
-  '1d':  { label:'1日 · 波段',   limit:60  },
-  '3d':  { label:'3日 · 中长线', limit:40  },
-  '1w':  { label:'1周 · 长线',   limit:30  },
+  '1s':  { label:'1秒 · 超高频', limit:500 },
+  '1m':  { label:'1分 · 超短线', limit:500 },
+  '3m':  { label:'3分 · 短线',   limit:500 },
+  '5m':  { label:'5分 · 短线',   limit:500 },
+  '15m': { label:'15分 · 主策略',limit:480 },
+  '30m': { label:'30分 · 中线',  limit:480 },
+  '1h':  { label:'1时 · 趋势',   limit:480 },
+  '2h':  { label:'2时 · 趋势',   limit:480 },
+  '4h':  { label:'4时 · 大趋势', limit:300 },
+  '6h':  { label:'6时 · 大趋势', limit:300 },
+  '12h': { label:'12时 · 波段',  limit:240 },
+  '1d':  { label:'1日 · 波段',   limit:240 },
+  '3d':  { label:'3日 · 中长线', limit:120 },
+  '1w':  { label:'1周 · 长线',   limit:100 },
 };
 
 // ─── 数据缓存（来自 data.json）───
