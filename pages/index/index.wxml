@@ -242,17 +242,34 @@
     <view class="ai-ind-card">
       <!-- 顶部：圆圈 + 评分说明 + 入场建议 -->
       <view class="ai-ind-top">
+        <!-- AI评分圆圈（换图标） -->
         <view class="ai-score-ring-big {{decisionState}}">
+          <text class="ai-ring-icon">🎯</text>
           <text class="ai-ring-num-big">{{score}}</text>
           <text class="ai-ring-den-big">/100</text>
-          <text class="ai-ring-label-big">AI评分</text>
         </view>
         <view class="ai-ind-right">
           <text class="ai-ind-verdict {{decisionState}}">{{scoreLabel}}</text>
           <text class="ai-ind-signal" wx:if="{{aiLabel}}">{{aiLabel}}</text>
-          <view class="ai-score-bar-wrap">
-            <view class="ai-score-bar-fill {{decisionState}}" style="width:{{scoreBar}}%"></view>
+
+          <!-- 动态分段进度条 -->
+          <view class="ai-prog-track">
+            <view class="ai-prog-fill {{decisionState}}" style="width:{{scoreBar}}%">
+              <view class="ai-prog-glow {{decisionState}}"></view>
+            </view>
+            <view class="ai-prog-seg s1 {{scoreBar >= 20 ? 'lit' : ''}}"></view>
+            <view class="ai-prog-seg s2 {{scoreBar >= 40 ? 'lit' : ''}}"></view>
+            <view class="ai-prog-seg s3 {{scoreBar >= 60 ? 'lit' : ''}}"></view>
+            <view class="ai-prog-seg s4 {{scoreBar >= 80 ? 'lit' : ''}}"></view>
           </view>
+          <view class="ai-prog-labels">
+            <text class="ai-prog-l">0</text>
+            <text class="ai-prog-l">25</text>
+            <text class="ai-prog-l">50</text>
+            <text class="ai-prog-l">75</text>
+            <text class="ai-prog-l">100</text>
+          </view>
+
           <!-- 入场分值门槛说明 -->
           <view class="ai-ind-threshold">
             <view class="ai-thr-item {{score >= 80 ? 'active-strong' : ''}}">

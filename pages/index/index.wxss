@@ -261,26 +261,45 @@ page {
   position: relative; z-index: 1; font-size: 16rpx; color: #3b82f6; font-weight: 700; margin-top: 2rpx;
 }
 
-/* AI评分环（大版，price-hero左侧主显示） */
+/* AI评分环（大版） */
 .ai-score-ring-big {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  width: 130rpx; height: 130rpx; border-radius: 50%;
+  width: 140rpx; height: 140rpx; border-radius: 50%;
   background: conic-gradient(#3b82f6 0%, #06b6d4 60%, rgba(255,255,255,.06) 60%);
-  box-shadow: 0 0 28px rgba(59,130,246,.5);
+  box-shadow: 0 0 32px rgba(59,130,246,.55), inset 0 0 12px rgba(59,130,246,.15);
   position: relative;
+  animation: ring-pulse 3s ease-in-out infinite;
+}
+@keyframes ring-pulse {
+  0%, 100% { box-shadow: 0 0 28px rgba(59,130,246,.5), inset 0 0 12px rgba(59,130,246,.1); }
+  50%       { box-shadow: 0 0 48px rgba(59,130,246,.85), inset 0 0 20px rgba(59,130,246,.25); }
 }
 .ai-score-ring-big::before {
-  content: ''; position: absolute; width: 100rpx; height: 100rpx;
+  content: ''; position: absolute; width: 108rpx; height: 108rpx;
   border-radius: 50%; background: #07090f;
 }
 /* 有信号时颜色变化 */
 .ai-score-ring-big.signal-long {
   background: conic-gradient(#f87171 0%, #fb923c 70%, rgba(255,255,255,.06) 70%);
-  box-shadow: 0 0 28px rgba(248,113,113,.5);
+  box-shadow: 0 0 40px rgba(248,113,113,.6);
+  animation: ring-pulse-long 2s ease-in-out infinite;
+}
+@keyframes ring-pulse-long {
+  0%, 100% { box-shadow: 0 0 32px rgba(248,113,113,.5); }
+  50%       { box-shadow: 0 0 60px rgba(248,113,113,.9); }
 }
 .ai-score-ring-big.signal-short {
   background: conic-gradient(#34d399 0%, #06b6d4 70%, rgba(255,255,255,.06) 70%);
-  box-shadow: 0 0 28px rgba(52,211,153,.5);
+  box-shadow: 0 0 40px rgba(52,211,153,.6);
+  animation: ring-pulse-short 2s ease-in-out infinite;
+}
+@keyframes ring-pulse-short {
+  0%, 100% { box-shadow: 0 0 32px rgba(52,211,153,.5); }
+  50%       { box-shadow: 0 0 60px rgba(52,211,153,.9); }
+}
+/* 圆圈内图标 */
+.ai-ring-icon {
+  position: relative; z-index: 1; font-size: 28rpx; line-height: 1; margin-bottom: 2rpx;
 }
 .ai-ring-num-big {
   position: relative; z-index: 1; font-size: 46rpx; font-weight: 900;
@@ -292,6 +311,60 @@ page {
 .ai-ring-label-big {
   position: relative; z-index: 1; font-size: 20rpx; color: #3b82f6; font-weight: 700; margin-top: 3rpx;
 }
+
+/* ─────────── 动态分段进度条 ─────────── */
+.ai-prog-track {
+  position: relative; height: 14rpx;
+  background: rgba(255,255,255,.06);
+  border-radius: 14rpx; overflow: visible;
+  margin: 6rpx 0 2rpx;
+}
+.ai-prog-fill {
+  height: 100%; border-radius: 14rpx; position: relative;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+  transition: width .8s cubic-bezier(.34,1.56,.64,1);
+  overflow: hidden;
+}
+.ai-prog-fill.buy, .ai-prog-fill.signal-long {
+  background: linear-gradient(90deg, #f87171, #fb923c);
+}
+.ai-prog-fill.short_s, .ai-prog-fill.signal-short {
+  background: linear-gradient(90deg, #34d399, #06b6d4);
+}
+.ai-prog-fill.ok   { background: linear-gradient(90deg, #60a5fa, #818cf8); }
+.ai-prog-fill.watch{ background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+/* 进度条内光晕扫光 */
+.ai-prog-glow {
+  position: absolute; top: 0; right: -20rpx;
+  width: 40rpx; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent);
+  animation: prog-sweep 2s ease-in-out infinite;
+}
+@keyframes prog-sweep {
+  0%   { opacity: 0; transform: translateX(-60rpx); }
+  40%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(20rpx); }
+}
+/* 分段刻度线 */
+.ai-prog-seg {
+  position: absolute; top: -3rpx; width: 2rpx; height: 20rpx;
+  background: rgba(255,255,255,.12); border-radius: 2rpx;
+  transition: background .4s, box-shadow .4s;
+}
+.ai-prog-seg.s1 { left: 25%; }
+.ai-prog-seg.s2 { left: 50%; }
+.ai-prog-seg.s3 { left: 75%; }
+.ai-prog-seg.s4 { left: 100%; }
+.ai-prog-seg.lit {
+  background: rgba(255,255,255,.7);
+  box-shadow: 0 0 8px rgba(255,255,255,.8);
+}
+/* 刻度标签 */
+.ai-prog-labels {
+  display: flex; justify-content: space-between;
+  padding: 0 2rpx; margin-bottom: 4rpx;
+}
+.ai-prog-l { font-size: 17rpx; color: #334155; }
 
 
 
