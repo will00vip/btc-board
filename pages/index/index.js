@@ -185,6 +185,8 @@ Page({
     // ══ 免费体验60秒倒计时（每次进入重置） ══
     const TRIAL_SECS = 60
     // 检查会员有效期
+    // 【开发调试用，上线前删掉这行】
+    // wx.setStorageSync('isVip', true); wx.setStorageSync('vip_exp', 9999999999999)
     let isVip = wx.getStorageSync('isVip') === true
     if (isVip) {
       const exp = wx.getStorageSync('vip_exp') || 0

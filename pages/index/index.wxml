@@ -249,7 +249,7 @@
         <view class="pw-ai-circle">
           <text class="pw-ai-icon">🤖</text>
         </view>
-        <text class="pw-ai-title">DeepSeek AI · 量化信号</text>
+        <text class="pw-ai-title">顶级AI算法 · 量化信号</text>
         <text class="pw-ai-sub">全球顶级算法 · 专业机构同款策略</text>
       </view>
 
@@ -266,7 +266,7 @@
           <text class="pw-feat-icon">🎯</text>
           <view class="pw-feat-text">
             <text class="pw-feat-title">AI插针精准识别</text>
-            <text class="pw-feat-desc">DeepSeek量化模型，胜率72%+</text>
+            <text class="pw-feat-desc">顶级AI量化模型，胜率72%+</text>
           </view>
         </view>
         <view class="pw-feat-item">
