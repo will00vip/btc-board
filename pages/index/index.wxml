@@ -419,18 +419,18 @@
       <view class="vip-price-row">
         <view class="vip-price-card">
           <text class="vip-price-tag">月卡</text>
-          <text class="vip-price-num">¥29</text>
+          <text class="vip-price-num">¥68</text>
           <text class="vip-price-unit">/月</text>
         </view>
         <view class="vip-price-card hot">
           <text class="vip-hot-badge">最划算</text>
           <text class="vip-price-tag">季卡</text>
-          <text class="vip-price-num">¥69</text>
+          <text class="vip-price-num">¥168</text>
           <text class="vip-price-unit">/季</text>
         </view>
         <view class="vip-price-card">
           <text class="vip-price-tag">年卡</text>
-          <text class="vip-price-num">¥199</text>
+          <text class="vip-price-num">¥498</text>
           <text class="vip-price-unit">/年</text>
         </view>
       </view>

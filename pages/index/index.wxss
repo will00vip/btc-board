@@ -647,8 +647,8 @@ page {
 .trend-card-badge.down      { background: rgba(52,211,153,.2);   color: #34d399; }
 .trend-card-badge.bear_weak { background: rgba(148,163,184,.15); color: #94a3b8; }
 .trend-card-badge.neutral   { background: rgba(148,163,184,.12); color: #94a3b8; }
-.trend-badge-icon { font-size: 28rpx; }
-.trend-badge-text { font-size: 27rpx; letter-spacing: 1rpx; }
+.trend-badge-icon { font-size: 44rpx; }
+.trend-badge-text { font-size: 32rpx; font-weight: 900; letter-spacing: 1rpx; }
 .trend-card-desc { font-size: 23rpx; color: rgba(255,255,255,.45); line-height: 1.65; }
 
 .trend-card-mid {
