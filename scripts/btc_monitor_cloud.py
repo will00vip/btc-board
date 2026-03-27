@@ -78,38 +78,78 @@ def calc_macd(closes):
     return dif, dea, hist
 
 
+def calc_rsi(closes, n=14):
+    if len(closes) < n + 1:
+        return 50
+    gains, losses = [], []
+    for i in range(1, len(closes)):
+        d = closes[i] - closes[i-1]
+        gains.append(max(d, 0))
+        losses.append(max(-d, 0))
+    ag = sum(gains[-n:]) / n
+    al = sum(losses[-n:]) / n
+    if al == 0:
+        return 100
+    rs = ag / al
+    return round(100 - 100 / (1 + rs), 1)
+
+
+def calc_kdj(klines, n=9):
+    if len(klines) < n:
+        return 50, 50, 50
+    highs  = [k['high']  for k in klines[-n:]]
+    lows   = [k['low']   for k in klines[-n:]]
+    closes = [k['close'] for k in klines[-n:]]
+    hh = max(highs)
+    ll = min(lows)
+    rsv = (closes[-1] - ll) / (hh - ll) * 100 if hh != ll else 50
+    k_val = rsv * (1/3) + 50 * (2/3)
+    d_val = k_val * (1/3) + 50 * (2/3)
+    j_val = 3 * k_val - 2 * d_val
+    return round(k_val, 1), round(d_val, 1), round(j_val, 1)
+
+
 # ── 推送 ─────────────────────────────────────────────────────────
 
+def push_serverchan(title, content):
+    if not SERVERCHAN_KEY:
+        return False
+    try:
+        r = http_post(
+            'https://sctapi.ftqq.com/' + SERVERCHAN_KEY + '.send',
+            {'title': title, 'desp': content}
+        )
+        errno = r.get('data', {}).get('errno', r.get('errno', '?'))
+        print('[Server] errno=' + str(errno))
+        return errno == 0
+    except Exception as e:
+        print('[Server error] ' + str(e))
+        return False
+
+
+def push_pushdeer(title, content):
+    if not PUSHDEER_KEY:
+        return False
+    try:
+        r = http_post(
+            'https://api2.pushdeer.com/message/push',
+            {'pushkey': PUSHDEER_KEY, 'text': title + '\n' + content, 'type': 'text'}
+        )
+        code = r.get('code', '?')
+        print('[PushDeer] code=' + str(code))
+        return code == 0
+    except Exception as e:
+        print('[PushDeer error] ' + str(e))
+        return False
+
+
 def push(title, content):
-    ok = 0
-    if SERVERCHAN_KEY:
-        try:
-            r = http_post(
-                'https://sctapi.ftqq.com/' + SERVERCHAN_KEY + '.send',
-                {'title': title, 'desp': content}
-            )
-            errno = r.get('data', {}).get('errno', '?')
-            print('[Server] errno=' + str(errno))
-            if errno == 0:
-                ok += 1
-        except Exception as e:
-            print('[Server error] ' + str(e))
-
-    if PUSHDEER_KEY:
-        try:
-            r = http_post(
-                'https://api2.pushdeer.com/message/push',
-                {'pushkey': PUSHDEER_KEY, 'title': title, 'text': content, 'type': 'text'}
-            )
-            code = r.get('code', '?')
-            print('[PushDeer] code=' + str(code))
-            if code == 0:
-                ok += 1
-        except Exception as e:
-            print('[PushDeer error] ' + str(e))
-
-    if ok == 0:
-        print('[push] both failed')
+    ok1 = push_serverchan(title, content)
+    ok2 = push_pushdeer(title, content)
+    if not ok1 and not ok2:
+        print('[push] both channels failed!')
+    else:
+        print('[push] ok sc=' + str(ok1) + ' pd=' + str(ok2))
 
 
 # ── MACD 叉口 ────────────────────────────────────────────────────
@@ -125,36 +165,32 @@ def check_macd_cross(dif, dea, hist, price_now, ts_str):
         return
 
     dist = abs(dif[-1] - dea[-1])
-    strength = 'strong' if dist > 100 else ('mid' if dist > 30 else 'weak')
-    strength_cn = {'strong': 'strong', 'mid': 'mid', 'weak': 'weak'}[strength]
+    strength_cn = '强' if dist > 100 else ('中' if dist > 30 else '弱')
+    axis_pos = '零轴下方' if dif[-1] < 0 else '零轴上方'
 
     if golden:
-        axis = 'below-zero golden (oversold reversal)' if dif[-1] < 0 else 'above-zero golden (bull continue)'
-        title = 'BTC MACD Golden Cross | ' + str(int(price_now)) + 'U | ' + strength_cn
+        title = 'BTC MACD金叉 ' + axis_pos + ' | ' + str(int(price_now)) + 'U | ' + strength_cn
         msg = (
-            'MACD Golden Cross - Bullish Signal\n'
-            '--------------------\n'
-            'Time: ' + ts_str + '\n'
-            'Price: ' + str(round(price_now, 1)) + ' USDT\n'
-            'DIF: ' + str(round(dif[-2], 1)) + ' -> ' + str(round(dif[-1], 1)) + '\n'
-            'DEA: ' + str(round(dea[-2], 1)) + ' -> ' + str(round(dea[-1], 1)) + '\n'
-            'MACD Bar: ' + str(round(hist[-1], 1)) + '\n'
-            'Position: ' + axis + '\n'
-            '\nSuggestion: Consider long, confirm with pin bar'
+            'MACD 金叉 — 看多信号\n'
+            '时间：' + ts_str + '\n'
+            '价格：' + str(round(price_now, 1)) + ' USDT\n'
+            'DIF：' + str(round(dif[-2], 1)) + ' → ' + str(round(dif[-1], 1)) + '\n'
+            'DEA：' + str(round(dea[-2], 1)) + ' → ' + str(round(dea[-1], 1)) + '\n'
+            'MACD柱：' + str(round(hist[-1], 1)) + '\n'
+            '位置：' + axis_pos + ('（超卖区金叉，反转力强）' if dif[-1] < 0 else '（多头持续）') + '\n'
+            '\n建议：关注下影插针，可考虑多单'
         )
     else:
-        axis = 'above-zero dead (overbought reversal)' if dif[-1] > 0 else 'below-zero dead (bear continue)'
-        title = 'BTC MACD Dead Cross | ' + str(int(price_now)) + 'U | ' + strength_cn
+        title = 'BTC MACD死叉 ' + axis_pos + ' | ' + str(int(price_now)) + 'U | ' + strength_cn
         msg = (
-            'MACD Dead Cross - Bearish Signal\n'
-            '--------------------\n'
-            'Time: ' + ts_str + '\n'
-            'Price: ' + str(round(price_now, 1)) + ' USDT\n'
-            'DIF: ' + str(round(dif[-2], 1)) + ' -> ' + str(round(dif[-1], 1)) + '\n'
-            'DEA: ' + str(round(dea[-2], 1)) + ' -> ' + str(round(dea[-1], 1)) + '\n'
-            'MACD Bar: ' + str(round(hist[-1], 1)) + '\n'
-            'Position: ' + axis + '\n'
-            '\nSuggestion: Consider short, confirm with pin bar'
+            'MACD 死叉 — 看空信号\n'
+            '时间：' + ts_str + '\n'
+            '价格：' + str(round(price_now, 1)) + ' USDT\n'
+            'DIF：' + str(round(dif[-2], 1)) + ' → ' + str(round(dif[-1], 1)) + '\n'
+            'DEA：' + str(round(dea[-2], 1)) + ' → ' + str(round(dea[-1], 1)) + '\n'
+            'MACD柱：' + str(round(hist[-1], 1)) + '\n'
+            '位置：' + axis_pos + ('（超买区死叉，反转力强）' if dif[-1] > 0 else '（空头持续）') + '\n'
+            '\n建议：关注上影插针，可考虑空单'
         )
 
     push(title, msg)
@@ -167,20 +203,20 @@ def check_signal():
     hour = now.hour
 
     if 0 <= hour < 5:
-        print('[' + now.strftime('%H:%M') + '] silent hours, skip')
+        print('[' + now.strftime('%H:%M') + '] 静默时段(0-5点)，跳过')
         return
 
-    print('[' + now.strftime('%H:%M') + '] scanning...')
+    print('[' + now.strftime('%H:%M') + '] 开始扫描...')
 
     try:
-        klines = get_klines(interval='15m', limit=40)
-        print('klines: ' + str(len(klines)))
+        klines = get_klines(interval='15m', limit=60)
+        print('K线数量：' + str(len(klines)))
     except Exception as e:
-        print('data error: ' + str(e))
+        print('数据获取失败：' + str(e))
         return
 
     if len(klines) < 10:
-        print('not enough data')
+        print('数据不足')
         return
 
     pin_k     = klines[-2]
@@ -205,6 +241,8 @@ def check_signal():
 
     closes = [k['close'] for k in klines]
     dif, dea, hist = calc_macd(closes)
+    rsi = calc_rsi(closes)
+    k_val, d_val, j_val = calc_kdj(klines)
 
     macd_long_ok  = (len(hist) >= 3 and hist[-2] > hist[-3]) or \
                     (len(dif) >= 3 and dif[-3] < dea[-3] and dif[-2] >= dea[-2])
@@ -219,7 +257,12 @@ def check_signal():
     short_confirm_strong = confirm_k['high'] < h and confirm_k['close'] < confirm_k['open']
     short_confirm_weak   = confirm_k['close'] < h * 0.999
 
-    # ── Long: lower wick pin ─────────────────────────────────────
+    # MA趋势
+    ma20 = round(sum(closes[-20:]) / 20, 1) if len(closes) >= 20 else 0
+    ma60 = round(sum(closes[-60:]) / 60, 1) if len(closes) >= 60 else 0
+    trend = '多头' if price_now > ma20 > ma60 else ('空头' if price_now < ma20 < ma60 else '震荡')
+
+    # ── 做多：下影插针 ─────────────────────────────────────────────
     long_pin = body > 0 and lower_shadow >= body * 1.5 and c > mid
     if long_pin and vol_ok:
         sl   = round(l * 0.9985, 1)
@@ -230,66 +273,65 @@ def check_signal():
 
         score = 0
         details = []
-        details.append('lower wick pin (shadow/body=' + str(round(lower_shadow / body, 1)) + 'x)')
+        details.append('下影插针（影/实=' + str(round(lower_shadow / body, 1)) + '倍）')
         score += 3
         if vol_strong:
-            details.append('huge volume (' + str(vol_ratio) + 'x)')
+            details.append('放量（' + str(vol_ratio) + 'x 超强放量）')
             score += 3
         else:
-            details.append('volume ok (' + str(vol_ratio) + 'x)')
+            details.append('放量（' + str(vol_ratio) + 'x）')
             score += 2
         if macd_long_ok:
-            details.append('MACD ok (DIF=' + str(round(dif[-1], 1)) + ')')
+            details.append('MACD看多（DIF=' + str(round(dif[-1], 1)) + '）')
             score += 2
         else:
-            details.append('MACD no')
+            details.append('MACD中性')
+        if rsi < 40:
+            details.append('RSI超卖（' + str(rsi) + '）')
+            score += 1
         if long_confirm_strong:
-            details.append('confirm K strong')
+            details.append('确认K强（阳线收高）')
             score += 2
         elif long_confirm_weak:
-            details.append('confirm K weak')
+            details.append('确认K弱')
             score += 1
         else:
-            details.append('no confirm K')
+            details.append('确认K待形成')
 
         if score >= 8:
-            level  = 'SUPER STRONG'
-            advice = 'Strongly recommended! Multiple indicators aligned'
-            stars  = '*****'
+            level = '超强信号'; stars = '★★★★★'; advice = '强烈建议参与，多指标共振'
         elif score >= 6:
-            level  = 'STRONG'
-            advice = 'Suggested entry, small position'
-            stars  = '****'
+            level = '强信号'; stars = '★★★★'; advice = '建议轻仓进场，注意止损'
         else:
-            level  = 'NORMAL'
-            advice = 'Wait for confirmation'
-            stars  = '***'
+            level = '普通信号'; stars = '★★★'; advice = '谨慎观察，等待进一步确认'
 
         if score >= 5:
-            title = 'BTC LONG ' + level + ' | ' + str(int(price_now)) + ' | ' + str(score) + '/10'
+            title = 'BTC做多 ' + ('🔥' if score >= 8 else '📈') + level + ' | ' + str(int(price_now)) + ' | ' + str(score) + '/10'
             msg = (
-                'BTC LONG Signal  ' + level + '\n'
-                + stars + '  Score ' + str(score) + '/10  RR 1.5:1\n'
-                '--------------------\n'
-                'Time: ' + ts_str + '\n'
-                'Price: ' + str(round(price_now, 1)) + ' USDT\n'
-                'Dir: LONG (lower wick reversal)\n'
-                '\nSignal:\n' + '\n'.join(details) + '\n'
-                '\nAdvice: ' + advice + '\n'
-                '\nPlan:\n'
-                '  SL   ' + str(sl) + '  (-' + str(round((price_now - sl) / price_now * 100, 2)) + '%)\n'
-                '  TP1  ' + str(tp1) + '  (+' + str(round((tp1 - price_now) / price_now * 100, 2)) + '%)\n'
-                '  TP2  ' + str(tp2) + '  (+' + str(round((tp2 - price_now) / price_now * 100, 2)) + '%)\n'
-                '  TP3  ' + str(tp3) + '  (+' + str(round((tp3 - price_now) / price_now * 100, 2)) + '%)\n'
-                '\nMax 30% position size'
+                'BTC 做多信号  ' + level + '\n'
+                + stars + '  评分 ' + str(score) + '/10  盈亏比1.5:1\n'
+                '————————————————\n'
+                '时间：' + ts_str + '\n'
+                '价格：' + str(round(price_now, 1)) + ' USDT\n'
+                '方向：做多（下影插针反转）\n'
+                '趋势：' + trend + '  MA20=' + str(ma20) + '  MA60=' + str(ma60) + '\n'
+                'RSI：' + str(rsi) + '  KDJ-J：' + str(j_val) + '\n'
+                '\n信号详情：\n' + '\n'.join(['· ' + d for d in details]) + '\n'
+                '\n建议：' + advice + '\n'
+                '\n交易计划：\n'
+                '  止损  ' + str(sl) + '  (-' + str(round((price_now - sl) / price_now * 100, 2)) + '%)\n'
+                '  TP1   ' + str(tp1) + '  (+' + str(round((tp1 - price_now) / price_now * 100, 2)) + '%)\n'
+                '  TP2   ' + str(tp2) + '  (+' + str(round((tp2 - price_now) / price_now * 100, 2)) + '%)\n'
+                '  TP3   ' + str(tp3) + '  (+' + str(round((tp3 - price_now) / price_now * 100, 2)) + '%)\n'
+                '\n仓位建议：不超过总仓位30%'
             )
             print(msg)
             push(title, msg)
         else:
-            print('long score ' + str(score) + ' < 5, skip')
+            print('做多评分' + str(score) + '<5，不推送')
         return
 
-    # ── Short: upper wick pin ────────────────────────────────────
+    # ── 做空：上影插针 ────────────────────────────────────────────
     short_pin = body > 0 and upper_shadow >= body * 1.5 and c < mid
     if short_pin and vol_ok:
         sl   = round(h * 1.0015, 1)
@@ -300,70 +342,69 @@ def check_signal():
 
         score = 0
         details = []
-        details.append('upper wick pin (shadow/body=' + str(round(upper_shadow / body, 1)) + 'x)')
+        details.append('上影插针（影/实=' + str(round(upper_shadow / body, 1)) + '倍）')
         score += 3
         if vol_strong:
-            details.append('huge volume (' + str(vol_ratio) + 'x)')
+            details.append('放量（' + str(vol_ratio) + 'x 超强放量）')
             score += 3
         else:
-            details.append('volume ok (' + str(vol_ratio) + 'x)')
+            details.append('放量（' + str(vol_ratio) + 'x）')
             score += 2
         if macd_short_ok:
-            details.append('MACD ok (DIF=' + str(round(dif[-1], 1)) + ')')
+            details.append('MACD看空（DIF=' + str(round(dif[-1], 1)) + '）')
             score += 2
         else:
-            details.append('MACD no')
+            details.append('MACD中性')
+        if rsi > 60:
+            details.append('RSI超买（' + str(rsi) + '）')
+            score += 1
         if short_confirm_strong:
-            details.append('confirm K strong')
+            details.append('确认K强（阴线收低）')
             score += 2
         elif short_confirm_weak:
-            details.append('confirm K weak')
+            details.append('确认K弱')
             score += 1
         else:
-            details.append('no confirm K')
+            details.append('确认K待形成')
 
         if score >= 8:
-            level  = 'SUPER STRONG'
-            advice = 'Strongly recommended! Multiple indicators aligned'
-            stars  = '*****'
+            level = '超强信号'; stars = '★★★★★'; advice = '强烈建议参与，多指标共振'
         elif score >= 6:
-            level  = 'STRONG'
-            advice = 'Suggested entry, small position'
-            stars  = '****'
+            level = '强信号'; stars = '★★★★'; advice = '建议轻仓做空，注意止损'
         else:
-            level  = 'NORMAL'
-            advice = 'Wait for confirmation'
-            stars  = '***'
+            level = '普通信号'; stars = '★★★'; advice = '谨慎观察，等待进一步确认'
 
         if score >= 5:
-            title = 'BTC SHORT ' + level + ' | ' + str(int(price_now)) + ' | ' + str(score) + '/10'
+            title = 'BTC做空 ' + ('🔥' if score >= 8 else '📉') + level + ' | ' + str(int(price_now)) + ' | ' + str(score) + '/10'
             msg = (
-                'BTC SHORT Signal  ' + level + '\n'
-                + stars + '  Score ' + str(score) + '/10  RR 1.5:1\n'
-                '--------------------\n'
-                'Time: ' + ts_str + '\n'
-                'Price: ' + str(round(price_now, 1)) + ' USDT\n'
-                'Dir: SHORT (upper wick reversal)\n'
-                '\nSignal:\n' + '\n'.join(details) + '\n'
-                '\nAdvice: ' + advice + '\n'
-                '\nPlan:\n'
-                '  SL   ' + str(sl) + '  (+' + str(round((sl - price_now) / price_now * 100, 2)) + '%)\n'
-                '  TP1  ' + str(tp1) + '  (-' + str(round((price_now - tp1) / price_now * 100, 2)) + '%)\n'
-                '  TP2  ' + str(tp2) + '  (-' + str(round((price_now - tp2) / price_now * 100, 2)) + '%)\n'
-                '  TP3  ' + str(tp3) + '  (-' + str(round((price_now - tp3) / price_now * 100, 2)) + '%)\n'
-                '\nMax 30% position size'
+                'BTC 做空信号  ' + level + '\n'
+                + stars + '  评分 ' + str(score) + '/10  盈亏比1.5:1\n'
+                '————————————————\n'
+                '时间：' + ts_str + '\n'
+                '价格：' + str(round(price_now, 1)) + ' USDT\n'
+                '方向：做空（上影插针反转）\n'
+                '趋势：' + trend + '  MA20=' + str(ma20) + '  MA60=' + str(ma60) + '\n'
+                'RSI：' + str(rsi) + '  KDJ-J：' + str(j_val) + '\n'
+                '\n信号详情：\n' + '\n'.join(['· ' + d for d in details]) + '\n'
+                '\n建议：' + advice + '\n'
+                '\n交易计划：\n'
+                '  止损  ' + str(sl) + '  (+' + str(round((sl - price_now) / price_now * 100, 2)) + '%)\n'
+                '  TP1   ' + str(tp1) + '  (-' + str(round((price_now - tp1) / price_now * 100, 2)) + '%)\n'
+                '  TP2   ' + str(tp2) + '  (-' + str(round((price_now - tp2) / price_now * 100, 2)) + '%)\n'
+                '  TP3   ' + str(tp3) + '  (-' + str(round((price_now - tp3) / price_now * 100, 2)) + '%)\n'
+                '\n仓位建议：不超过总仓位30%'
             )
             print(msg)
             push(title, msg)
         else:
-            print('short score ' + str(score) + ' < 5, skip')
+            print('做空评分' + str(score) + '<5，不推送')
         return
 
-    # ── MACD cross ───────────────────────────────────────────────
+    # ── MACD叉口 ─────────────────────────────────────────────────
     check_macd_cross(dif, dea, hist, price_now, ts_str)
 
-    print('[' + now.strftime('%H:%M') + '] no signal (long:' + str(long_pin) +
-          ' short:' + str(short_pin) + ' vol:' + str(vol_ok) + ')')
+    print('[' + now.strftime('%H:%M') + '] 本次无信号 (做多:' + str(long_pin) +
+          ' 做空:' + str(short_pin) + ' 放量:' + str(vol_ok) + ' 量比:' + str(vol_ratio) + ')')
 
 
 if __name__ == '__main__':
