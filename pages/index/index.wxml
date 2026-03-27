@@ -28,18 +28,27 @@
     </view>
   </view>
 
-  <!-- ══ AI 顶部横幅 ══ -->
-  <view class="ai-banner">
-    <view class="ai-banner-inner">
-      <view class="ai-logo-wrap">
-        <text class="ai-logo-text">AI</text>
+  <!-- ══ 合并顶部栏：信号雷达 + AI标识 + 激活状态 ══ -->
+  <view class="top-header">
+    <view class="top-header-inner">
+      <!-- 青蛙LOGO -->
+      <view class="top-frog-wrap">
+        <text class="top-frog-emoji">🐸</text>
       </view>
-      <view class="ai-banner-text">
-        <text class="ai-title">顶级AI量化算法 · 实时行情分析</text>
-        <text class="ai-sub">AI实时解读K线形态 · 插针精准识别 · 胜率实时计算</text>
+      <!-- 标题文字 -->
+      <view class="top-title-block">
+        <text class="top-title-main">BTC/USDT 信号雷达</text>
+        <text class="top-title-sub">{{aiLabel}} · AI量化分析 · 插针精准识别</text>
       </view>
-      <view class="ai-badge">
-        <text class="ai-badge-text">已激活</text>
+      <!-- 右侧：状态点 + 刷新 + 会员 -->
+      <view class="top-right-area">
+        <view class="live-dot {{loading ? 'loading' : ''}}"></view>
+        <view class="nav-refresh-btn" bindtap="refresh">
+          <text>{{loading ? '···' : '↻'}}</text>
+        </view>
+        <view class="top-vip-btn" bindtap="showVipDrawer">
+          <text>{{isVip ? '👑' : '🔒'}}</text>
+        </view>
       </view>
     </view>
   </view>
@@ -51,23 +60,6 @@
       <text class="trial-icon">⏳</text>
       <text class="trial-txt">AI免费体验剩余 <text class="trial-secs {{trialSecs <= 10 ? 'urgent' : ''}}">{{trialSecs}}s</text></text>
       <text class="trial-cta">开通会员 →</text>
-    </view>
-  </view>
-
-  <!-- ══ 顶部导航栏 ══ -->
-  <view class="navbar">
-    <view class="navbar-left">
-      <image class="nav-icon" src="/assets/logo.png" mode="aspectFit" />
-      <view>
-        <text class="nav-title">BTC/USDT 信号雷达</text>
-        <text class="nav-sub">{{aiLabel}}</text>
-      </view>
-    </view>
-    <view class="navbar-right">
-      <view class="live-dot {{loading ? 'loading' : ''}}"></view>
-      <view class="nav-refresh-btn" bindtap="refresh">
-        <text>{{loading ? '···' : '↻'}}</text>
-      </view>
     </view>
   </view>
 
