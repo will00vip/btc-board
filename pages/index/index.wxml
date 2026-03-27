@@ -209,10 +209,10 @@
           <view class="unlock-price-item"><text class="unlock-price-tag">月卡</text><text class="unlock-price-num">¥88</text></view>
           <view class="unlock-price-item hot">
             <text class="unlock-hot-badge">最划算</text>
-            <text class="unlock-price-tag">季卡</text>
-            <text class="unlock-price-num hot-num">¥188</text>
+            <text class="unlock-price-tag">年卡</text>
+            <text class="unlock-price-num hot-num">¥688</text>
           </view>
-          <view class="unlock-price-item"><text class="unlock-price-tag">年卡</text><text class="unlock-price-num">¥688</text></view>
+          <view class="unlock-price-item"><text class="unlock-price-tag">永久</text><text class="unlock-price-num">¥888</text></view>
         </view>
         <view class="unlock-cta" bindtap="showVipModal">
           <text class="unlock-cta-text">👑 立即开通 →</text>
@@ -413,10 +413,10 @@
           <view class="unlock-price-item"><text class="unlock-price-tag">月卡</text><text class="unlock-price-num">¥88</text></view>
           <view class="unlock-price-item hot">
             <text class="unlock-hot-badge">最划算</text>
-            <text class="unlock-price-tag">季卡</text>
-            <text class="unlock-price-num hot-num">¥188</text>
+            <text class="unlock-price-tag">年卡</text>
+            <text class="unlock-price-num hot-num">¥688</text>
           </view>
-          <view class="unlock-price-item"><text class="unlock-price-tag">年卡</text><text class="unlock-price-num">¥688</text></view>
+          <view class="unlock-price-item"><text class="unlock-price-tag">永久</text><text class="unlock-price-num">¥888</text></view>
         </view>
         <view class="unlock-cta" bindtap="showVipModal">
           <text class="unlock-cta-text">👑 立即开通 →</text>
@@ -518,11 +518,6 @@
         </view>
         <view class="vip-price-card hot">
           <text class="vip-hot-badge">最划算</text>
-          <text class="vip-price-tag">季卡</text>
-          <text class="vip-price-num">¥188</text>
-          <text class="vip-price-unit">/季</text>
-        </view>
-        <view class="vip-price-card">
           <text class="vip-price-tag">年卡</text>
           <text class="vip-price-num">¥688</text>
           <text class="vip-price-unit">/年</text>

@@ -3,11 +3,11 @@
 const ADMIN_PWD = '8888'
 
 // 各类型价格（用于统计收入）
-const PRICE_MAP = { month: 88, quarter: 168, year: 498, lifetime: 698 }
+const PRICE_MAP = { month: 88, year: 688, lifetime: 888 }
 // 各类型天数（永久卡用 9999 天）
-const DAYS_MAP  = { month: 31, quarter: 92, year: 365, lifetime: 9999 }
+const DAYS_MAP  = { month: 31, year: 365, lifetime: 9999 }
 // 各类型中文
-const LABEL_MAP = { month: '月卡', quarter: '季卡', year: '年卡', lifetime: '永久卡' }
+const LABEL_MAP = { month: '月卡', year: '年卡', lifetime: '永久卡' }
 
 Page({
   data: {
@@ -15,7 +15,7 @@ Page({
     pwd: '',
     pwdErr: '',
 
-    genType: 'quarter',   // 默认季卡
+    genType: 'year',   // 默认年卡（最划算）
     lastCode: '',
     lastCodeMeta: '',
 
@@ -69,7 +69,6 @@ Page({
 
     let code = ''
     if (type === 'month')    code = `BTC-M-${year}${month}-${rand}`
-    if (type === 'quarter')  code = `BTC-Q-${year}Q${quarter}-${rand}`
     if (type === 'year')     code = `BTC-Y-${year}-${rand}`
     if (type === 'lifetime') code = `BTC-LT-${rand}`
 

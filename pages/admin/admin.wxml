@@ -42,17 +42,13 @@
           bindtap="setGenType" data-type="month"
         >月卡 ¥88</view>
         <view
-          class="type-btn {{genType === 'quarter' ? 'active quarter' : ''}}"
-          bindtap="setGenType" data-type="quarter"
-        >季卡 ¥168</view>
-        <view
           class="type-btn {{genType === 'year' ? 'active year' : ''}}"
           bindtap="setGenType" data-type="year"
-        >年卡 ¥498</view>
+        >年卡 ¥688</view>
         <view
           class="type-btn {{genType === 'lifetime' ? 'active lifetime' : ''}}"
           bindtap="setGenType" data-type="lifetime"
-        >永久 ¥698</view>
+        >永久 ¥888</view>
       </view>
 
       <!-- 生成按钮 -->
