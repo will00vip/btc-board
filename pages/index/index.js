@@ -336,7 +336,7 @@ Page({
     }
 
     // ── 20分钟免费体验 ──
-    const TRIAL_MS    = 20 * 60 * 1000  // 20分钟
+    const TRIAL_MS    = 8 * 60 * 1000   // 8分钟
     let   trialEnd    = wx.getStorageSync('trial_end_ts')
     const now         = Date.now()
     if (!trialEnd) {
