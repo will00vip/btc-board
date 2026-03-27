@@ -1,0 +1,117 @@
+<!-- pages/admin/admin.wxml -->
+<view class="admin-page">
+
+  <!-- 密码验证层 -->
+  <view class="lock-screen" wx:if="{{!unlocked}}">
+    <view class="lock-box">
+      <text class="lock-icon">🔑</text>
+      <text class="lock-title">管理员入口</text>
+      <input
+        class="lock-input"
+        type="number"
+        password="{{true}}"
+        placeholder="输入管理员密码"
+        placeholder-class="lock-placeholder"
+        value="{{pwd}}"
+        bindinput="onPwdInput"
+        maxlength="8"
+      />
+      <view class="lock-btn {{pwd ? 'active' : ''}}" bindtap="submitPwd">
+        <text>进入后台</text>
+      </view>
+      <text class="lock-err" wx:if="{{pwdErr}}">{{pwdErr}}</text>
+    </view>
+  </view>
+
+  <!-- 管理后台主界面 -->
+  <block wx:if="{{unlocked}}">
+
+    <view class="admin-header">
+      <text class="admin-title">🛠 大饼雷达 · 后台管理</text>
+      <text class="admin-sub">激活码生成 & 管理</text>
+    </view>
+
+    <!-- 生成区 -->
+    <view class="gen-card">
+      <text class="card-title">⚡ 一键生成激活码</text>
+
+      <!-- 类型选择 -->
+      <view class="type-row">
+        <view
+          class="type-btn {{genType === 'month' ? 'active month' : ''}}"
+          bindtap="setGenType" data-type="month"
+        >月卡 ¥68</view>
+        <view
+          class="type-btn {{genType === 'quarter' ? 'active quarter' : ''}}"
+          bindtap="setGenType" data-type="quarter"
+        >季卡 ¥168</view>
+        <view
+          class="type-btn {{genType === 'year' ? 'active year' : ''}}"
+          bindtap="setGenType" data-type="year"
+        >年卡 ¥498</view>
+      </view>
+
+      <!-- 生成按钮 -->
+      <view class="gen-btn" bindtap="generateCode">
+        <text class="gen-btn-text">生成激活码 →</text>
+      </view>
+
+      <!-- 生成结果 -->
+      <view class="result-box" wx:if="{{lastCode}}">
+        <view class="result-code-row">
+          <text class="result-code">{{lastCode}}</text>
+          <view class="copy-btn" bindtap="copyCode" data-code="{{lastCode}}">
+            <text>复制</text>
+          </view>
+        </view>
+        <text class="result-meta">{{lastCodeMeta}}</text>
+      </view>
+    </view>
+
+    <!-- 已发出的码 -->
+    <view class="issued-card">
+      <view class="issued-header">
+        <text class="card-title">📋 已发出激活码</text>
+        <text class="issued-count">共 {{issuedCodes.length}} 条</text>
+      </view>
+
+      <view class="issued-empty" wx:if="{{issuedCodes.length === 0}}">
+        <text>暂无记录</text>
+      </view>
+
+      <view
+        class="issued-item {{item.used ? 'used' : 'fresh'}}"
+        wx:for="{{issuedCodes}}"
+        wx:key="code"
+        wx:item="item"
+      >
+        <view class="issued-left">
+          <text class="issued-code">{{item.code}}</text>
+          <text class="issued-info">{{item.type}} · {{item.createdAt}}</text>
+        </view>
+        <view class="issued-right">
+          <text class="issued-status {{item.used ? 'used' : 'fresh'}}">{{item.used ? '已使用' : '未使用'}}</text>
+          <view class="copy-btn sm" bindtap="copyCode" data-code="{{item.code}}">复制</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部统计 -->
+    <view class="stat-row">
+      <view class="stat-item">
+        <text class="stat-num">{{issuedCodes.filter(c => !c.used).length}}</text>
+        <text class="stat-label">未使用</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num sold">{{issuedCodes.filter(c => c.used).length}}</text>
+        <text class="stat-label">已激活</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num gold">¥{{totalRevenue}}</text>
+        <text class="stat-label">预估收入</text>
+      </view>
+    </view>
+
+  </block>
+
+</view>

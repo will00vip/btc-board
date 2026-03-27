@@ -492,7 +492,7 @@
 
   <!-- ══ 底部更新时间 ══ -->
   <view class="footer">
-    <view class="footer-badge">🥞 大饼K线雷达  ·  60s自动嗅探</view>
+    <view class="footer-badge" bindtap="adminTap">🥞 大饼K线雷达  ·  60s自动嗅探</view>
     <text class="footer-txt">最后更新 {{updateTime}}</text>
     <text class="footer-txt">数据来源 🔥 火币HTX  /  🌐 币安镜像</text>
   </view>

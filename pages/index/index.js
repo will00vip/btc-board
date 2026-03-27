@@ -355,6 +355,20 @@ Page({
   onUnload() { clearInterval(this._timer) },
   onPullDownRefresh() { this.loadData().finally(() => wx.stopPullDownRefresh()) },
 
+  // ── 隐藏管理员入口（连点5下跳转） ──
+  _adminTapCount: 0,
+  _adminTapTimer: null,
+  adminTap() {
+    this._adminTapCount = (this._adminTapCount || 0) + 1
+    clearTimeout(this._adminTapTimer)
+    if (this._adminTapCount >= 5) {
+      this._adminTapCount = 0
+      wx.navigateTo({ url: '/pages/admin/admin' })
+    } else {
+      this._adminTapTimer = setTimeout(() => { this._adminTapCount = 0 }, 1500)
+    }
+  },
+
   // ── 免责声明 ──
   closeDisclaimer() {
     wx.setStorageSync('disclaimer_agreed', true)
@@ -399,6 +413,9 @@ Page({
     }
 
     const codeMap = this._validCodes()
+    // 合并管理员动态生成的码
+    const extraCodes = wx.getStorageSync('extra_valid_codes') || {}
+    Object.assign(codeMap, extraCodes)
     const info = codeMap[code]
     if (!info) {
       this.setData({ activateErr: '激活码无效，请检查后重新输入' })
