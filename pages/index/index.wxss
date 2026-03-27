@@ -65,7 +65,7 @@ page {
 .top-title-block { flex: 1; }
 .top-title-main {
   display: block; font-size: 38rpx; font-weight: 900;
-  background: linear-gradient(90deg, #ffd700 0%, #ff9f0a 35%, #ff6b6b 70%, #f0abfc 100%);
+  background: linear-gradient(90deg, #ffd700 0%, #ffb300 40%, #ff9f0a 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   letter-spacing: 2rpx;
   text-shadow: none;
