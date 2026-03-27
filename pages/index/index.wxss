@@ -905,3 +905,149 @@ page {
   font-size: 26rpx; color: rgba(255,255,255,.28);
   padding: 10rpx 0;
 }
+
+/* ══════════════════════════════════════════════
+   付费墙引导卡
+══════════════════════════════════════════════ */
+@keyframes paywall-glow {
+  0%,100%{box-shadow:0 0 30rpx rgba(251,191,36,.2),0 0 80rpx rgba(251,191,36,.08)}
+  50%{box-shadow:0 0 50rpx rgba(251,191,36,.35),0 0 120rpx rgba(251,191,36,.15)}
+}
+@keyframes float-badge {
+  0%,100%{transform:translateY(0)} 50%{transform:translateY(-6rpx)}
+}
+
+.paywall-card {
+  margin: 24rpx 24rpx 0;
+  background: linear-gradient(160deg, #0d1a2e 0%, #090d18 100%);
+  border: 1.5rpx solid rgba(251,191,36,.3);
+  border-radius: 40rpx;
+  padding: 44rpx 36rpx 40rpx;
+  animation: paywall-glow 3s ease-in-out infinite;
+  position: relative; overflow: hidden;
+}
+.paywall-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2rpx;
+  background: linear-gradient(90deg, transparent, rgba(251,191,36,.6), transparent);
+}
+
+/* 顶部标题 */
+.paywall-header { text-align: center; margin-bottom: 36rpx; }
+.paywall-lock { display: block; font-size: 72rpx; margin-bottom: 16rpx; animation: float-badge 2.5s ease-in-out infinite; }
+.paywall-title {
+  display: block; font-size: 46rpx; font-weight: 900;
+  background: linear-gradient(135deg, #fbbf24 0%, #fb923c 60%, #f59e0b 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 12rpx; letter-spacing: 2rpx;
+}
+.paywall-sub { display: block; font-size: 24rpx; color: rgba(255,255,255,.45); letter-spacing: 1rpx; }
+
+/* 模糊预览层 */
+.paywall-preview {
+  position: relative; margin-bottom: 36rpx;
+  background: rgba(255,255,255,.03); border-radius: 28rpx;
+  border: 1rpx solid rgba(255,255,255,.08); padding: 28rpx 24rpx 24rpx;
+  overflow: hidden;
+}
+.preview-decision-card {
+  display: flex; align-items: center; gap: 20rpx; margin-bottom: 20rpx;
+}
+.preview-face-wrap {
+  width: 88rpx; height: 88rpx; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(251,191,36,.2), rgba(251,146,60,.15));
+  border: 2rpx solid rgba(251,191,36,.35);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.preview-face { font-size: 48rpx; }
+.preview-info { flex: 1; }
+.preview-verdict { display: block; font-size: 30rpx; font-weight: 900; color: #fbbf24; margin-bottom: 10rpx; }
+.preview-meta-row { display: flex; gap: 12rpx; flex-wrap: wrap; }
+.preview-meta-tag {
+  font-size: 20rpx; padding: 5rpx 14rpx; border-radius: 14rpx;
+  background: rgba(255,255,255,.08); color: rgba(255,255,255,.6);
+}
+.preview-meta-tag.accent { background: rgba(251,191,36,.15); color: #fbbf24; }
+.preview-score-circle {
+  width: 80rpx; height: 80rpx; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(251,191,36,.2), rgba(217,119,6,.15));
+  border: 2rpx solid rgba(251,191,36,.4);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.preview-score-num { font-size: 34rpx; font-weight: 900; color: #fbbf24; line-height: 1; }
+.preview-score-den { font-size: 16rpx; color: rgba(255,255,255,.4); }
+
+.preview-tp-row { display: flex; gap: 10rpx; }
+.preview-tp-item {
+  flex: 1; text-align: center; padding: 10rpx 0; border-radius: 14rpx;
+  font-size: 18rpx;
+}
+.preview-tp-item.stop { background: rgba(239,83,80,.12); color: rgba(239,83,80,.6); }
+.preview-tp-item.tp1  { background: rgba(38,166,154,.1);  color: rgba(38,166,154,.6); }
+.preview-tp-item.tp2  { background: rgba(38,166,154,.14); color: rgba(38,166,154,.7); }
+.preview-tp-item.tp3  { background: rgba(38,166,154,.18); color: rgba(38,166,154,.8); }
+.preview-tp-val { display: block; font-size: 20rpx; font-weight: 900; margin-top: 4rpx; letter-spacing: 2rpx; }
+
+/* 模糊遮罩 */
+.paywall-blur-mask {
+  position: absolute; inset: 0; border-radius: 28rpx;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, rgba(9,11,16,.05) 0%, rgba(9,11,16,.7) 60%, rgba(9,11,16,.95) 100%);
+}
+
+/* 功能亮点 */
+.paywall-features { margin-bottom: 32rpx; }
+.paywall-feat {
+  display: flex; align-items: flex-start; gap: 20rpx;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid rgba(255,255,255,.06);
+}
+.paywall-feat:last-child { border-bottom: none; }
+.paywall-feat-icon { font-size: 38rpx; flex-shrink: 0; margin-top: 2rpx; }
+.paywall-feat-body { flex: 1; }
+.paywall-feat-name { display: block; font-size: 28rpx; font-weight: 800; color: #f1f5f9; margin-bottom: 5rpx; }
+.paywall-feat-desc { display: block; font-size: 22rpx; color: rgba(255,255,255,.4); }
+
+/* 用户见证 */
+.paywall-testimonial {
+  background: rgba(251,191,36,.07); border: 1rpx solid rgba(251,191,36,.2);
+  border-radius: 20rpx; padding: 24rpx 28rpx; margin-bottom: 32rpx;
+}
+.paywall-quote { display: block; font-size: 24rpx; color: rgba(255,255,255,.6); line-height: 1.8; margin-bottom: 8rpx; font-style: italic; }
+.paywall-quote-author { display: block; font-size: 20rpx; color: rgba(251,191,36,.6); }
+
+/* 定价行 */
+.paywall-price-row { display: flex; gap: 16rpx; margin-bottom: 28rpx; }
+.paywall-price-item {
+  flex: 1; padding: 22rpx 0 18rpx; text-align: center;
+  background: rgba(255,255,255,.04);
+  border: 1.5rpx solid rgba(255,255,255,.1);
+  border-radius: 24rpx; position: relative;
+}
+.paywall-price-item.hot {
+  background: linear-gradient(160deg, rgba(217,119,6,.18), rgba(251,191,36,.12));
+  border-color: rgba(251,191,36,.5);
+  box-shadow: 0 6rpx 24rpx rgba(251,191,36,.15);
+  transform: scale(1.04);
+}
+.paywall-hot-badge {
+  position: absolute; top: -20rpx; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, #d97706, #fbbf24);
+  color: #0d1117; font-size: 18rpx; font-weight: 900;
+  padding: 5rpx 20rpx; border-radius: 20rpx; white-space: nowrap;
+}
+.paywall-price-tag { display: block; font-size: 22rpx; color: rgba(255,255,255,.4); margin-bottom: 6rpx; }
+.paywall-price-num { display: block; font-size: 46rpx; font-weight: 900; color: rgba(255,255,255,.7); line-height: 1; }
+.paywall-price-num.hot-num { color: #fbbf24; }
+
+/* CTA */
+.paywall-cta {
+  background: linear-gradient(135deg, #d97706 0%, #fbbf24 50%, #fb923c 100%);
+  border-radius: 60rpx; padding: 28rpx 0; text-align: center;
+  box-shadow: 0 10rpx 40rpx rgba(251,191,36,.4), 0 0 0 2rpx rgba(251,191,36,.15);
+  margin-bottom: 18rpx;
+  transition: all .2s;
+}
+.paywall-cta-text { font-size: 34rpx; font-weight: 900; color: #0d1117; letter-spacing: 2rpx; }
+.paywall-hint { display: block; text-align: center; font-size: 22rpx; color: rgba(255,255,255,.28); margin-bottom: 12rpx; }
