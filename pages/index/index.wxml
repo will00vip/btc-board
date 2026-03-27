@@ -53,7 +53,18 @@
     </view>
   </view>
 
-  <!-- ══ AI评分大圆圈（最顶部，top-header下方） ══ -->
+  <!-- ══ 价格大头（AI评分上方） ══ -->
+  <view class="price-hero">
+    <text class="price-main {{priceDir}}">{{curPrice}}</text>
+    <view class="price-badges">
+      <text class="price-badge {{priceDir}}">{{priceChange}}</text>
+      <text class="price-badge-plain">4h {{price4hChange}}</text>
+      <text class="price-badge-plain">24h {{price24hChange}}</text>
+      <text class="price-badge-plain">量 {{vol24h}}</text>
+    </view>
+  </view>
+
+  <!-- ══ AI评分大圆圈（价格下方） ══ -->
   <view class="ai-score-top-bar">
     <view class="ai-score-ring-big {{decisionState}}">
       <text class="ai-ring-num-big">{{score}}</text>
@@ -62,7 +73,7 @@
     </view>
     <view class="ai-score-top-info">
       <text class="ai-score-top-label {{decisionState}}">{{scoreLabel}}</text>
-      <text class="ai-score-top-hint">{{aiLabel}}</text>
+      <text class="ai-score-signal-dir" wx:if="{{aiLabel}}">{{aiLabel}}</text>
       <view class="ai-score-bar-wrap">
         <view class="ai-score-bar-fill {{decisionState}}" style="width:{{scoreBar}}%"></view>
       </view>
@@ -79,7 +90,7 @@
     </view>
   </view>
 
-  <!-- ══ 大趋势判断 + 周期切换（最顶部，所有内容之前） ══ -->
+  <!-- ══ 大趋势判断卡 ══ -->
   <view class="frog-trend-card">
     <view class="ftc-left">
       <view class="ftc-frog">{{trendIcon}}</view>
@@ -94,55 +105,24 @@
       </view>
     </view>
   </view>
-  <!-- 周期切换行（紧跟趋势卡） -->
-  <scroll-view class="period-bar-top" scroll-x="true" enhanced="true" show-scrollbar="false">
-    <view
-      class="period-btn-top {{interval === item.iv ? 'active' : ''}}"
-      wx:for="{{periods}}" wx:key="iv" wx:item="item"
-      wx:if="{{item.base || showMorePeriods}}"
-      bindtap="switchInterval"
-      data-iv="{{item.iv}}"
-      data-label="{{item.label}}"
-    >{{item.iv}}</view>
-    <view class="period-more-top" bindtap="toggleMorePeriods">
-      <text>{{showMorePeriods ? '↑' : '···'}}</text>
-    </view>
-  </scroll-view>
-  <!-- 趋势详情行（MA20/MA60/支撑/压力） -->
-  <view class="ftc-detail-row">
-    <view class="ftc-detail-item">
-      <text class="ftc-d-label">MA20</text>
-      <text class="ftc-d-val {{trendMa20Dir}}">{{trendMa20}}</text>
-    </view>
-    <view class="ftc-detail-item">
-      <text class="ftc-d-label">MA60</text>
-      <text class="ftc-d-val {{trendMa60Dir}}">{{trendMa60}}</text>
-    </view>
-    <view class="ftc-detail-item">
-      <text class="ftc-d-label">支撑</text>
-      <text class="ftc-d-val green">{{trendSupport}}</text>
-    </view>
-    <view class="ftc-detail-item">
-      <text class="ftc-d-label">压力</text>
-      <text class="ftc-d-val red">{{trendResist}}</text>
-    </view>
-  </view>
-
-  <!-- ══ 价格大头 ══ -->
-  <view class="price-hero">
-    <text class="price-main {{priceDir}}">{{curPrice}}</text>
-    <view class="price-badges">
-      <text class="price-badge {{priceDir}}">{{priceChange}}</text>
-      <text class="price-badge-plain">4h {{price4hChange}}</text>
-      <text class="price-badge-plain">24h {{price24hChange}}</text>
-      <text class="price-badge-plain">量 {{vol24h}}</text>
-    </view>
-  </view>
 
   <!-- ══ K线图区域（始终可见，在决策卡上方） ══ -->
 
-  <!-- 【K线图标题行 + 图例】 -->
+  <!-- 【K线图Pill周期切换 + 标题行】 -->
   <view class="kline-header">
+    <view class="kline-period-pills">
+      <view
+        class="kpill {{interval === item.iv ? 'kpill-active' : ''}}"
+        wx:for="{{periods}}" wx:key="iv" wx:item="item"
+        wx:if="{{item.base || showMorePeriods}}"
+        bindtap="switchInterval"
+        data-iv="{{item.iv}}"
+        data-label="{{item.label}}"
+      >{{item.iv}}</view>
+      <view class="kpill kpill-more" bindtap="toggleMorePeriods">
+        <text>{{showMorePeriods ? '↑' : '···'}}</text>
+      </view>
+    </view>
     <view class="kline-title-row">
       <text class="kline-title-txt">📈 K线 <text class="kview-badge">{{klineView}}根</text></text>
       <view class="chart-legend">

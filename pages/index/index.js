@@ -954,8 +954,10 @@ Page({
     const isBearTrend = trendColor === 'bear' || trendColor === 'bear_w'
 
     const trendInfo = sig.trendInfo || null
-    const aiScoreHint = score >= 80 ? '强烈看好' : score >= 60 ? '中等把握' : score >= 40 ? '谨慎评估' : '信号偏弱'
-    const aiLabel = `AI量化 · ${aiScoreHint}`
+    // aiLabel: 有信号时显示方向，无信号时空白
+    const aiLabel = hasSignal
+      ? (sig.type === 'long' ? '📈 做多信号' : '📉 做空信号')
+      : ''
 
     this.setData({
       curPrice: fmtPrice(last.close),
