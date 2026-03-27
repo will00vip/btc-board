@@ -1105,7 +1105,8 @@ page {
 
 /* 管理员密码浮窗 */
 .admin-pwd-float {
-  position: fixed; bottom: 120rpx; left: 50%; transform: translateX(-50%);
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 9999; width: 560rpx;
 }
 .admin-pwd-inner {
