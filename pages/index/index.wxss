@@ -20,13 +20,13 @@ page {
   display: flex; align-items: center; gap: 16rpx;
 }
 .top-frog-wrap {
-  width: 68rpx; height: 68rpx; border-radius: 18rpx; flex-shrink: 0;
-  background: linear-gradient(135deg, #1e3a5f, #0e2a4a);
-  border: 1.5rpx solid rgba(59,130,246,.4);
+  width: 72rpx; height: 72rpx; border-radius: 20rpx; flex-shrink: 0;
+  background: linear-gradient(135deg, #1e3a5f, #0c1f3a);
+  border: 1.5rpx solid rgba(96,165,250,.5);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 18px rgba(59,130,246,.3);
+  box-shadow: 0 0 20px rgba(59,130,246,.4);
 }
-.top-frog-emoji { font-size: 38rpx; line-height: 1; }
+.top-frog-emoji { font-size: 44rpx; line-height: 1; }
 .top-title-block { flex: 1; }
 .top-title-main {
   display: block; font-size: 30rpx; font-weight: 900;

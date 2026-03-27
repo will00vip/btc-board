@@ -31,14 +31,14 @@
   <!-- ══ 合并顶部栏：信号雷达 + AI标识 + 激活状态 ══ -->
   <view class="top-header">
     <view class="top-header-inner">
-      <!-- 青蛙LOGO -->
+      <!-- LOGO -->
       <view class="top-frog-wrap">
-        <text class="top-frog-emoji">🐸</text>
+        <text class="top-frog-emoji">📡</text>
       </view>
       <!-- 标题文字 -->
       <view class="top-title-block">
-        <text class="top-title-main">BTC/USDT 信号雷达</text>
-        <text class="top-title-sub">{{aiLabel}} · AI量化分析 · 插针精准识别</text>
+        <text class="top-title-main">大饼 AI 信号雷达</text>
+        <text class="top-title-sub">BTC量化精准信号 · 插针识别</text>
       </view>
       <!-- 右侧：状态点 + 刷新 + 会员 -->
       <view class="top-right-area">
