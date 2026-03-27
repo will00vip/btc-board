@@ -316,8 +316,8 @@ Page({
       this.setData({ showDisclaimer: true })
     }
 
-    // ── VIP状态 ──
-    const isVip = wx.getStorageSync('is_vip') || false
+    // ── VIP状态 ── （开发模式强制true，上线前改回来）
+    const isVip = wx.getStorageSync('is_vip') || true   // TODO: 上线前改 false
     this.setData({ isVip })
 
     wx.createSelectorQuery()
