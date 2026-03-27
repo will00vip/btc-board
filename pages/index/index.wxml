@@ -466,4 +466,55 @@
     </view>
   </view>
 
+  <!-- ══ 会员升级抽屉 ══ -->
+  <view class="vip-drawer-mask" wx:if="{{showVipDrawer}}" bindtap="hideVipDrawer">
+    <view class="vip-drawer" catchtap="">
+      <view class="vip-drawer-header">
+        <text class="vip-drawer-title">👑 开通会员</text>
+        <view class="vip-drawer-close" bindtap="hideVipDrawer"><text>✕</text></view>
+      </view>
+
+      <!-- 当前状态 -->
+      <view class="vip-status-row">
+        <text class="vip-status-icon">{{isVip ? '👑' : '🔒'}}</text>
+        <text class="vip-status-txt">{{isVip ? '已是会员，尽情使用' : '当前未开通，开通后全功能使用'}}</text>
+      </view>
+
+      <!-- 定价 -->
+      <view class="vip-price-row">
+        <view class="vip-price-item month">
+          <text class="vip-price-name">月卡</text>
+          <view class="vip-price-num-wrap"><text class="vip-price-sym">¥</text><text class="vip-price-num">88</text></view>
+          <text class="vip-price-desc">30天无限使用</text>
+        </view>
+        <view class="vip-price-item year hot">
+          <view class="vip-price-hot">🔥 最划算</view>
+          <text class="vip-price-name">年卡</text>
+          <view class="vip-price-num-wrap"><text class="vip-price-sym">¥</text><text class="vip-price-num">688</text></view>
+          <text class="vip-price-desc">月均57元</text>
+        </view>
+        <view class="vip-price-item life">
+          <text class="vip-price-name">永久</text>
+          <view class="vip-price-num-wrap"><text class="vip-price-sym">¥</text><text class="vip-price-num">888</text></view>
+          <text class="vip-price-desc">买断终身</text>
+        </view>
+      </view>
+
+      <!-- 联系开通 -->
+      <view class="vip-cta-btn" bindtap="onCtaContact">
+        <text class="vip-cta-txt">👑 联系作者获取激活码</text>
+      </view>
+      <text class="vip-cta-hint">点击复制微信号 · 加好友付款后获取激活码</text>
+
+      <!-- 已有激活码 -->
+      <view class="vip-code-area">
+        <text class="vip-code-title">已有激活码？直接激活</text>
+        <view class="vip-code-row">
+          <input class="vip-code-input" placeholder="输入激活码" bindinput="onCodeInput" value="{{codeInput}}" />
+          <view class="vip-code-btn" bindtap="submitCode"><text>激活</text></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
 </view>

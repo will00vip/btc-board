@@ -162,6 +162,7 @@ Page({
     codeInput: '',
     pwdInput: '',
     showPwdDialog: false,
+    showVipDrawer: false,
 
     // 空头趋势锁定
     isBearTrend: false,
@@ -1061,6 +1062,10 @@ Page({
   },
   showPwdEntry() { this.setData({ showPwdDialog: true, pwdInput: '' }) },
   closePwdDialog() { this.setData({ showPwdDialog: false }) },
+
+  // ══ 会员升级抽屉 ══
+  showVipDrawer() { this.setData({ showVipDrawer: true }) },
+  hideVipDrawer() { this.setData({ showVipDrawer: false }) },
 
   // ══ 免责声明 ══
   agreeDisclaimer() {

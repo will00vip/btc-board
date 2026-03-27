@@ -780,7 +780,85 @@ page {
   text-align: center; margin-top: 12rpx; margin-bottom: 4rpx;
 }
 
-/* ─────────── 错误提示 ─────────── */
+
+/* ─────────── 会员升级抽屉 ─────────── */
+.vip-drawer-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 150;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.vip-drawer {
+  width: 100%; background: #0a1628;
+  border-radius: 32rpx 32rpx 0 0;
+  border-top: 1.5rpx solid rgba(59,130,246,.35);
+  padding: 28rpx 26rpx 60rpx;
+  box-shadow: 0 -10px 50px rgba(0,0,0,.6), 0 0 40px rgba(59,130,246,.1);
+}
+.vip-drawer-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 22rpx;
+}
+.vip-drawer-title { font-size: 34rpx; font-weight: 900; color: #f1f5f9; }
+.vip-drawer-close {
+  width: 52rpx; height: 52rpx; border-radius: 50%;
+  background: rgba(255,255,255,.07); border: 1rpx solid rgba(255,255,255,.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26rpx; color: #64748b;
+}
+
+.vip-status-row {
+  display: flex; align-items: center; gap: 12rpx;
+  background: rgba(59,130,246,.08); border: 1rpx solid rgba(59,130,246,.2);
+  border-radius: 16rpx; padding: 14rpx 18rpx; margin-bottom: 22rpx;
+}
+.vip-status-icon { font-size: 30rpx; }
+.vip-status-txt  { font-size: 24rpx; color: #93c5fd; font-weight: 600; }
+
+.vip-price-row { display: flex; gap: 14rpx; margin-bottom: 24rpx; }
+.vip-price-item {
+  flex: 1; border-radius: 20rpx; padding: 18rpx 8rpx 14rpx; text-align: center;
+  border: 1.5rpx solid rgba(255,255,255,.1); background: rgba(255,255,255,.03);
+  position: relative; overflow: hidden;
+}
+.vip-price-item.month { border-color: rgba(96,165,250,.3); }
+.vip-price-item.year  { border-color: rgba(251,191,36,.4); background: rgba(251,191,36,.05); }
+.vip-price-item.life  { border-color: rgba(129,140,248,.3); }
+.vip-price-hot {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(90deg, #d97706, #fbbf24);
+  font-size: 17rpx; color: #fff; font-weight: 700;
+  padding: 4rpx 14rpx; border-radius: 0 0 12rpx 12rpx;
+}
+.vip-price-name { display: block; font-size: 22rpx; color: #94a3b8; margin-bottom: 6rpx; margin-top: 20rpx; }
+.vip-price-num-wrap { display: flex; align-items: baseline; justify-content: center; }
+.vip-price-sym { font-size: 20rpx; color: #f1f5f9; font-weight: 700; margin-right: 2rpx; }
+.vip-price-num { font-size: 42rpx; font-weight: 900; color: #f1f5f9; line-height: 1; }
+.vip-price-item.year .vip-price-num { color: #ffd43b; }
+.vip-price-desc { display: block; font-size: 17rpx; color: #64748b; margin-top: 4rpx; }
+
+.vip-cta-btn {
+  background: linear-gradient(135deg, #1d4ed8, #0891b2, #3b82f6);
+  border-radius: 20rpx; padding: 22rpx 0; text-align: center; margin-bottom: 12rpx;
+  box-shadow: 0 6px 24px rgba(59,130,246,.4);
+}
+.vip-cta-txt { font-size: 30rpx; font-weight: 900; color: #fff; letter-spacing: 1rpx; }
+.vip-cta-hint {
+  display: block; font-size: 20rpx; color: #64748b; text-align: center; margin-bottom: 22rpx;
+}
+
+.vip-code-area {
+  border-top: 1rpx solid rgba(255,255,255,.06); padding-top: 20rpx;
+}
+.vip-code-title { display: block; font-size: 22rpx; color: #64748b; margin-bottom: 12rpx; text-align: center; }
+.vip-code-row { display: flex; gap: 12rpx; }
+.vip-code-input {
+  flex: 1; background: rgba(255,255,255,.04); border: 1rpx solid rgba(255,255,255,.12);
+  border-radius: 14rpx; padding: 16rpx 18rpx; font-size: 26rpx; color: #f1f5f9;
+  letter-spacing: 2rpx;
+}
+.vip-code-btn {
+  background: linear-gradient(135deg, #1d4ed8, #0891b2);
+  border-radius: 14rpx; padding: 16rpx 28rpx;
+  font-size: 26rpx; color: #fff; font-weight: 700; flex-shrink: 0;
+}
 .error-bar {
   margin: 0 18rpx 24rpx; padding: 18rpx 20rpx;
   background: rgba(248,113,113,.07); border: 1rpx solid rgba(248,113,113,.3);
