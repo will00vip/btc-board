@@ -213,6 +213,8 @@ Page({
     showDisclaimer: false,
     showVipModal: false,
     isVip: false,
+    activateCode: '',
+    activateErr: '',
 
     // 大趋势折叠状态（已废弃，保留兼容）
     trendExpanded: false,
@@ -318,7 +320,15 @@ Page({
 
     // ── VIP状态 ── （开发模式强制true，上线前改回来）
     const isVip = wx.getStorageSync('is_vip') || true   // TODO: 上线前改 false
-    this.setData({ isVip })
+    // 检查是否到期
+    const expireTs = wx.getStorageSync('vip_expire_ts')
+    if (isVip && expireTs && Date.now() > expireTs) {
+      wx.removeStorageSync('is_vip')
+      wx.removeStorageSync('vip_expire_ts')
+      this.setData({ isVip: false })
+    } else {
+      this.setData({ isVip })
+    }
 
     wx.createSelectorQuery()
       .select('#klineCanvas')
@@ -351,7 +361,74 @@ Page({
     this.setData({ showDisclaimer: false })
   },
 
-  // ── 会员弹窗 ──
+  // ── 激活码验证 ──
+  // 月卡格式 BTC-M-YYYYMM，季卡 BTC-Q-YYYYQn，年卡 BTC-Y-YYYY
+  // 有效码列表（自己收款后对应发哪个码，每期可以加新码进来）
+  _validCodes() {
+    return {
+      // 月卡（2026年各月）
+      'BTC-M-202604': { type: '月卡', days: 31  },
+      'BTC-M-202605': { type: '月卡', days: 31  },
+      'BTC-M-202606': { type: '月卡', days: 30  },
+      'BTC-M-202607': { type: '月卡', days: 31  },
+      'BTC-M-202608': { type: '月卡', days: 31  },
+      'BTC-M-202609': { type: '月卡', days: 30  },
+      // 季卡（2026年各季）
+      'BTC-Q-2026Q2': { type: '季卡', days: 92  },
+      'BTC-Q-2026Q3': { type: '季卡', days: 92  },
+      'BTC-Q-2026Q4': { type: '季卡', days: 91  },
+      // 年卡
+      'BTC-Y-2026':   { type: '年卡', days: 365 },
+      'BTC-Y-2027':   { type: '年卡', days: 365 },
+    }
+  },
+
+  onActivateInput(e) {
+    this.setData({ activateCode: e.detail.value.trim().toUpperCase(), activateErr: '' })
+  },
+
+  submitActivateCode() {
+    const code = this.data.activateCode.trim().toUpperCase()
+    if (!code) return
+
+    // 检查是否已使用
+    const usedCodes = wx.getStorageSync('used_codes') || []
+    if (usedCodes.includes(code)) {
+      this.setData({ activateErr: '该激活码已被使用，请联系作者' })
+      return
+    }
+
+    const codeMap = this._validCodes()
+    const info = codeMap[code]
+    if (!info) {
+      this.setData({ activateErr: '激活码无效，请检查后重新输入' })
+      wx.vibrateShort({ type: 'heavy' })
+      return
+    }
+
+    // 计算到期时间
+    const now = Date.now()
+    const expireTs = now + info.days * 24 * 3600 * 1000
+    const expireDate = new Date(expireTs).toLocaleDateString('zh-CN')
+
+    // 标记已使用 + 保存VIP状态
+    usedCodes.push(code)
+    wx.setStorageSync('used_codes', usedCodes)
+    wx.setStorageSync('is_vip', true)
+    wx.setStorageSync('vip_expire_ts', expireTs)
+    wx.setStorageSync('vip_type', info.type)
+
+    this.setData({ isVip: true, activateErr: '' })
+
+    wx.showModal({
+      title: '🎉 激活成功！',
+      content: `${info.type}已激活，有效期至 ${expireDate}\n感谢支持，好好赚钱！`,
+      showCancel: false,
+      confirmText: '开始使用 →'
+    })
+  },
+
+
   showVipModal() { this.setData({ showVipModal: true }) },
   closeVipModal() { this.setData({ showVipModal: false }) },
   contactVip() {

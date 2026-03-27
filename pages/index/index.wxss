@@ -1051,3 +1051,35 @@ page {
 }
 .paywall-cta-text { font-size: 34rpx; font-weight: 900; color: #0d1117; letter-spacing: 2rpx; }
 .paywall-hint { display: block; text-align: center; font-size: 22rpx; color: rgba(255,255,255,.28); margin-bottom: 12rpx; }
+
+/* 激活码输入区 */
+.activate-wrap { margin-top: 28rpx; padding-top: 28rpx; border-top: 1rpx solid rgba(255,255,255,.08); }
+.activate-row { display: flex; gap: 16rpx; align-items: center; }
+.activate-input {
+  flex: 1; height: 80rpx; padding: 0 24rpx;
+  background: rgba(255,255,255,.06);
+  border: 1.5rpx solid rgba(255,255,255,.12);
+  border-radius: 20rpx;
+  font-size: 26rpx; color: #f1f5f9;
+  letter-spacing: 2rpx;
+}
+.activate-placeholder { color: rgba(255,255,255,.25); font-size: 24rpx; }
+.activate-btn {
+  height: 80rpx; padding: 0 36rpx;
+  background: rgba(255,255,255,.08);
+  border: 1.5rpx solid rgba(255,255,255,.15);
+  border-radius: 20rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28rpx; color: rgba(255,255,255,.3);
+  transition: all .2s; flex-shrink: 0;
+}
+.activate-btn.active {
+  background: linear-gradient(135deg, #d97706, #fbbf24);
+  border-color: transparent;
+  color: #0d1117; font-weight: 900;
+  box-shadow: 0 4rpx 20rpx rgba(251,191,36,.3);
+}
+.activate-err {
+  display: block; margin-top: 14rpx;
+  font-size: 22rpx; color: #ef5350; text-align: center;
+}

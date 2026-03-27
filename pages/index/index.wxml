@@ -159,6 +159,24 @@
         <text class="paywall-cta-text">👑 立即开通 · 查看实时信号 →</text>
       </view>
       <text class="paywall-hint">开通后即时解锁 · 联系作者激活</text>
+
+      <!-- 激活码输入区 -->
+      <view class="activate-wrap">
+        <view class="activate-row">
+          <input
+            class="activate-input"
+            placeholder="输入激活码"
+            placeholder-class="activate-placeholder"
+            value="{{activateCode}}"
+            bindinput="onActivateInput"
+            maxlength="20"
+          />
+          <view class="activate-btn {{activateCode ? 'active' : ''}}" bindtap="submitActivateCode">
+            <text>激活</text>
+          </view>
+        </view>
+        <text class="activate-err" wx:if="{{activateErr}}">{{activateErr}}</text>
+      </view>
     </view>
   </block>
 
