@@ -4,20 +4,20 @@ const { macd: calcMACD, boll: calcBOLL, ema: calcEMA } = require('../../utils/in
 
 // 完整周期列表（对标交易所风格）
 const PERIODS = [
-  { iv: '1s',  label: '1秒',   limit: 200 },
-  { iv: '1m',  label: '1分',   limit: 200 },
-  { iv: '3m',  label: '3分',   limit: 200 },
-  { iv: '5m',  label: '5分',   limit: 180 },
-  { iv: '15m', label: '15分',  limit: 150 },
-  { iv: '30m', label: '30分',  limit: 120 },
-  { iv: '1h',  label: '1时',   limit: 100 },
-  { iv: '2h',  label: '2时',   limit: 100 },
-  { iv: '4h',  label: '4时',   limit: 80  },
-  { iv: '6h',  label: '6时',   limit: 80  },
-  { iv: '12h', label: '12时',  limit: 60  },
-  { iv: '1d',  label: '1日',   limit: 60  },
-  { iv: '3d',  label: '3日',   limit: 40  },
-  { iv: '1w',  label: '1周',   limit: 30  },
+  { iv: '1s',  label: '1秒',   limit: 500 },
+  { iv: '1m',  label: '1分',   limit: 500 },
+  { iv: '3m',  label: '3分',   limit: 500 },
+  { iv: '5m',  label: '5分',   limit: 500 },
+  { iv: '15m', label: '15分',  limit: 480 },
+  { iv: '30m', label: '30分',  limit: 480 },
+  { iv: '1h',  label: '1时',   limit: 480 },
+  { iv: '2h',  label: '2时',   limit: 480 },
+  { iv: '4h',  label: '4时',   limit: 300 },
+  { iv: '6h',  label: '6时',   limit: 300 },
+  { iv: '12h', label: '12时',  limit: 240 },
+  { iv: '1d',  label: '1日',   limit: 240 },
+  { iv: '3d',  label: '3日',   limit: 120 },
+  { iv: '1w',  label: '1周',   limit: 100 },
 ]
 
 const TIPS = [
@@ -244,7 +244,7 @@ Page({
     loading: false,
     errorMsg: '',
     showTips: false,
-    klineView: 60,    // 当前K线视窗根数（火币默认约60根）
+    klineView: 120,   // 当前K线视窗根数，初始120根
     
     // 风控状态
     riskStatus: 'normal',        // 'normal'正常, 'cooldown'冷却中, 'max_loss'超日亏限
@@ -278,9 +278,9 @@ Page({
     this._dragStartX  = 0
     this._dragStartOff= 0
     this._isDragging  = false
-    this._view        = 60     // 默认60根（火币风格默认视窗）
+    this._view        = 120    // 默认120根
     this._pinchStartDist = 0
-    this._pinchStartView = 60
+    this._pinchStartView = 120
     this._isPinching  = false
     this._kvCache     = {}     // 多周期缓存: { '15m': { sig, ts }, ... }
     wx.createSelectorQuery()
@@ -621,7 +621,7 @@ Page({
         this._isDragging     = false
         this._touchMoved     = false
         this._pinchStartDist = dist
-        this._pinchStartView = this._view || 60
+        this._pinchStartView = this._view || 120
         this.setData({ touchIdx: -1 })
         return
       }
@@ -631,7 +631,7 @@ Page({
         // 两指靠拢 → dist变小 → 缩小 → VIEW变大（看更多根，更全局）
         const scale   = this._pinchStartDist / dist  // <1拉开，>1靠拢
         const newView = Math.round(this._pinchStartView * scale)
-        this._view = Math.max(10, Math.min(120, newView))
+        this._view = Math.max(10, Math.min(480, newView))
         this.setData({ klineView: this._view })
         this._drawChart(null)
         return
@@ -769,9 +769,9 @@ Page({
     this._dragOffset = 0
     this._allBars    = null
     this._chartData  = null
-    this._view       = 60
+    this._view       = 120
 
-    this.setData({ interval: iv, intervalLabel: label, klineView: 60 })
+    this.setData({ interval: iv, intervalLabel: label, klineView: 120 })
 
     // 有缓存且 < 2分钟：立即渲染，后台静默更新
     const cache = this._kvCache[iv]
