@@ -773,10 +773,27 @@ Page({
 
     this.setData({ interval: iv, intervalLabel: label, klineView: 60 })
 
-    // 直接强制拉最新数据（不走缓存），保证切换立刻刷新
-    this._kvCache[iv] = null
-    this.loadData(false)
+    // 有缓存且 < 2分钟：立即渲染，后台静默更新
+    const cache = this._kvCache[iv]
+    const cacheAge = cache ? (Date.now() - cache.ts) : Infinity
+    if (cache && cacheAge < 120000) {
+      this._renderAll(cache.sig)          // 秒切：先显示缓存
+      this._silentRefresh(iv)             // 后台刷新
+    } else {
+      this.loadData(false)                // 无缓存：正常拉
+    }
   },
+
+  // 后台静默刷新（不显示loading）
+  async _silentRefresh(iv) {
+    try {
+      const sig = await detectSignal(iv)
+      this._kvCache[iv] = { sig, ts: Date.now() }
+      if (this.data.interval === iv) this._renderAll(sig)  // 仍在这个周期才更新
+    } catch(e) { /* 静默忽略 */ }
+  },
+
+
 
   refresh() { this.loadData(false) },
   toggleTips() { this.setData({ showTips: !this.data.showTips }) },

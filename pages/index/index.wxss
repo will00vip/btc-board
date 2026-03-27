@@ -165,39 +165,41 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
   border-color: #58a6ff; color: #58a6ff; font-weight: 800;
 }
 
-/* 行2：大趋势内嵌条 */
+/* 行2：大趋势内嵌条（放大版） */
 .trend-inline-bar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 8rpx 20rpx; background: rgba(255,255,255,.03);
-  border-top: 1rpx solid rgba(255,255,255,.06);
-  border-bottom: 1rpx solid rgba(255,255,255,.04);
+  padding: 14rpx 20rpx;
+  background: rgba(255,255,255,.04);
+  border-top: 1rpx solid rgba(255,255,255,.08);
+  border-bottom: 1rpx solid rgba(255,255,255,.06);
 }
-.trend-inline-left { display: flex; align-items: center; gap: 10rpx; }
-.trend-inline-icon { font-size: 22rpx; }
-.trend-inline-title { font-size: 22rpx; color: #6e7681; }
+.trend-inline-left { display: flex; align-items: center; gap: 12rpx; }
+.trend-inline-icon { font-size: 28rpx; }
+.trend-inline-title { font-size: 26rpx; color: #8b949e; font-weight: 600; }
 .trend-inline-label {
-  font-size: 22rpx; font-weight: 800; padding: 2rpx 12rpx; border-radius: 8rpx;
+  font-size: 26rpx; font-weight: 900; padding: 4rpx 18rpx; border-radius: 10rpx; letter-spacing: 1rpx;
 }
-.trend-inline-label.bull      { color: #ff4d6d; background: rgba(255,77,109,.12); }
-.trend-inline-label.bull_weak { color: #ffa657; background: rgba(255,166,87,.12); }
-.trend-inline-label.bear      { color: #26a69a; background: rgba(38,166,154,.12); }
-.trend-inline-label.bear_weak { color: #6e7681; background: rgba(110,118,129,.12); }
-.trend-inline-label.neutral   { color: #8b949e; background: rgba(139,148,158,.10); }
-.trend-inline-right { display: flex; align-items: center; gap: 6rpx; }
-.trend-inline-zone  { font-size: 20rpx; color: #6e7681; }
-.trend-inline-sep   { font-size: 18rpx; color: #30363d; }
+.trend-inline-label.bull      { color: #ff4d6d; background: rgba(255,77,109,.18); }
+.trend-inline-label.bull_weak { color: #ffa657; background: rgba(255,166,87,.18); }
+.trend-inline-label.bear      { color: #26a69a; background: rgba(38,166,154,.18); }
+.trend-inline-label.bear_weak { color: #6e7681; background: rgba(110,118,129,.15); }
+.trend-inline-label.neutral   { color: #8b949e; background: rgba(139,148,158,.12); }
+.trend-inline-right { display: flex; align-items: center; gap: 8rpx; }
+.trend-inline-zone  { font-size: 22rpx; color: #6e7681; }
+.trend-inline-sep   { font-size: 20rpx; color: #30363d; }
 
 /* 行3：大趋势折叠详情 */
 .trend-detail-wrap {
   display: flex; align-items: center; justify-content: flex-end;
-  padding: 4rpx 20rpx; background: rgba(0,0,0,.15);
-  border-bottom: 1rpx solid rgba(255,255,255,.04);
+  padding: 6rpx 20rpx; background: rgba(0,0,0,.18);
+  border-bottom: 1rpx solid rgba(255,255,255,.05);
 }
-.trend-detail-wrap.expanded { flex-direction: column; align-items: flex-start; }
-.trend-detail-inner { width: 100%; padding: 10rpx 0 6rpx; }
-.trend-desc-inline  { font-size: 22rpx; color: #6e7681; display: block; margin-bottom: 8rpx; }
+.trend-detail-wrap.expanded { flex-direction: column; align-items: flex-start; padding: 10rpx 20rpx; }
+.trend-detail-inner { width: 100%; padding: 8rpx 0 6rpx; }
+.trend-desc-inline  { font-size: 24rpx; color: #8b949e; display: block; margin-bottom: 10rpx; line-height: 1.5; }
 .trend-ma-row-inline { display: flex; gap: 16rpx; }
-.trend-detail-toggle { font-size: 20rpx; color: #30363d; align-self: flex-end; }
+.trend-detail-toggle { font-size: 22rpx; color: #484f58; align-self: flex-end; padding: 2rpx 0; }
+
 
 /* 旧 period-bar 保留兜底（已无独立渲染） */
 .period-bar { display: none; }
