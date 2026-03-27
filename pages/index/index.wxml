@@ -1,54 +1,77 @@
-<!-- pages/index/index.wxml  v7.5 -->
+<!-- pages/index/index.wxml  v8.1  合规修复版 -->
 <view class="page">
 
-  <!-- ══ 免责声明弹窗（首次打开显示） ══ -->
+  <!-- ══ 首次免责声明弹窗（审核必备） ══ -->
   <view class="disclaimer-mask" wx:if="{{showDisclaimer}}">
-    <view class="disclaimer-box">
-      <view class="disclaimer-icon">⚠️</view>
-      <text class="disclaimer-title">使用须知</text>
-      <view class="disclaimer-content">
-        <text class="disclaimer-txt">本工具仅供学习交流，展示K线技术指标数据。</text>
-        <text class="disclaimer-txt">所有内容均不构成任何投资建议，不对任何交易结果负责。</text>
-        <text class="disclaimer-txt">数字货币交易风险极高，请谨慎操作，量力而行。</text>
-        <text class="disclaimer-txt">继续使用即视为您已知晓并同意以上说明。</text>
+    <view class="disclaimer-dialog">
+      <view class="disc-header">
+        <text class="disc-title">⚠️ 重要风险提示</text>
+        <text class="disc-sub">请仔细阅读后再使用</text>
       </view>
-      <view class="disclaimer-btn" bindtap="closeDisclaimer">
-        <text>我已了解，进入使用 →</text>
+      <scroll-view scroll-y class="disc-scroll">
+        <text class="disc-body">本应用提供的BTC行情数据分析及交易信号，仅供学习和参考使用，不构成任何投资建议。
+
+加密货币交易具有极高风险，价格波动剧烈，您可能损失全部投入资金。
+
+本应用不对任何交易损失承担责任。所有交易决策均由用户自主做出，风险自行承担。
+
+未满18周岁请勿使用。请遵守您所在地区的法律法规。</text>
+      </scroll-view>
+      <view class="disc-btn-row">
+        <view class="disc-reject-btn" bindtap="rejectDisclaimer">
+          <text>不同意，退出</text>
+        </view>
+        <view class="disc-agree-btn" bindtap="agreeDisclaimer">
+          <text>我已阅读并同意</text>
+        </view>
       </view>
+    </view>
+  </view>
+
+  <!-- ══ AI 顶部横幅 ══ -->
+  <view class="ai-banner">
+    <view class="ai-banner-inner">
+      <view class="ai-logo-wrap">
+        <text class="ai-logo-text">AI</text>
+      </view>
+      <view class="ai-banner-text">
+        <text class="ai-title">顶级AI量化算法 · 实时行情分析</text>
+        <text class="ai-sub">AI实时解读K线形态 · 插针精准识别 · 胜率实时计算</text>
+      </view>
+      <view class="ai-badge">
+        <text class="ai-badge-text">已激活</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 60秒倒计时条（非会员且在体验期时显示） ══ -->
+  <view class="trial-bar" wx:if="{{!isVip && inTrial}}">
+    <view class="trial-bar-fill" style="width:{{trialSecs / trialTotal * 100}}%"></view>
+    <view class="trial-bar-content">
+      <text class="trial-icon">⏳</text>
+      <text class="trial-txt">AI免费体验剩余 <text class="trial-secs {{trialSecs <= 10 ? 'urgent' : ''}}">{{trialSecs}}s</text></text>
+      <text class="trial-cta">开通会员 →</text>
     </view>
   </view>
 
   <!-- ══ 顶部导航栏 ══ -->
   <view class="navbar">
     <view class="navbar-left">
-      <view class="nav-radar-icon">
-        <text class="nav-radar-emoji">📡</text>
-        <view class="nav-radar-ring"></view>
-      </view>
-      <view class="nav-title-block">
-        <text class="nav-title">大饼K线雷达</text>
-        <text class="nav-sub">实时K线 · 多指标共振 · 智能预警</text>
+      <image class="nav-icon" src="/assets/logo.png" mode="aspectFit" />
+      <view>
+        <text class="nav-title">BTC/USDT 信号雷达</text>
+        <text class="nav-sub">{{aiLabel}}</text>
       </view>
     </view>
     <view class="navbar-right">
       <view class="live-dot {{loading ? 'loading' : ''}}"></view>
-      <view class="nav-vip-btn {{isVip ? 'vip-on' : ''}}" bindtap="showVipModal">
-        <text class="nav-vip-icon">{{isVip ? '👑' : '🔒'}}</text>
-      </view>
       <view class="nav-refresh-btn" bindtap="refresh">
-        <text class="nav-refresh-text">{{loading ? '⏳' : '🔄'}}</text>
-        <text class="nav-refresh-label">{{loading ? '连接中' : '正常'}}</text>
+        <text>{{loading ? '···' : '↻'}}</text>
       </view>
     </view>
   </view>
 
-  <!-- ══ 免费体验倒计时横条 ══ -->
-  <view class="trial-bar" wx:if="{{inTrial && !isVip}}">
-    <text class="trial-bar-text">🎁 免费体验中 · 剩余 {{trialLeftMin}} 分钟</text>
-    <view class="trial-bar-cta" bindtap="showVipModal"><text>开通会员不中断 →</text></view>
-  </view>
-
-  <!-- ══ 价格大头（全部左对齐，右边留白） ══ -->
+  <!-- ══ 价格大头 ══ -->
   <view class="price-hero">
     <view class="price-hero-left">
       <text class="price-main {{priceDir}}">{{curPrice}}</text>
@@ -59,205 +82,33 @@
         <text class="price-badge-plain">量 {{vol24h}}</text>
       </view>
     </view>
-    <view class="price-hero-right-blank"></view>
-  </view>
-
-  <!-- ══ K线图区域（全部用户可见） ══ -->
-  <view class="kline-section">
-    <view class="kline-title-row">
-      <view class="kline-title-left">
-        <text class="kline-section-icon">📈</text>
-        <view class="period-bar-inline">
-          <view
-            class="period-btn-sm {{interval === item.iv ? 'active' : ''}}"
-            wx:for="{{basicPeriods}}" wx:key="iv" wx:for-item="item"
-            bindtap="switchInterval"
-            data-iv="{{item.iv}}"
-            data-label="{{item.label}}"
-          >{{item.label}}</view>
-          <view class="period-btn-sm more-btn {{periodMenuOpen ? 'active' : ''}}" bindtap="togglePeriodMenu">
-            <text>{{periodMenuOpen ? '收起' : '更多▾'}}</text>
-          </view>
-        </view>
-      </view>
-      <view style="display:flex;align-items:center;gap:10rpx;flex-shrink:0;">
-        <view class="chart-legend">
-          <text class="leg-boll-u">BOLL↑</text>
-          <text class="leg-boll-l">↓</text>
-          <text class="leg-ma5">MA5</text>
-          <text class="leg-ma10">MA10</text>
-        </view>
-      </view>
-    </view>
-    <view class="period-more-panel" wx:if="{{periodMenuOpen}}">
-      <view
-        class="period-more-btn {{interval === item.iv ? 'active' : ''}}"
-        wx:for="{{morePeriods}}" wx:key="iv" wx:for-item="item"
-        bindtap="switchIntervalFromMenu"
-        data-iv="{{item.iv}}"
-        data-label="{{item.label}}"
-      >{{item.label}}</view>
-    </view>
-  </view>
-  <view class="kcanvas-wrap"
-    bindtouchmove="onKlineTouch"
-    bindtouchend="onKlineTouchEnd"
-    bindtouchstart="onKlineTouchStart"
-  >
-    <canvas type="2d" id="klineCanvas" class="kcanvas"></canvas>
-    <view class="kcanvas-hint" wx:if="{{touchIdx < 0}}">
-      <text>← 单指拖动  ·  双指缩放 →</text>
-    </view>
-    <view class="ktooltip" wx:if="{{touchIdx >= 0}}" style="left:{{tooltipLeft}}px">
-      <text class="ktt-time">{{touchTime}}</text>
-      <view class="ktt-row"><text class="ktt-l">开</text><text class="ktt-v">{{touchO}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">高</text><text class="ktt-v up">{{touchH}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">低</text><text class="ktt-v dn">{{touchL}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">收</text><text class="ktt-v">{{touchC}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">量</text><text class="ktt-v">{{touchV}}</text></view>
-      <view class="ktt-div"></view>
-      <view class="ktt-row"><text class="ktt-l">MACD</text><text class="ktt-v">{{touchMACD}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">DIF</text><text class="ktt-v">{{touchDIF}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">DEA</text><text class="ktt-v">{{touchDEA}}</text></view>
-    </view>
-  </view>
-
-  <!-- ══ 大趋势卡片（所有人可见，真实数据） ══ -->
-  <view class="trend-card-v2 {{trendColor}}">
-    <view class="trend-card-top">
-      <view class="trend-card-title-row">
-        <text class="trend-card-period">{{intervalLabel}} 大趋势</text>
-        <view class="trend-card-badge {{trendColor}}">
-          <text class="trend-badge-icon">{{trendColor === 'bull' ? '🚀' : trendColor === 'down' || trendColor === 'bear' ? '🐸' : trendColor === 'bull_weak' ? '🌤' : '🌧'}}</text>
-          <text class="trend-badge-text">{{trendLabel}}</text>
-        </view>
-      </view>
-      <text class="trend-card-desc">{{trendDesc}}</text>
-    </view>
-    <view class="trend-card-mid">
-      <view class="trend-ma-item"><text class="trend-ma-label">MA20</text><text class="trend-ma-val">{{trendMa20}}</text></view>
-      <view class="trend-ma-divider"></view>
-      <view class="trend-ma-item"><text class="trend-ma-label">MA60</text><text class="trend-ma-val">{{trendMa60}}</text></view>
-      <view class="trend-ma-divider"></view>
-      <view class="trend-ma-item"><text class="trend-ma-label">支撑区</text><text class="trend-ma-val green">{{supportZone}}</text></view>
-      <view class="trend-ma-divider"></view>
-      <view class="trend-ma-item"><text class="trend-ma-label">压力区</text><text class="trend-ma-val red">{{resistZone}}</text></view>
-    </view>
-    <view class="trend-card-bar-wrap">
-      <view class="trend-card-bar-track">
-        <view class="trend-card-bar-fill {{trendColor}}" style="width:{{trendStrength}}%"></view>
-      </view>
-      <text class="trend-card-bar-label">趋势强度 {{trendStrength}}%</text>
-    </view>
-  </view>
-
-  <!-- ══ 风控状态栏（所有人可见） ══ -->
-  <view class="risk-bar {{riskStatus}}">
-    <view class="risk-left">
-      <text class="risk-icon">{{riskStatus === 'normal' ? '✅' : riskStatus === 'cooldown' ? '🧊' : '🛑'}}</text>
-      <text class="risk-txt">{{riskMsg}}</text>
-    </view>
-    <view class="risk-right" wx:if="{{riskStatus !== 'normal'}}">
-      <text class="risk-time">{{cooldownUntil}}</text>
-    </view>
-  </view>
-
-  <!-- ══ 主分析区：空头趋势非会员整体锁定 ══ -->
-
-  <!-- 【情况A】非会员 + 空头趋势 → 整体锁定模糊 -->
-  <view class="bear-lock-wrap" wx:if="{{!isVip && !inTrial && isBearTrend}}">
-    <!-- 模糊底层（假数据预览） -->
-    <view class="bear-lock-blur-bg">
-      <!-- 假多空能量 -->
-      <view class="fake-energy-preview">
-        <view class="fake-ep-bar">
-          <view class="fake-ep-bull" style="width:38%"><text>多 38%</text></view>
-          <view class="fake-ep-bear" style="width:62%"><text>空 62%</text></view>
-        </view>
-      </view>
-      <!-- 假决策卡 -->
-      <view class="fake-decision-preview">
-        <view class="fake-dp-face">📉</view>
-        <view class="fake-dp-info">
-          <text class="fake-dp-verdict">空头信号检测中…</text>
-          <view class="fake-dp-meta">
-            <text class="fake-dp-tag red">📉 做空</text>
-            <text class="fake-dp-tag">胜率 ██%</text>
-            <text class="fake-dp-tag">评分 █/10</text>
-          </view>
-        </view>
-      </view>
-      <!-- 假止盈止损 -->
-      <view class="fake-sl-preview">
-        <view class="fake-slp-item stop"><text class="fake-slp-l">止损</text><text class="fake-slp-v">██████</text></view>
-        <view class="fake-slp-item tp1"><text class="fake-slp-l">TP1</text><text class="fake-slp-v">██████</text></view>
-        <view class="fake-slp-item tp2"><text class="fake-slp-l">TP2</text><text class="fake-slp-v">██████</text></view>
-        <view class="fake-slp-item tp3"><text class="fake-slp-l">TP3</text><text class="fake-slp-v">██████</text></view>
-      </view>
-    </view>
-    <!-- 毛玻璃遮罩 + 解锁CTA -->
-    <view class="bear-lock-mask">
-      <view class="bear-unlock-box">
-        <view class="bear-lock-alert">
-          <text class="bear-lock-alert-icon">🔴</text>
-          <text class="bear-lock-alert-txt">当前空头趋势 · 做空信号分析已就绪</text>
-        </view>
-        <text class="bear-lock-icon">🔐</text>
-        <text class="bear-lock-title">开通会员 · 解锁全部分析</text>
-        <text class="bear-lock-desc">多空能量 · 决策评分 · MACD叉口\n精准止损 · TP1/TP2/TP3 · 仓位建议</text>
-        <view class="unlock-price-row">
-          <view class="unlock-price-item"><text class="unlock-price-tag">月卡</text><text class="unlock-price-num">¥88</text></view>
-          <view class="unlock-price-item hot">
-            <text class="unlock-hot-badge">最划算</text>
-            <text class="unlock-price-tag">年卡</text>
-            <text class="unlock-price-num hot-num">¥688</text>
-          </view>
-          <view class="unlock-price-item"><text class="unlock-price-tag">永久</text><text class="unlock-price-num">¥888</text></view>
-        </view>
-        <view class="unlock-cta" bindtap="showVipModal">
-          <text class="unlock-cta-text">👑 立即开通 →</text>
-        </view>
-        <view class="unlock-code-row">
-          <input
-            class="unlock-code-input"
-            placeholder="已有激活码？输入兑换"
-            placeholder-class="unlock-code-placeholder"
-            value="{{activateCode}}"
-            bindinput="onActivateInput"
-            maxlength="20"
-          />
-          <view class="unlock-code-btn {{activateCode ? 'active' : ''}}" bindtap="submitActivateCode">
-            <text>激活</text>
-          </view>
-        </view>
-        <text class="activate-err" wx:if="{{activateErr}}">{{activateErr}}</text>
-        <text class="hidden-entry" bindtap="adminTap">· · ·</text>
+    <view class="price-hero-right">
+      <view class="ai-score-ring">
+        <text class="ai-ring-num">{{score}}</text>
+        <text class="ai-ring-den">/10</text>
+        <text class="ai-ring-label">AI评分</text>
       </view>
     </view>
   </view>
 
-  <!-- 【情况B】会员/体验期，或非会员但非空头趋势 → 正常显示全部内容 -->
-  <block wx:if="{{isVip || inTrial || !isBearTrend}}">
-
-  <!-- ══ 多空能量对比 ══ -->
-  <view class="energy-card">
-    <view class="energy-header">
-      <text class="energy-title">⚡ 多空能量对比</text>
-      <text class="energy-dom {{energyDominance}}">{{domLabel}}</text>
-    </view>
-    <view class="energy-bar-wrap">
-      <view class="energy-bull-bar" style="width:{{bullPct}}%">
-        <text class="energy-bar-label">多 {{bullPct}}%</text>
-      </view>
-      <view class="energy-bear-bar" style="width:{{bearPct}}%">
-        <text class="energy-bar-label">空 {{bearPct}}%</text>
-      </view>
-    </view>
+  <!-- ══ 周期切换栏 ══ -->
+  <view class="period-bar">
+    <view
+      class="period-btn {{interval === item.iv ? 'active' : ''}}"
+      wx:for="{{periods}}" wx:key="iv" wx:item="item"
+      bindtap="switchInterval"
+      data-iv="{{item.iv}}"
+      data-label="{{item.label}}"
+    >{{item.iv}}</view>
   </view>
 
-  <!-- ══ 决策卡 ══ -->
+  <!-- ══ 决策大卡 ══ -->
   <view class="decision-card {{decisionState}}">
     <view class="decision-glow {{decisionState}}"></view>
+    <!-- AI 角标 -->
+    <view class="ai-corner-tag">
+      <text>🤖 AI量化</text>
+    </view>
     <view class="decision-top">
       <view class="decision-face-wrap {{decisionState}}">
         <text class="decision-face">{{decisionFace}}</text>
@@ -266,7 +117,7 @@
         <text class="decision-verdict">{{decisionVerdict}}</text>
         <text class="decision-sub">{{decisionSub}}</text>
         <view class="decision-meta" wx:if="{{hasSignal}}">
-          <text class="meta-tag">{{signalDir === 'long' ? '📈 做多' : '📉 做空'}}</text>
+          <text class="meta-tag {{signalDir === 'long' ? 'long' : 'short'}}">{{signalDir === 'long' ? '📈 做多' : '📉 做空'}}</text>
           <text class="meta-tag accent">胜率 {{winRate}}%</text>
           <text class="meta-tag">盈亏比 {{rrRatio}}</text>
         </view>
@@ -288,56 +139,10 @@
     </view>
   </view>
 
-  <!-- ══ MACD金叉/死叉 ══ -->
-  <view class="macd-cross-bar {{macdCross.type === 'golden' ? 'golden' : 'dead'}}" wx:if="{{macdCrossShow}}">
-    <text class="macd-cross-icon">{{macdCross.type === 'golden' ? '🟢' : '🔴'}}</text>
-    <view class="macd-cross-info">
-      <text class="macd-cross-title">MACD {{macdCross.type === 'golden' ? '金叉' : '死叉'}} · {{macdCross.strength}}叉</text>
-      <text class="macd-cross-desc">{{macdCross.axisDesc}} | DIF:{{macdCross.dif}} DEA:{{macdCross.dea}}</text>
-    </view>
-    <text class="macd-cross-hint">{{macdCross.type === 'golden' ? '看多▲' : '看空▼'}}</text>
-  </view>
+  <!-- ══ 以下内容：体验期OR会员显示；体验结束+非会员 → 付费墙 ══ -->
+  <block wx:if="{{isVip || inTrial}}">
 
-  <!-- ══ 多空条件感知 ══ -->
-  <view class="section-title-plain">
-    <text>🧭 实时多空条件感知</text>
-    <text class="section-sub">满足条件越多越强</text>
-  </view>
-  <view class="cond-wrap">
-    <view class="cond-col">
-      <view class="cond-col-title long-color">📈 做多条件</view>
-      <view class="cond-item {{item.ok ? 'ok' : 'no'}}" wx:for="{{longConditions}}" wx:key="label" wx:item="item">
-        <text class="cond-icon">{{item.ok ? '✅' : '⬜'}}</text>
-        <view class="cond-text">
-          <text class="cond-label">{{item.label}}</text>
-          <text class="cond-tip">{{item.tip}}</text>
-        </view>
-      </view>
-      <view class="cond-score-bar">
-        <view class="cond-score-fill long" style="width:{{longScore}}%"></view>
-        <text class="cond-score-txt">{{longOk}}/4</text>
-      </view>
-    </view>
-    <view class="cond-divider"></view>
-    <view class="cond-col">
-      <view class="cond-col-title short-color">📉 做空条件</view>
-      <view class="cond-item {{item.ok ? 'ok' : 'no'}}" wx:for="{{shortConditions}}" wx:key="label" wx:item="item">
-        <text class="cond-icon">{{item.ok ? '✅' : '⬜'}}</text>
-        <view class="cond-text">
-          <text class="cond-label">{{item.label}}</text>
-          <text class="cond-tip">{{item.tip}}</text>
-        </view>
-      </view>
-      <view class="cond-score-bar">
-        <view class="cond-score-fill short" style="width:{{shortScore}}%"></view>
-        <text class="cond-score-txt">{{shortOk}}/4</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- ══ 止盈止损区 ══ -->
-  <!-- 会员/体验期 -->
-  <view wx:if="{{isVip || inTrial}}">
+    <!-- 信号详情（有信号时） -->
     <view class="signal-detail {{signalDir}}" wx:if="{{hasSignal}}">
       <view class="section-title">
         <text>🔔 信号详情</text>
@@ -352,193 +157,257 @@
           <text class="dc-label">🎯 胜率参考</text>
           <text class="dc-val accent">{{winRate}}%</text>
         </view>
-      </view>
-      <view class="sl-tp-block">
-        <view class="sl-tp-title">
-          <text>{{signalDir === 'long' ? '🎯 做多 · 止盈止损参考' : '🎯 做空 · 止盈止损参考'}}</text>
+        <view class="detail-cell">
+          <text class="dc-label">🛑 止损位</text>
+          <text class="dc-val loss">{{stopLoss}}</text>
         </view>
-        <view class="sl-row">
-          <view class="sl-tag stop">— 止损</view>
-          <text class="sl-price stop">{{stopLoss}}</text>
-          <text class="sl-hint">{{signalDir === 'long' ? '插针最低点下方' : '插针最高点上方'}}</text>
-        </view>
-        <view class="sl-row entry">
-          <view class="sl-tag entry-tag">📍 入场价</view>
-          <text class="sl-price">{{curPrice}}</text>
-          <text class="sl-hint">当前价格入场</text>
-        </view>
-        <view class="sl-row tp">
-          <view class="sl-tag tp1-tag {{signalDir}}">🎯 保守止盈</view>
-          <text class="sl-price {{signalDir === 'long' ? 'tp-long' : 'tp-short'}}">{{tp1}}</text>
-          <text class="sl-hint">1.0:1 盈亏比</text>
-        </view>
-        <view class="sl-row tp">
-          <view class="sl-tag tp2-tag {{signalDir}}">🎯 标准止盈</view>
-          <text class="sl-price {{signalDir === 'long' ? 'tp-long' : 'tp-short'}}">{{tp2}}</text>
-          <text class="sl-hint">1.5:1 盈亏比</text>
-        </view>
-        <view class="sl-row tp">
-          <view class="sl-tag tp3-tag {{signalDir}}">🎯 激进止盈</view>
-          <text class="sl-price {{signalDir === 'long' ? 'tp-long-hi' : 'tp-short-hi'}}">{{tp3}}</text>
-          <text class="sl-hint">2.5:1 盈亏比</text>
+        <view class="detail-cell">
+          <text class="dc-label">⚖️ 盈亏比</text>
+          <text class="dc-val">{{rrRatio}}</text>
         </view>
       </view>
-      <view class="pos-row" wx:if="{{posLots > 0}}">
-        <view class="pos-item"><text class="pos-label">📊 仓位建议</text><text class="pos-val">{{posLots}}张</text></view>
-        <view class="pos-item"><text class="pos-label">保证金</text><text class="pos-val">{{posMargin}}U</text></view>
-        <view class="pos-item"><text class="pos-label">仓位占比</text><text class="pos-val">{{posRatio}}%</text></view>
-        <view class="pos-item"><text class="pos-label">杠杆</text><text class="pos-val">{{posLeverage}}x</text></view>
-        <view class="pos-item"><text class="pos-label">最大亏损</text><text class="pos-val">{{posRiskU}}U</text></view>
+      <view class="tp-row">
+        <view class="tp-item tp1">
+          <text class="tp-label">TP1 +1倍</text>
+          <text class="tp-val {{signalDir}}">{{tp1}}</text>
+        </view>
+        <view class="tp-item tp2">
+          <text class="tp-label">TP2 +1.5倍</text>
+          <text class="tp-val {{signalDir}}">{{tp2}}</text>
+        </view>
+        <view class="tp-item tp3">
+          <text class="tp-label">TP3 +2.5倍</text>
+          <text class="tp-val {{signalDir}}">{{tp3}}</text>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 非会员 + 非空头趋势：仅止盈止损模糊 -->
-  <view class="sl-lock-wrap" wx:if="{{!isVip && !inTrial}}">
-    <view class="sl-lock-blur-bg">
-      <view class="fake-sl-title"><text>🎯 止盈止损参考（会员专属）</text></view>
-      <view class="fake-sl-row">
-        <view class="fake-sl-item stop"><text class="fake-sl-l">— 止损</text><text class="fake-sl-v">██████</text></view>
-        <view class="fake-sl-item tp1"><text class="fake-sl-l">TP1 保守</text><text class="fake-sl-v">██████</text></view>
-        <view class="fake-sl-item tp2"><text class="fake-sl-l">TP2 标准</text><text class="fake-sl-v">██████</text></view>
-        <view class="fake-sl-item tp3"><text class="fake-sl-l">TP3 激进</text><text class="fake-sl-v">██████</text></view>
+    <!-- 多空条件感知 -->
+    <view class="section-title-plain">
+      <text>🧭 多空条件感知</text>
+      <text class="section-sub">满足越多越强</text>
+    </view>
+    <view class="cond-wrap">
+      <view class="cond-col">
+        <view class="cond-col-title long-color">📈 做多条件</view>
+        <view class="cond-item {{item.ok ? 'ok' : 'no'}}" wx:for="{{longConditions}}" wx:key="label" wx:item="item">
+          <text class="cond-icon">{{item.ok ? '✅' : '⬜'}}</text>
+          <view class="cond-text">
+            <text class="cond-label">{{item.label}}</text>
+            <text class="cond-tip">{{item.tip}}</text>
+          </view>
+        </view>
+        <view class="cond-score-bar">
+          <view class="cond-score-fill long" style="width:{{longScore}}%"></view>
+          <text class="cond-score-txt">{{longOk}}/4</text>
+        </view>
+      </view>
+      <view class="cond-divider"></view>
+      <view class="cond-col">
+        <view class="cond-col-title short-color">📉 做空条件</view>
+        <view class="cond-item {{item.ok ? 'ok' : 'no'}}" wx:for="{{shortConditions}}" wx:key="label" wx:item="item">
+          <text class="cond-icon">{{item.ok ? '✅' : '⬜'}}</text>
+          <view class="cond-text">
+            <text class="cond-label">{{item.label}}</text>
+            <text class="cond-tip">{{item.tip}}</text>
+          </view>
+        </view>
+        <view class="cond-score-bar">
+          <view class="cond-score-fill short" style="width:{{shortScore}}%"></view>
+          <text class="cond-score-txt">{{shortOk}}/4</text>
+        </view>
       </view>
     </view>
-    <view class="sl-frosted-mask">
-      <view class="sl-unlock-box">
-        <text class="sl-lock-icon">🔐</text>
-        <text class="sl-lock-title">开通会员 · 解锁精准止盈止损</text>
-        <text class="sl-lock-desc">止损价 · TP1/TP2/TP3 · 仓位建议\n基于实时数据，动态精准计算</text>
-        <view class="unlock-price-row">
-          <view class="unlock-price-item"><text class="unlock-price-tag">月卡</text><text class="unlock-price-num">¥88</text></view>
-          <view class="unlock-price-item hot">
-            <text class="unlock-hot-badge">最划算</text>
-            <text class="unlock-price-tag">年卡</text>
-            <text class="unlock-price-num hot-num">¥688</text>
+
+    <!-- 指标卡 -->
+    <view class="section-title-plain" style="margin-top:24rpx;">
+      <text>📊 AI指标分析</text>
+      <text class="section-sub">8项综合评估</text>
+    </view>
+    <view class="ind-grid">
+      <view class="ind-card {{item.cls}}" wx:for="{{indCards}}" wx:key="name" wx:item="item">
+        <view class="ind-top">
+          <view class="ind-dot {{item.dot}}"></view>
+          <text class="ind-name">{{item.name}}</text>
+        </view>
+        <text class="ind-val {{item.cls}}">{{item.val}}</text>
+        <text class="ind-tip">{{item.tip}}</text>
+        <view class="ind-prog-wrap">
+          <view class="ind-prog-fill {{item.cls}}" style="width:{{item.progress}}%"></view>
+        </view>
+        <text class="ind-state {{item.dot}}">{{item.state}}</text>
+      </view>
+    </view>
+
+  </block>
+
+  <!-- ══ 付费墙（体验结束 + 非会员） ══ -->
+  <block wx:else>
+    <view class="paywall-full">
+      <!-- 顶部AI大Logo -->
+      <view class="pw-ai-header">
+        <view class="pw-ai-circle">
+          <text class="pw-ai-icon">🤖</text>
+        </view>
+        <text class="pw-ai-title">DeepSeek AI · 量化信号</text>
+        <text class="pw-ai-sub">全球顶级算法 · 专业机构同款策略</text>
+      </view>
+
+      <!-- 免费体验已结束提示 -->
+      <view class="pw-trial-end">
+        <text class="pw-trial-end-icon">⏰</text>
+        <text class="pw-trial-end-txt">60秒免费体验已结束</text>
+        <text class="pw-trial-end-sub">开通会员继续获取AI信号，把握每一次行情机会</text>
+      </view>
+
+      <!-- 功能亮点 -->
+      <view class="pw-features">
+        <view class="pw-feat-item">
+          <text class="pw-feat-icon">🎯</text>
+          <view class="pw-feat-text">
+            <text class="pw-feat-title">AI插针精准识别</text>
+            <text class="pw-feat-desc">DeepSeek量化模型，胜率72%+</text>
           </view>
-          <view class="unlock-price-item"><text class="unlock-price-tag">永久</text><text class="unlock-price-num">¥888</text></view>
         </view>
-        <view class="unlock-cta" bindtap="showVipModal">
-          <text class="unlock-cta-text">👑 立即开通 →</text>
+        <view class="pw-feat-item">
+          <text class="pw-feat-icon">⚡</text>
+          <view class="pw-feat-text">
+            <text class="pw-feat-title">实时多空信号推送</text>
+            <text class="pw-feat-desc">微信秒推 · 不错过任何机会</text>
+          </view>
         </view>
-        <view class="unlock-code-row">
-          <input
-            class="unlock-code-input"
-            placeholder="已有激活码？输入兑换"
-            placeholder-class="unlock-code-placeholder"
-            value="{{activateCode}}"
-            bindinput="onActivateInput"
-            maxlength="20"
-          />
-          <view class="unlock-code-btn {{activateCode ? 'active' : ''}}" bindtap="submitActivateCode">
+        <view class="pw-feat-item">
+          <text class="pw-feat-icon">📊</text>
+          <view class="pw-feat-text">
+            <text class="pw-feat-title">8项指标综合评分</text>
+            <text class="pw-feat-desc">MACD·RSI·KDJ·BOLL联合分析</text>
+          </view>
+        </view>
+        <view class="pw-feat-item">
+          <text class="pw-feat-icon">🛡️</text>
+          <view class="pw-feat-text">
+            <text class="pw-feat-title">止盈止损自动计算</text>
+            <text class="pw-feat-desc">盈亏比1.5:1 · TP1/TP2/TP3三档</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 用户见证 -->
+      <view class="pw-testimonial">
+        <text class="pw-test-quote">"用了3天，抓到两次插针，各赚了300U，真的牛！"</text>
+        <text class="pw-test-author">— 会员 小王@上海</text>
+      </view>
+
+      <!-- 定价卡片 -->
+      <view class="pw-pricing">
+        <view class="pw-price-card month">
+          <text class="pw-price-label">月卡</text>
+          <view class="pw-price-amount"><text class="pw-price-sym">¥</text><text class="pw-price-num">88</text></view>
+          <text class="pw-price-desc">30天无限使用</text>
+        </view>
+        <view class="pw-price-card year hot">
+          <view class="pw-price-hot-tag">🔥 最划算</view>
+          <text class="pw-price-label">年卡</text>
+          <view class="pw-price-amount"><text class="pw-price-sym">¥</text><text class="pw-price-num">688</text></view>
+          <text class="pw-price-desc">月均57元</text>
+        </view>
+        <view class="pw-price-card life">
+          <text class="pw-price-label">永久</text>
+          <view class="pw-price-amount"><text class="pw-price-sym">¥</text><text class="pw-price-num">888</text></view>
+          <text class="pw-price-desc">买断终身</text>
+        </view>
+      </view>
+
+      <!-- 主CTA按钮 -->
+      <view class="pw-cta-btn" bindtap="onCtaContact">
+        <text class="pw-cta-text">👑 立即开通 · 联系作者获取激活码</text>
+      </view>
+      <text class="pw-contact-hint">点击后复制微信号，加好友付款获取激活码</text>
+
+      <!-- 激活码区域 -->
+      <view class="pw-code-area">
+        <text class="pw-code-title">已有激活码？</text>
+        <view class="pw-code-row">
+          <input class="pw-code-input" placeholder="输入激活码" bindinput="onCodeInput" value="{{codeInput}}" />
+          <view class="pw-code-btn" bindtap="submitCode">
             <text>激活</text>
           </view>
         </view>
-        <text class="activate-err" wx:if="{{activateErr}}">{{activateErr}}</text>
-        <text class="hidden-entry" bindtap="adminTap">· · ·</text>
+        <text class="pw-code-hint" bindtap="showPwdEntry">···</text>
+      </view>
+
+    </view>
+  </block>
+
+  <!-- ══ K线图（始终可见） ══ -->
+  <view class="section-title-plain" style="margin-top:24rpx;">
+    <text>📈 K线图</text>
+    <view style="display:flex;align-items:center;gap:10rpx;">
+      <text class="kview-badge">{{klineView}}根/屏</text>
+      <view class="chart-legend">
+        <text class="leg-boll-u">BOLL↑</text>
+        <text class="leg-boll-l">↓</text>
+        <text class="leg-ma5">MA5</text>
+        <text class="leg-ma10">MA10</text>
       </view>
     </view>
   </view>
-
-  </block><!-- end 情况B -->
-
-  <!-- ══ 底部更新时间 ══ -->
-  <view class="footer">
-    <view class="footer-badge" bindtap="adminTap">🥞 大饼K线雷达  ·  60s自动嗅探</view>
-    <text class="footer-txt">最后更新 {{updateTime}}</text>
-    <text class="footer-txt">数据来源 🔥 火币HTX  /  🌐 币安镜像</text>
-  </view>
-
-  <!-- 管理员隐藏密码入口 -->
-  <view class="admin-pwd-float" wx:if="{{showAdminPwdBox}}">
-    <view class="admin-pwd-inner">
-      <input
-        class="admin-pwd-input"
-        type="number"
-        password="{{true}}"
-        placeholder="管理员密码"
-        placeholder-class="admin-pwd-placeholder"
-        value="{{adminPwdInput}}"
-        bindinput="onAdminPwdInput"
-        maxlength="8"
-        focus="{{true}}"
-      />
-      <view class="admin-pwd-btn" bindtap="submitAdminPwd">进入</view>
-      <view class="admin-pwd-close" bindtap="closeAdminPwd">✕</view>
+  <view class="kcanvas-wrap"
+    bindtouchmove="onKlineTouch"
+    bindtouchstart="onKlineTouch"
+    bindtouchend="onKlineTouchEnd"
+    catchtouchmove="onKlineTouch"
+  >
+    <canvas type="2d" id="klineCanvas" class="kcanvas"></canvas>
+    <view class="kcanvas-hint" wx:if="{{touchIdx < 0}}">
+      <text>← 单指拖动  ·  双指缩放 →</text>
+    </view>
+    <view class="ktooltip" wx:if="{{touchIdx >= 0}}" style="left:{{tooltipLeft}}px">
+      <text class="ktt-time">{{touchTime}}</text>
+      <view class="ktt-row"><text class="ktt-l">开</text><text class="ktt-v">{{touchO}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">高</text><text class="ktt-v up">{{touchH}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">低</text><text class="ktt-v dn">{{touchL}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">收</text><text class="ktt-v">{{touchC}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">量</text><text class="ktt-v">{{touchV}}</text></view>
+      <view class="ktt-div"></view>
+      <view class="ktt-row"><text class="ktt-l">MACD</text><text class="ktt-v">{{touchMACD}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">DIF</text><text class="ktt-v">{{touchDIF}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">DEA</text><text class="ktt-v">{{touchDEA}}</text></view>
     </view>
   </view>
 
-  <!-- ══ 会员升级弹窗 ══ -->
-  <view class="vip-mask" wx:if="{{showVipModal}}" bindtap="closeVipModal">
-    <view class="vip-box" catchtap="">
-      <view class="vip-header">
-        <text class="vip-crown">👑</text>
-        <text class="vip-title">大饼K线雷达 Pro</text>
-        <text class="vip-slogan">解锁全部专业功能</text>
-      </view>
-      <view class="vip-features">
-        <view class="vip-feat-row">
-          <text class="vip-feat-icon">🔔</text>
-          <view class="vip-feat-text">
-            <text class="vip-feat-name">实时推送提醒</text>
-            <text class="vip-feat-desc">信号触发即刻推送到手机</text>
-          </view>
-          <text class="vip-feat-tag pro">Pro</text>
-        </view>
-        <view class="vip-feat-row">
-          <text class="vip-feat-icon">📊</text>
-          <view class="vip-feat-text">
-            <text class="vip-feat-name">多空历史回测</text>
-            <text class="vip-feat-desc">胜率数据实盘验证报告</text>
-          </view>
-          <text class="vip-feat-tag pro">Pro</text>
-        </view>
-        <view class="vip-feat-row">
-          <text class="vip-feat-icon">🎯</text>
-          <view class="vip-feat-text">
-            <text class="vip-feat-name">精准止盈止损</text>
-            <text class="vip-feat-desc">止损+TP1/2/3 · 仓位建议全解锁</text>
-          </view>
-          <text class="vip-feat-tag pro">Pro</text>
-        </view>
-        <view class="vip-feat-row">
-          <text class="vip-feat-icon">📈</text>
-          <view class="vip-feat-text">
-            <text class="vip-feat-name">多币种监控</text>
-            <text class="vip-feat-desc">ETH/SOL/BNB同步扫描</text>
-          </view>
-          <text class="vip-feat-tag soon">即将上线</text>
-        </view>
-      </view>
-      <view class="vip-price-row">
-        <view class="vip-price-card">
-          <text class="vip-price-tag">月卡</text>
-          <text class="vip-price-num">¥88</text>
-          <text class="vip-price-unit">/月</text>
-        </view>
-        <view class="vip-price-card hot">
-          <text class="vip-hot-badge">最划算</text>
-          <text class="vip-price-tag">年卡</text>
-          <text class="vip-price-num">¥688</text>
-          <text class="vip-price-unit">/年</text>
-        </view>
-        <view class="vip-price-card">
-          <text class="vip-price-tag">永久</text>
-          <text class="vip-price-num">¥888</text>
-          <text class="vip-price-unit">买断</text>
-        </view>
-      </view>
-      <view class="vip-cta" bindtap="contactVip">
-        <text>联系作者开通 →</text>
-      </view>
-      <text class="vip-close" bindtap="closeVipModal">✕ 关闭</text>
+  <!-- ══ 风控状态栏 ══ -->
+  <view class="risk-bar {{riskStatus}}">
+    <view class="risk-left">
+      <text class="risk-icon">{{riskStatus === 'normal' ? '✅' : riskStatus === 'cooldown' ? '🧊' : '🛑'}}</text>
+      <text class="risk-txt">{{riskMsg}}</text>
     </view>
+    <view class="risk-right" wx:if="{{riskStatus !== 'normal'}}">
+      <text class="risk-time">{{cooldownUntil}}</text>
+    </view>
+  </view>
+
+  <!-- ══ 底部 ══ -->
+  <view class="footer" bindtap="onFooterTap">
+    <text class="footer-logo">⚡ BTC AI Signal · 智能量化分析</text>
+    <text class="footer-txt">最后更新 {{updateTime}}  ·  60秒自动刷新</text>
+    <text class="footer-txt">数据来源：火币HTX / 币安镜像 · 仅供参考</text>
+    <text class="footer-disclaimer">⚠️ 本工具仅供学习参考，不构成投资建议，投资有风险</text>
   </view>
 
   <!-- ══ 错误提示 ══ -->
   <view class="error-bar" wx:if="{{errorMsg}}">
     <text>⚠️ {{errorMsg}}</text>
     <text class="error-hint">开发模式请勾选「不校验合法域名」</text>
+  </view>
+
+  <!-- ══ 密码输入弹框 ══ -->
+  <view class="pwd-mask" wx:if="{{showPwdDialog}}" bindtap="closePwdDialog">
+    <view class="pwd-dialog" catchtap="">
+      <text class="pwd-title">🔐 输入访问密码</text>
+      <input class="pwd-input" type="number" password placeholder="请输入密码" bindinput="onPasswordInput" value="{{pwdInput}}" />
+      <view class="pwd-submit" bindtap="submitPassword"><text>确认</text></view>
+    </view>
   </view>
 
 </view>

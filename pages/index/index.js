@@ -1,23 +1,14 @@
-// pages/index/index.js  v6.1 - bugfix：去重import，清理dead code，止盈方向色修正，24h采样按周期动态计算
-const { fetchKlines, detectSignal, detectMacdCross } = require('../../utils/detector')
+// pages/index/index.js  v3
+const { fetchKlines, detectSignal } = require('../../utils/detector')
 const { macd: calcMACD, boll: calcBOLL, ema: calcEMA } = require('../../utils/indicators')
 
-// 完整周期列表（对标交易所风格）
 const PERIODS = [
-  { iv: '1s',  label: '1秒',   limit: 500 },
-  { iv: '1m',  label: '1分',   limit: 500 },
-  { iv: '3m',  label: '3分',   limit: 500 },
-  { iv: '5m',  label: '5分',   limit: 500 },
-  { iv: '15m', label: '15分',  limit: 480 },
-  { iv: '30m', label: '30分',  limit: 480 },
-  { iv: '1h',  label: '1时',   limit: 480 },
-  { iv: '2h',  label: '2时',   limit: 480 },
-  { iv: '4h',  label: '4时',   limit: 300 },
-  { iv: '6h',  label: '6时',   limit: 300 },
-  { iv: '12h', label: '12时',  limit: 240 },
-  { iv: '1d',  label: '1日',   limit: 240 },
-  { iv: '3d',  label: '3日',   limit: 120 },
-  { iv: '1w',  label: '1周',   limit: 100 },
+  { iv: '1m',  label: '1m超短线',  limit: 200 },
+  { iv: '5m',  label: '5m短线',    limit: 180 },
+  { iv: '15m', label: '15m主策略', limit: 150 },
+  { iv: '30m', label: '30m中线',   limit: 120 },
+  { iv: '1h',  label: '1h趋势',    limit: 100 },
+  { iv: '4h',  label: '4h大趋势',  limit: 80  },
 ]
 
 const TIPS = [
@@ -63,115 +54,6 @@ const TIPS = [
   },
 ]
 
-/**
- * 大趋势判断（基于4h K线数据）
- * 返回 { trend, trendLabel, trendColor, supportZone, resistZone, trendDesc }
- */
-function calcTrend(bars) {
-  if (!bars || bars.length < 20) return null
-  const closes = bars.map(b => b.close)
-  const n = closes.length
-
-  // MA20 / MA60 简易计算
-  const ma20 = closes.slice(-20).reduce((s,v)=>s+v,0)/20
-  const ma60slice = closes.slice(-Math.min(60,n))
-  const ma60 = ma60slice.reduce((s,v)=>s+v,0)/ma60slice.length
-  const last = closes[n-1]
-
-  // 近20根高低点
-  const recent = bars.slice(-20)
-  const highs = recent.map(b=>b.high)
-  const lows  = recent.map(b=>b.low)
-  const recentHigh = Math.max(...highs)
-  const recentLow  = Math.min(...lows)
-
-  // 支撑/压力区：取近20根的低点聚集区±0.3%
-  const supportBase = recentLow
-  const resistBase  = recentHigh
-
-  // 判断趋势
-  let trend = 'sideways', trendLabel = '震荡', trendColor = 'neutral'
-  let trendDesc = ''
-
-  if (last > ma20 && ma20 > ma60) {
-    trend = 'up'; trendLabel = '多头趋势'; trendColor = 'bull'
-    trendDesc = 'MA20>MA60 价格站上均线，多头占优'
-  } else if (last < ma20 && ma20 < ma60) {
-    trend = 'down'; trendLabel = '空头趋势'; trendColor = 'bear'
-    trendDesc = 'MA20<MA60 价格跌破均线，空头占优'
-  } else if (last > ma20) {
-    trend = 'up_weak'; trendLabel = '偏多震荡'; trendColor = 'bull_weak'
-    trendDesc = '价格站上MA20，但MA20/60交叉不明确'
-  } else {
-    trend = 'down_weak'; trendLabel = '偏空震荡'; trendColor = 'bear_weak'
-    trendDesc = '价格跌破MA20，短期偏弱'
-  }
-
-  // 支撑区间（近低点±0.3%）
-  const supportLo = (supportBase * 0.997).toFixed(0)
-  const supportHi = (supportBase * 1.003).toFixed(0)
-  // 压力区间
-  const resistLo  = (resistBase  * 0.997).toFixed(0)
-  const resistHi  = (resistBase  * 1.003).toFixed(0)
-
-  // 趋势强度：MA20与MA60的偏离程度映射到0~100
-  const maDiff = Math.abs(ma20 - ma60) / ma60 * 100  // 百分比偏离
-  const rawStrength = Math.min(maDiff / 3 * 100, 100)  // 3%偏离 = 100%强度
-  // bull/bear强趋势从50起，弱趋势/震荡从0~50
-  let trendStrength = 50
-  if (trend === 'bull' || trend === 'bear') {
-    trendStrength = Math.round(50 + rawStrength / 2)
-  } else if (trend === 'bull_weak' || trend === 'down_weak') {
-    trendStrength = Math.round(25 + rawStrength / 4)
-  } else {
-    trendStrength = Math.round(rawStrength / 4)
-  }
-  trendStrength = Math.max(5, Math.min(100, trendStrength))
-
-  return {
-    trend, trendLabel, trendColor, trendDesc,
-    supportZone: `${supportLo}~${supportHi}`,
-    resistZone:  `${resistLo}~${resistHi}`,
-    ma20: ma20.toFixed(0),
-    ma60: ma60.toFixed(0),
-    trendStrength,
-  }
-}
-
-/**
- * 多空能量对比
- * 返回 { bullPower, bearPower, bullPct, bearPct, dominance }
- * bullPct/bearPct: 0~100，用于进度条
- */
-function calcEnergyBalance(bars) {
-  if (!bars || bars.length < 10) return null
-  const recent = bars.slice(-20)
-
-  let bullEnergy = 0, bearEnergy = 0
-  recent.forEach(b => {
-    const body = Math.abs(b.close - b.open)
-    const range = b.high - b.low || 1
-    const vol = b.volume || 1
-    if (b.close >= b.open) {
-      bullEnergy += body * vol
-    } else {
-      bearEnergy += body * vol
-    }
-  })
-
-  const total = bullEnergy + bearEnergy || 1
-  const bullPct = Math.round(bullEnergy / total * 100)
-  const bearPct = 100 - bullPct
-
-  let dominance = 'neutral', domLabel = '多空均衡'
-  if (bullPct >= 65) { dominance = 'bull'; domLabel = '多头强势' }
-  else if (bullPct >= 55) { dominance = 'bull_weak'; domLabel = '多头偏强' }
-  else if (bearPct >= 65) { dominance = 'bear'; domLabel = '空头强势' }
-  else if (bearPct >= 55) { dominance = 'bear_weak'; domLabel = '空头偏强' }
-
-  return { bullPct, bearPct, dominance, domLabel }
-}
-
 function winRateFromScore(s) {
   return ({0:28,1:30,2:32,3:35,4:38,5:48,6:55,7:63,8:72,9:80,10:85})[Math.min(10,Math.max(0,s))] || 35
 }
@@ -200,30 +82,9 @@ function bollProgress(close, upper, lower) {
 Page({
   data: {
     interval: '15m',
-    intervalLabel: '15分',
+    intervalLabel: '15m · 主策略',
     periods: PERIODS,
-    // 基础周期（直接显示，精简为5个最常用）
-    basicPeriods: PERIODS.filter(p => ['1m','15m','1h','4h','1d'].includes(p.iv)),
-    // 更多周期（折叠展开）
-    morePeriods:  PERIODS.filter(p => !['1m','15m','1h','4h','1d'].includes(p.iv)),
-    periodMenuOpen: false,  // 更多周期面板是否展开
     tips: TIPS,
-
-    // 免责声明 & 会员弹窗
-    showDisclaimer: false,
-    showVipModal: false,
-    isVip: false,
-    inTrial: false,        // 正在20分钟免费体验中
-    trialLeft: 0,          // 剩余体验毫秒
-    trialLeftMin: 0,       // 剩余体验分钟（取整）
-    activateCode: '',
-    activateErr: '',
-    showAdminPwdBox: false,
-    adminPwdInput: '',
-
-    // 大趋势折叠状态（已废弃，保留兼容）
-    trendExpanded: false,
-    trendStrength: 50,  // 趋势强度 0~100
 
     // 价格
     curPrice: '--', priceChange: '--', priceDir: '',
@@ -277,8 +138,26 @@ Page({
     loading: false,
     errorMsg: '',
     showTips: false,
-    klineView: 120,   // 当前K线视窗根数，初始120根
+    klineView: 40,    // 当前K线视窗根数
     
+    // 会员 & 体验
+    isVip: false,
+    inTrial: false,
+    trialSecs: 60,
+    trialTotal: 60,
+    codeInput: '',
+    pwdInput: '',
+    showPwdDialog: false,
+
+    // 空头趋势锁定
+    isBearTrend: false,
+
+    // AI标签（营销用）
+    aiLabel: 'AI量化 · 实时分析中',
+
+    // 免责声明
+    showDisclaimer: false,
+
     // 风控状态
     riskStatus: 'normal',        // 'normal'正常, 'cooldown'冷却中, 'max_loss'超日亏限
     riskMsg: '',                 // 风控说明
@@ -290,20 +169,6 @@ Page({
     touchIdx: -1, tooltipLeft: 8,
     touchTime: '', touchO: '', touchH: '', touchL: '', touchC: '', touchV: '',
     touchMACD: '', touchDIF: '', touchDEA: '',
-
-    // MACD金叉/死叉通知条
-    macdCross: null,
-    macdCrossShow: false,
-
-    // 大趋势判断
-    trendLabel: '--', trendColor: 'neutral', trendDesc: '--',
-    supportZone: '--', resistZone: '--',
-    trendMa20: '--', trendMa60: '--',
-    isBearTrend: false,
-
-    // 多空能量对比
-    bullPct: 50, bearPct: 50, domLabel: '均衡',
-    energyDominance: 'neutral',
   },
 
   onLoad() {
@@ -312,61 +177,45 @@ Page({
     this._dragStartX  = 0
     this._dragStartOff= 0
     this._isDragging  = false
-    this._view        = 120    // 默认120根
+    this._view        = 40
     this._pinchStartDist = 0
-    this._pinchStartView = 120
+    this._pinchStartView = 40
     this._isPinching  = false
-    this._kvCache     = {}     // 多周期缓存: { '15m': { sig, ts }, ... }
 
-    // ── 免责声明：首次显示 ──
+    // ══ 免费体验60秒倒计时（每次进入重置） ══
+    const TRIAL_SECS = 60
+    // 检查会员有效期
+    let isVip = wx.getStorageSync('isVip') === true
+    if (isVip) {
+      const exp = wx.getStorageSync('vip_exp') || 0
+      if (exp < Date.now()) {
+        // 会员过期，降级
+        isVip = false
+        wx.removeStorageSync('isVip')
+      }
+    }
+    // 每次打开都重置体验时间（60s重新开始）
+    const trialEnd = Date.now() + TRIAL_SECS * 1000
+    wx.setStorageSync('trial_end_ts', trialEnd)
+    const inTrial = !isVip
+    this.setData({ isVip, inTrial, trialSecs: TRIAL_SECS, trialTotal: TRIAL_SECS })
+
+    // ══ 免责声明（首次进入显示） ══
     const agreed = wx.getStorageSync('disclaimer_agreed')
     if (!agreed) {
       this.setData({ showDisclaimer: true })
     }
 
-    // ── VIP状态 ──
-    const isVipStored = wx.getStorageSync('is_vip') || false
-    const expireTs    = wx.getStorageSync('vip_expire_ts')
-    let   isVip       = false
-    if (isVipStored && expireTs && Date.now() > expireTs) {
-      // 付费VIP到期
-      wx.removeStorageSync('is_vip')
-      wx.removeStorageSync('vip_expire_ts')
-    } else if (isVipStored) {
-      isVip = true
-    }
-
-    // ── 20分钟免费体验 ──
-    const TRIAL_MS    = 8 * 60 * 1000   // 8分钟
-    let   trialEnd    = wx.getStorageSync('trial_end_ts')
-    const now         = Date.now()
-    if (!trialEnd) {
-      // 首次进入，开始体验计时
-      trialEnd = now + TRIAL_MS
-      wx.setStorageSync('trial_end_ts', trialEnd)
-    }
-    const trialLeft   = Math.max(0, trialEnd - now)  // ms
-    const inTrial     = trialLeft > 0
-
-    this.setData({
-      isVip,
-      inTrial,
-      trialLeft,
-      trialLeftMin: Math.ceil(trialLeft / 60000),
-    })
-
-    // ── 倒计时更新（每30秒刷新一次倒计时显示） ──
-    if (inTrial && !isVip) {
+    if (!isVip) {
       this._trialTimer = setInterval(() => {
-        const left    = Math.max(0, wx.getStorageSync('trial_end_ts') - Date.now())
-        const expired = left <= 0
-        this.setData({ trialLeft: left, trialLeftMin: Math.ceil(left / 60000), inTrial: !expired })
-        if (expired) {
+        const now = Date.now()
+        const secs = Math.max(0, Math.ceil((wx.getStorageSync('trial_end_ts') - now) / 1000))
+        const stillTrial = secs > 0
+        this.setData({ inTrial: stillTrial, trialSecs: secs })
+        if (!stillTrial) {
           clearInterval(this._trialTimer)
-          // 体验结束，强制刷新界面显示付费墙
-          this.setData({ inTrial: false })
         }
-      }, 30 * 1000)
+      }, 1000)
     }
 
     wx.createSelectorQuery()
@@ -388,143 +237,20 @@ Page({
         this._canvasReady = true
         if (this._pendingBars) { this._drawChart(this._pendingBars); this._pendingBars = null }
       })
-    this.loadData(false)
-    this._timer = setInterval(() => this.loadData(true), 60 * 1000)  // true=静默刷新
+    this.loadData()
+    this._timer = setInterval(() => this.loadData(), 60 * 1000)
   },
-  onUnload() { clearInterval(this._timer); clearInterval(this._trialTimer) },
+  onUnload() { 
+    clearInterval(this._timer)
+    clearInterval(this._trialTimer)
+  },
   onPullDownRefresh() { this.loadData().finally(() => wx.stopPullDownRefresh()) },
 
-  // ── 隐藏管理员入口（连点3下弹出密码框） ──
-  _adminTapCount: 0,
-  _adminTapTimer: null,
-  adminTap() {
-    this._adminTapCount = (this._adminTapCount || 0) + 1
-    clearTimeout(this._adminTapTimer)
-    if (this._adminTapCount >= 3) {
-      this._adminTapCount = 0
-      this.setData({ showAdminPwdBox: true, adminPwdInput: '' })
-    } else {
-      this._adminTapTimer = setTimeout(() => { this._adminTapCount = 0 }, 1200)
-    }
-  },
-  onAdminPwdInput(e) {
-    const v = e.detail.value
-    this.setData({ adminPwdInput: v })
-    // 输满4位自动验证
-    if (v.length === 4) this.submitAdminPwd()
-  },
-  submitAdminPwd() {
-    const pwd = this.data.adminPwdInput
-    if (pwd === '6666') {
-      // 6666：临时进入正常显示（不持久化）
-      this.setData({ showAdminPwdBox: false, isVip: true })
-      wx.showToast({ title: '已进入预览模式', icon: 'success', duration: 1500 })
-    } else if (pwd === '8888') {
-      // 8888：进管理员后台
-      this.setData({ showAdminPwdBox: false })
-      wx.navigateTo({ url: '/pages/admin/admin' })
-    } else {
-      wx.vibrateShort({ type: 'heavy' })
-      this.setData({ adminPwdInput: '' })
-    }
-  },
-  closeAdminPwd() {
-    this.setData({ showAdminPwdBox: false, adminPwdInput: '' })
-  },
-
-
-
-  // ── 免责声明 ──
-  closeDisclaimer() {
-    wx.setStorageSync('disclaimer_agreed', true)
-    this.setData({ showDisclaimer: false })
-  },
-
-  // ── 激活码验证 ──
-  // 月卡格式 BTC-M-YYYYMM-XXXX（¥88），年卡 BTC-Y-YYYY-XXXX（¥688），永久卡 BTC-LT-XXXX（¥888）
-  // 有效码列表（硬编码备用码，管理员动态生成的码另存extra_valid_codes）
-  _validCodes() {
-    return {
-      // 月卡（2026年各月）
-      'BTC-M-202604': { type: '月卡', days: 31  },
-      'BTC-M-202605': { type: '月卡', days: 31  },
-      'BTC-M-202606': { type: '月卡', days: 30  },
-      'BTC-M-202607': { type: '月卡', days: 31  },
-      'BTC-M-202608': { type: '月卡', days: 31  },
-      'BTC-M-202609': { type: '月卡', days: 30  },
-      // 年卡
-      'BTC-Y-2026':   { type: '年卡', days: 365 },
-      'BTC-Y-2027':   { type: '年卡', days: 365 },
-      // 永久卡（动态生成，格式 BTC-LT-XXXX）
-      // 永久卡通过管理员后台动态生成，days=9999，无需在此硬编码
-    }
-  },
-
-  onActivateInput(e) {
-    this.setData({ activateCode: e.detail.value.trim().toUpperCase(), activateErr: '' })
-  },
-
-  submitActivateCode() {
-    const code = this.data.activateCode.trim().toUpperCase()
-    if (!code) return
-
-    // 检查是否已使用
-    const usedCodes = wx.getStorageSync('used_codes') || []
-    if (usedCodes.includes(code)) {
-      this.setData({ activateErr: '该激活码已被使用，请联系作者' })
-      return
-    }
-
-    const codeMap = this._validCodes()
-    // 合并管理员动态生成的码
-    const extraCodes = wx.getStorageSync('extra_valid_codes') || {}
-    Object.assign(codeMap, extraCodes)
-    const info = codeMap[code]
-    if (!info) {
-      this.setData({ activateErr: '激活码无效，请检查后重新输入' })
-      wx.vibrateShort({ type: 'heavy' })
-      return
-    }
-
-    // 计算到期时间
-    const now = Date.now()
-    const expireTs = now + info.days * 24 * 3600 * 1000
-    const expireDate = new Date(expireTs).toLocaleDateString('zh-CN')
-
-    // 标记已使用 + 保存VIP状态
-    usedCodes.push(code)
-    wx.setStorageSync('used_codes', usedCodes)
-    wx.setStorageSync('is_vip', true)
-    wx.setStorageSync('vip_expire_ts', expireTs)
-    wx.setStorageSync('vip_type', info.type)
-
-    this.setData({ isVip: true, activateErr: '' })
-
-    wx.showModal({
-      title: '🎉 激活成功！',
-      content: `${info.type}已激活，有效期至 ${expireDate}\n感谢支持，好好赚钱！`,
-      showCancel: false,
-      confirmText: '开始使用 →'
-    })
-  },
-
-
-  showVipModal() { this.setData({ showVipModal: true }) },
-  closeVipModal() { this.setData({ showVipModal: false }) },
-  contactVip() {
-    wx.setClipboardData({
-      data: '大饼K线雷达Pro开通请加微信：weber00vip',
-      success() { wx.showToast({ title: '微信号已复制', icon: 'success' }) }
-    })
-  },
-
-
-
   // ══════════════════════════════════════════
-  //  Canvas 绘制（火币风格三分区）
-  //  主图(62%): K线实体+影线 + BOLL + MA5/10
-  //  量图(12%): 成交量柱
-  //  副图(26%): MACD柱 + DIF + DEA
+  //  Canvas 绘制（交易所风格三分区）
+  //  主图(60%): K线 + BOLL(上中下) + MA5 + MA10
+  //  量图(14%): 成交量柱
+  //  副图(26%): MACD 柱 + DIF线 + DEA线
   // ══════════════════════════════════════════
   _drawChart(bars) {
     if (!this._canvasReady) { this._pendingBars = bars; return }
@@ -532,289 +258,224 @@ Page({
     const W   = this._canvasW
     const H   = this._canvasH
 
+    // 全量数据存起来，供拖动复用；传 null 时复用已有数据
     if (bars) this._allBars = bars
     if (!this._allBars) return
 
-    const VIEW   = this._view || 60
-    const total  = this._allBars.length
+    // 每屏显示VIEW根，拖动偏移控制从哪里切窗口
+    const VIEW  = this._view || 40
+    const total = this._allBars.length
     const maxOff = Math.max(0, total - VIEW)
-    const off    = Math.max(0, Math.min(Math.round(this._dragOffset), maxOff))
+    const off   = Math.max(0, Math.min(Math.round(this._dragOffset), maxOff))
+    // 从右往左截：offset=0 → 最新VIEW根；offset增大 → 往左看历史
     const startIdx = Math.max(0, total - VIEW - off)
-    const data   = this._allBars.slice(startIdx, startIdx + VIEW)
-    const n      = data.length
+    const data  = this._allBars.slice(startIdx, startIdx + VIEW)
+    const n     = data.length
     if (n < 2) return
-    this._chartData = data
+    this._chartData = data   // 存备触摸/重绘用
 
-    // ── 布局（火币风：左边留窄，右边留宽放价签，底部留时间轴）──
-    const padL   = 4
-    const padR   = 56
-    const padTop = 18
-    const padBot = 20
+    // 布局
+    const padL = 16, padR = 42, padTop = 10, padBot = 22
     const innerW = W - padL - padR
     const totalH = H - padTop - padBot
 
-    const mainH  = totalH * 0.62
-    const volH   = totalH * 0.12
-    const macdH  = totalH * 0.26
-    const gap    = 1
+    const mainH = totalH * 0.60
+    const volH  = totalH * 0.14
+    const macdH = totalH * 0.26
+    const gap   = 2
 
-    const mainY  = padTop
-    const volY   = mainY + mainH + gap
-    const macdY  = volY  + volH  + gap
+    const mainY = padTop
+    const volY  = mainY + mainH + gap
+    const macdY = volY  + volH  + gap
 
-    // 每根K线宽度（barW）和实体宽度（bodyW），实体占约70%，两侧留缝隙
-    const barW   = innerW / n
-    const bodyW  = Math.max(1, barW * 0.72 - 0.5)  // 火币实体较粗
-    const wickW  = Math.max(0.8, barW * 0.12)        // 影线细
+    const barW  = innerW / n
+    const bBody = Math.max(1.5, barW * 0.6)
 
-    // ── 指标计算 ──
+    // ── 计算指标 ──
     const closes = data.map(b => b.close)
     const highs  = data.map(b => b.high)
     const lows   = data.map(b => b.low)
     const vols   = data.map(b => b.volume)
 
-    const ma5    = calcEMA(closes, 5)
-    const ma10   = calcEMA(closes, 10)
+    const ma5   = calcEMA(closes, 5)
+    const ma10  = calcEMA(closes, 10)
     const bollArr = calcBOLL(closes, 20, 2)
-    const macdObj = calcMACD(closes)
+    const macdObj = calcMACD(closes)   // { dif, dea, bar }
 
-    // ── 价格范围（留5%上下边距，让图不贴边）──
+    // ── 价格范围 ──
     let priceHi = -Infinity, priceLo = Infinity
     data.forEach((b, i) => {
-      priceHi = Math.max(priceHi, b.high)
-      priceLo = Math.min(priceLo, b.low)
-      // BOLL只作为参考线，不强制撑开
-      if (bollArr[i].upper < b.high * 1.005) priceHi = Math.max(priceHi, bollArr[i].upper)
-      if (bollArr[i].lower > b.low  * 0.995) priceLo = Math.min(priceLo, bollArr[i].lower)
+      priceHi = Math.max(priceHi, b.high, bollArr[i].upper)
+      priceLo = Math.min(priceLo, b.low,  bollArr[i].lower)
     })
-    const pad5 = (priceHi - priceLo) * 0.05 || 1
-    priceHi += pad5; priceLo -= pad5
     const priceRange = priceHi - priceLo || 1
     const py = p => mainY + (1 - (p - priceLo) / priceRange) * mainH
 
     // ── 成交量范围 ──
     const volMax = Math.max(...vols) || 1
-    const vy = v => volY + volH - (v / volMax) * volH * 0.92
+    const vy = v => volY + volH - (v / volMax) * volH
 
     // ── MACD范围 ──
-    const macdVals = [...macdObj.bar, ...macdObj.dif, ...macdObj.dea].filter(v => isFinite(v))
+    const macdVals = [...macdObj.bar, ...macdObj.dif, ...macdObj.dea]
     const macdMax  = Math.max(...macdVals.map(Math.abs)) || 1
     const macdMidY = macdY + macdH / 2
-    const macdPad  = macdH * 0.05
-    const my = v => {
-      const ratio = v / macdMax
-      return macdMidY - ratio * (macdH / 2 - macdPad)
-    }
+    const my = v => macdMidY - (v / macdMax) * (macdH / 2)
 
-    // ═══════════════ 绘制开始 ═══════════════
-
-    // 背景（火币：纯黑#111）
+    // ── 清背景 ──
     ctx.clearRect(0, 0, W, H)
-    ctx.fillStyle = '#131722'
+    ctx.fillStyle = '#0d1117'
     ctx.fillRect(0, 0, W, H)
 
-    // ── 网格（水平线，颜色很浅，火币风格）──
-    ctx.strokeStyle = '#1e2030'
-    ctx.lineWidth   = 0.5
-    for (let i = 0; i <= 4; i++) {
+    // ── 分区分割线 ──
+    ctx.strokeStyle = '#21262d'; ctx.lineWidth = 0.5
+    ;[mainY, volY, macdY, macdY + macdH].forEach(y => {
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke()
+    })
+
+    // ── 主图网格 ──
+    ctx.strokeStyle = '#161b22'; ctx.lineWidth = 0.5
+    for (let i = 1; i < 4; i++) {
       const y = mainY + i * mainH / 4
       ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke()
     }
-    // 成交量区域上边框
-    ctx.strokeStyle = '#1a1f33'
-    ctx.beginPath(); ctx.moveTo(padL, volY); ctx.lineTo(W - padR, volY); ctx.stroke()
-    // MACD区域上边框
-    ctx.beginPath(); ctx.moveTo(padL, macdY); ctx.lineTo(W - padR, macdY); ctx.stroke()
-    // MACD零线
-    ctx.strokeStyle = '#2a3050'; ctx.lineWidth = 0.8
+    // MACD 零线
+    ctx.strokeStyle = '#30363d'; ctx.lineWidth = 0.5
     ctx.beginPath(); ctx.moveTo(padL, macdMidY); ctx.lineTo(W - padR, macdMidY); ctx.stroke()
 
-    // ── 竖向网格（时间轴对应的竖线）──
-    ctx.strokeStyle = '#1a1e2e'; ctx.lineWidth = 0.5
-    const gridStep = n > 80 ? 20 : n > 40 ? 10 : 5
-    data.forEach((b, i) => {
-      if (i % gridStep !== 0) return
-      const x = padL + i * barW + barW / 2
-      ctx.beginPath(); ctx.moveTo(x, mainY); ctx.lineTo(x, macdY + macdH); ctx.stroke()
-    })
-
-    // ── 右轴价格标签（火币：白色数字，右侧对齐）──
-    ctx.fillStyle    = '#787b86'
-    ctx.font         = '9px -apple-system, sans-serif'
-    ctx.textAlign    = 'left'
+    // ── 右轴价格标签 ──
+    ctx.fillStyle = '#484f58'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left'
     for (let i = 0; i <= 4; i++) {
-      const p = priceHi - i * (priceHi - priceLo) / 4
+      const p = priceHi - i * priceRange / 4
       const y = mainY + i * mainH / 4
-      const label = p >= 10000 ? p.toFixed(0) : p.toFixed(2)
-      ctx.fillText(label, W - padR + 4, y + 3)
+      ctx.fillText(p >= 10000 ? p.toFixed(0) : p.toFixed(1), W - padR + 3, y + 3)
     }
-
-    // 最新价标记（右轴高亮）
-    const lastClose = data[n - 1].close
-    const lastY = py(lastClose)
-    ctx.fillStyle = data[n-1].close >= data[n-1].open ? '#26a69a' : '#ef5350'
-    ctx.fillRect(W - padR + 1, lastY - 7, padR - 2, 14)
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px -apple-system, sans-serif'; ctx.textAlign = 'left'
-    ctx.fillText(lastClose >= 10000 ? lastClose.toFixed(0) : lastClose.toFixed(2), W - padR + 4, lastY + 3)
 
     // ── 底部时间轴 ──
-    ctx.fillStyle = '#535965'; ctx.font = '9px -apple-system, sans-serif'; ctx.textAlign = 'center'
-    const tStep = n > 100 ? 20 : n > 50 ? 10 : n > 25 ? 5 : 3
+    ctx.fillStyle = '#484f58'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'
     data.forEach((b, i) => {
-      if (i % tStep !== 0) return
+      if (i % 8 !== 0) return
       const x = padL + i * barW + barW / 2
       const d = new Date(b.time)
-      const label = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
-      ctx.fillText(label, x, H - 4)
+      ctx.fillText(
+        `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,
+        x, H - 4
+      )
     })
 
-    // ── BOLL 三线（火币：上轨蓝、中轨灰虚线、下轨蓝）──
-    const drawLine = (arr, color, lw = 1, dash = []) => {
-      ctx.strokeStyle = color; ctx.lineWidth = lw
-      ctx.setLineDash(dash)
-      ctx.beginPath()
-      let started = false
+    // ── BOLL 三线 ──
+    const drawLine = (arr, color, lw=1) => {
+      ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.beginPath()
       arr.forEach((v, i) => {
-        if (!isFinite(v)) { started = false; return }
         const x = padL + i * barW + barW / 2
-        if (!started) { ctx.moveTo(x, py(v)); started = true }
-        else ctx.lineTo(x, py(v))
+        i === 0 ? ctx.moveTo(x, py(v)) : ctx.lineTo(x, py(v))
       })
       ctx.stroke()
-      ctx.setLineDash([])
     }
-    drawLine(bollArr.map(b => b.upper), 'rgba(90,131,198,0.7)',  0.8)
-    drawLine(bollArr.map(b => b.mid),   'rgba(90,131,198,0.4)',  0.8, [3, 2])
-    drawLine(bollArr.map(b => b.lower), 'rgba(90,131,198,0.7)',  0.8)
+    drawLine(bollArr.map(b => b.upper), '#bb86fc', 0.8)
+    drawLine(bollArr.map(b => b.mid),   '#666',    0.7)
+    drawLine(bollArr.map(b => b.lower), '#03dac6', 0.8)
 
-    // BOLL区域填充（上下轨之间半透明）
-    ctx.beginPath()
-    bollArr.forEach((b, i) => {
-      const x = padL + i * barW + barW / 2
-      i === 0 ? ctx.moveTo(x, py(b.upper)) : ctx.lineTo(x, py(b.upper))
-    })
-    for (let i = n - 1; i >= 0; i--) {
-      const x = padL + i * barW + barW / 2
-      ctx.lineTo(x, py(bollArr[i].lower))
-    }
-    ctx.closePath()
-    ctx.fillStyle = 'rgba(90,131,198,0.04)'
-    ctx.fill()
+    // ── MA 线 ──
+    drawLine(ma5,  '#ffa657', 1)
+    drawLine(ma10, '#58a6ff', 1)
 
-    // MA 线
-    drawLine(ma5,  '#f0b90b', 0.9)   // 金色MA5（火币风）
-    drawLine(ma10, '#5088c8', 0.9)   // 蓝色MA10
-
-    // ── 蜡烛图（火币风格：实体粗，影线细，颜色鲜艳）──
+    // ── 蜡烛图 ──
     data.forEach((b, i) => {
       const x    = padL + i * barW + barW / 2
       const isUp = b.close >= b.open
-      // 火币：上涨=绿色#26a69a，下跌=红色#ef5350
-      const upCol   = '#26a69a'
-      const dnCol   = '#ef5350'
-      const col     = isUp ? upCol : dnCol
-      const oY      = py(b.open)
-      const cY      = py(b.close)
-      const hY      = py(b.high)
-      const lY      = py(b.low)
-      const bodyTop = Math.min(oY, cY)
-      const bodyH   = Math.max(1, Math.abs(cY - oY))
+      const col  = isUp ? '#ff4d6d' : '#00d68f'
+      const oY   = py(b.open), cY = py(b.close)
+      const hY   = py(b.high), lY = py(b.low)
 
-      // 影线（细，颜色同实体）
-      ctx.strokeStyle = col
-      ctx.lineWidth   = wickW
-      ctx.beginPath(); ctx.moveTo(x, hY); ctx.lineTo(x, bodyTop); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(x, bodyTop + bodyH); ctx.lineTo(x, lY); ctx.stroke()
+      // 影线
+      ctx.strokeStyle = col; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(x, hY); ctx.lineTo(x, lY); ctx.stroke()
 
-      // 实体（填充 + 边框）
-      if (bodyH > 1.5) {
-        // 实心
-        ctx.fillStyle = col
-        ctx.fillRect(x - bodyW / 2, bodyTop, bodyW, bodyH)
-      } else {
-        // 十字星：只画横线
-        ctx.strokeStyle = col; ctx.lineWidth = 1
-        ctx.beginPath(); ctx.moveTo(x - bodyW / 2, bodyTop); ctx.lineTo(x + bodyW / 2, bodyTop); ctx.stroke()
-      }
+      // 实体
+      const top  = Math.min(oY, cY)
+      const bh   = Math.max(1, Math.abs(cY - oY))
+      ctx.fillStyle = col
+      ctx.fillRect(x - bBody / 2, top, bBody, bh)
     })
 
-    // ── 成交量柱（上涨=半透明绿，下跌=半透明红，对应实体颜色）──
+    // ── 成交量柱 ──
     data.forEach((b, i) => {
       const x   = padL + i * barW + barW / 2
-      const isUp = b.close >= b.open
-      ctx.fillStyle = isUp ? 'rgba(38,166,154,0.5)' : 'rgba(239,83,80,0.5)'
+      const col = b.close >= b.open ? '#ff4d6d' : '#00d68f'
       const top = vy(b.volume)
-      ctx.fillRect(x - bodyW / 2, top, bodyW, volY + volH - top)
+      ctx.fillStyle = col + '99'  // 半透明
+      ctx.fillRect(x - bBody / 2, top, bBody, volY + volH - top)
     })
 
-    // ── MACD 柱（红绿颜色同K线）──
+    // ── MACD 柱 ──
     data.forEach((b, i) => {
       const x   = padL + i * barW + barW / 2
       const v   = macdObj.bar[i]
-      if (!isFinite(v)) return
-      const isPos = v >= 0
-      const yTop = isPos ? my(v) : macdMidY
-      const yBot = isPos ? macdMidY : my(v)
-      const bh   = Math.max(1, Math.abs(yBot - yTop))
-      ctx.fillStyle = isPos ? 'rgba(38,166,154,0.75)' : 'rgba(239,83,80,0.75)'
-      ctx.fillRect(x - bodyW / 2, yTop, bodyW, bh)
+      const top = v >= 0 ? my(v) : macdMidY
+      const bh  = Math.max(1, Math.abs(my(v) - macdMidY))
+      ctx.fillStyle = v >= 0 ? '#ff4d6d99' : '#00d68f99'
+      ctx.fillRect(x - bBody / 2, top, bBody, bh)
     })
 
     // ── DIF / DEA 线 ──
-    const drawMACDLine = (arr, color, lw = 1) => {
-      ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash([])
-      ctx.beginPath()
-      let started = false
+    const drawMACDLine = (arr, color) => {
+      ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.beginPath()
       arr.forEach((v, i) => {
-        if (!isFinite(v)) { started = false; return }
         const x = padL + i * barW + barW / 2
-        if (!started) { ctx.moveTo(x, my(v)); started = true }
-        else ctx.lineTo(x, my(v))
+        i === 0 ? ctx.moveTo(x, my(v)) : ctx.lineTo(x, my(v))
       })
       ctx.stroke()
     }
-    drawMACDLine(macdObj.dif, '#f0b90b', 0.8)
-    drawMACDLine(macdObj.dea, '#5088c8', 0.8)
+    drawMACDLine(macdObj.dif, '#ffa657')
+    drawMACDLine(macdObj.dea, '#58a6ff')
 
-    // ── 插针信号标记（更简洁，只在真正插针K线上标小三角）──
+    // ── 插针信号标记箭头（只标真实插针，过滤十字星和微小波动） ──
     data.forEach((b, i) => {
-      const x       = padL + i * barW + barW / 2
+      const x = padL + i * barW + barW / 2
       const body    = Math.abs(b.close - b.open)
-      const kRange  = b.high - b.low || 0.001
+      const kRange  = b.high - b.low
       const lowerSh = Math.min(b.open, b.close) - b.low
       const upperSh = b.high - Math.max(b.open, b.close)
-      const minBody = b.close * 0.0003
-      const minSh   = b.close * 0.001
-      const isLong  = body >= minBody && lowerSh >= body * 1.5 && lowerSh >= minSh && b.close > b.low + kRange * 0.5
-      const isShort = body >= minBody && upperSh >= body * 1.5 && upperSh >= minSh && b.close < b.high - kRange * 0.5
-      const sz      = Math.max(8, Math.min(13, barW * 1.2))
+      const minBody = b.close * 0.0003   // 实体至少0.03%，过滤十字星
+      const minSh   = b.close * 0.001    // 影线至少0.1%，过滤微波动
+      const isLong  = body >= minBody && lowerSh >= body * 1.5 && lowerSh >= minSh && b.close > (b.low + kRange * 0.5)
+      const isShort = body >= minBody && upperSh >= body * 1.5 && upperSh >= minSh && b.close < (b.high - kRange * 0.5)
       if (isLong) {
-        const ay = py(b.low) + sz + 4
-        ctx.fillStyle = '#26a69a'
-        ctx.font = `${sz}px sans-serif`; ctx.textAlign = 'center'
-        ctx.fillText('▲', x, ay)
+        const ay = py(b.low) + 6
+        ctx.fillStyle = '#00e676'
+        ctx.font = `bold ${Math.max(9, barW)}px sans-serif`; ctx.textAlign = 'center'
+        ctx.fillText('▲', x, ay + 10)
+        if (barW > 5) {
+          ctx.fillStyle = 'rgba(0,230,118,0.6)'
+          ctx.font = '7px sans-serif'
+          ctx.fillText('多', x, ay + 20)
+        }
       } else if (isShort) {
-        const ay = py(b.high) - sz - 4
-        ctx.fillStyle = '#ef5350'
-        ctx.font = `${sz}px sans-serif`; ctx.textAlign = 'center'
-        ctx.fillText('▼', x, ay)
+        const ay = py(b.high) - 6
+        ctx.fillStyle = '#ff4d6d'
+        ctx.font = `bold ${Math.max(9, barW)}px sans-serif`; ctx.textAlign = 'center'
+        ctx.fillText('▼', x, ay - 6)
+        if (barW > 5) {
+          ctx.fillStyle = 'rgba(255,77,109,0.6)'
+          ctx.font = '7px sans-serif'
+          ctx.fillText('空', x, ay - 16)
+        }
       }
     })
 
-    // ── 区域标签（左上角）──
-    ctx.font = '8px -apple-system, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#535965'
-    ctx.fillText(`MA5  MA10  BOLL`, padL + 2, mainY + 11)
-    ctx.fillText('VOL', padL + 2, volY + 9)
-    ctx.fillText(`MACD`, padL + 2, macdY + 9)
+    // ── 右上角显示当前根数 ──
+    ctx.fillStyle = 'rgba(88,166,255,0.7)'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right'
+    ctx.fillText(`${n}根`, W - padR - 2, mainY + 12)
 
-    // ── 右上角视窗根数 ──
-    ctx.fillStyle = 'rgba(88,166,255,0.55)'; ctx.font = '8px sans-serif'; ctx.textAlign = 'right'
-    ctx.fillText(`${n}根`, W - padR - 2, mainY + 11)
+    // ── 区域标签 ──
+    ctx.fillStyle = '#484f58'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left'
+    ctx.fillText('VOL', padL + 2, volY + 10)
+    ctx.fillText('MACD(12,26,9)', padL + 2, macdY + 11)
 
-    // 存指标和布局备触摸用
+    // 存指标备触摸
     this._chartIndicators = { bollArr, ma5, ma10, macdObj }
-    this._chartLayout = { padL, padR, mainY, mainH, volH, macdH,
-                          volY, macdY, barW, n, priceHi, priceLo }
+    this._chartLayout = { padL, padR, padTop, padBot, innerW, mainH, volH, macdH,
+                          mainY, volY, macdY, barW, n, priceHi, priceLo }
   },
 
   // ── 触摸交互：双指缩放 + 单指拖动 + 单指查价 ──
@@ -833,7 +494,7 @@ Page({
         this._isDragging     = false
         this._touchMoved     = false
         this._pinchStartDist = dist
-        this._pinchStartView = this._view || 120
+        this._pinchStartView = this._view || 40
         this.setData({ touchIdx: -1 })
         return
       }
@@ -843,7 +504,7 @@ Page({
         // 两指靠拢 → dist变小 → 缩小 → VIEW变大（看更多根，更全局）
         const scale   = this._pinchStartDist / dist  // <1拉开，>1靠拢
         const newView = Math.round(this._pinchStartView * scale)
-        this._view = Math.max(10, Math.min(480, newView))
+        this._view = Math.max(10, Math.min(120, newView))
         this.setData({ klineView: this._view })
         this._drawChart(null)
         return
@@ -909,16 +570,15 @@ Page({
     const priceRange = priceHi - priceLo || 1
     const cy  = mainY + (1 - (b.close - priceLo) / priceRange) * mainH
 
-    ctx.strokeStyle = 'rgba(88,166,255,0.5)'; ctx.lineWidth = 0.8; ctx.setLineDash([3, 3])
+    ctx.strokeStyle = '#58a6ff88'; ctx.lineWidth = 0.8; ctx.setLineDash([3, 3])
     ctx.beginPath(); ctx.moveTo(cx, mainY); ctx.lineTo(cx, macdY + macdH); ctx.stroke()
     ctx.beginPath(); ctx.moveTo(padL, cy);  ctx.lineTo(W - padR, cy);       ctx.stroke()
     ctx.setLineDash([])
 
-    const isUp = b.close >= b.open
-    ctx.fillStyle = isUp ? '#26a69a' : '#ef5350'
+    ctx.fillStyle = '#58a6ff'
     ctx.fillRect(W - padR + 1, cy - 7, padR - 2, 14)
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px -apple-system, sans-serif'; ctx.textAlign = 'left'
-    ctx.fillText(b.close >= 10000 ? b.close.toFixed(0) : b.close.toFixed(2), W - padR + 4, cy + 3)
+    ctx.fillStyle = '#0d1117'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left'
+    ctx.fillText(b.close >= 10000 ? b.close.toFixed(0) : b.close.toFixed(1), W - padR + 3, cy + 3)
 
     const macdV = (ind.macdObj.bar[idx] || 0)
     const difV  = (ind.macdObj.dif[idx] || 0)
@@ -969,70 +629,29 @@ Page({
     tick()
   },
 
-  // 大趋势详情折叠/展开（兼容旧版，已废弃）
-  toggleTrendDetail() {
-    this.setData({ trendExpanded: !this.data.trendExpanded })
-  },
-
-  // 展开/收起更多周期面板
-  togglePeriodMenu() {
-    this.setData({ periodMenuOpen: !this.data.periodMenuOpen })
-  },
-
-  // 从更多面板切换周期（同时收起面板）
-  switchIntervalFromMenu(e) {
-    this.setData({ periodMenuOpen: false })
-    this.switchInterval(e)
-  },
-
   switchInterval(e) {
-    const iv    = e.currentTarget.dataset.iv
-    const label = e.currentTarget.dataset.label
-    // 重置拖动偏移和视窗
+    // 切换周期：重置拖动偏移和缓存数据，强制刷新图表
     this._dragOffset = 0
     this._allBars    = null
     this._chartData  = null
-    this._view       = 120
-
-    this.setData({ interval: iv, intervalLabel: label, klineView: 120 })
-
-    // 有缓存且 < 2分钟：立即渲染，后台静默更新
-    const cache = this._kvCache[iv]
-    const cacheAge = cache ? (Date.now() - cache.ts) : Infinity
-    if (cache && cacheAge < 120000) {
-      this._renderAll(cache.sig)          // 秒切：先显示缓存
-      this._silentRefresh(iv)             // 后台刷新
-    } else {
-      this.loadData(false)                // 无缓存：正常拉
-    }
+    this._view       = 40
+    this.setData({ interval: e.currentTarget.dataset.iv, intervalLabel: e.currentTarget.dataset.label, klineView: 40 })
+    this.loadData()
   },
-
-  // 后台静默刷新（不显示loading）
-  async _silentRefresh(iv) {
-    try {
-      const sig = await detectSignal(iv)
-      this._kvCache[iv] = { sig, ts: Date.now() }
-      if (this.data.interval === iv) this._renderAll(sig)  // 仍在这个周期才更新
-    } catch(e) { /* 静默忽略 */ }
-  },
-
-
-
-  refresh() { this.loadData(false) },
+  refresh() { this.loadData() },
   toggleTips() { this.setData({ showTips: !this.data.showTips }) },
 
-  async loadData(silent = false) {
-    if (!silent && this.data.loading) return
-    if (!silent) this.setData({ loading: true, errorMsg: '' })
+  async loadData() {
+    if (this.data.loading) return
+    this.setData({ loading: true, errorMsg: '' })
     try {
       const iv  = this.data.interval
       const sig = await detectSignal(iv)
-      this._kvCache[iv] = { sig, ts: Date.now() }  // 存缓存
       this._renderAll(sig)
     } catch (e) {
-      if (!silent) this.setData({ errorMsg: e.message || '数据获取失败，请检查网络' })
+      this.setData({ errorMsg: e.message || '数据获取失败，请检查网络' })
     } finally {
-      if (!silent) this.setData({ loading: false })
+      this.setData({ loading: false })
     }
   },
 
@@ -1045,16 +664,12 @@ Page({
     const chg = (last.close - prev.close) / prev.close * 100
     const dir = chg >= 0 ? 'up' : 'down'
 
-    // 24h / 4h 概况（按当前周期动态换算 bars 数量）
-    const ivMinMap = { '1s':1/60, '1m':1, '3m':3, '5m':5, '15m':15, '30m':30, '1h':60, '2h':120, '4h':240, '6h':360, '12h':720, '1d':1440, '3d':4320, '1w':10080 }
-    const ivMin    = ivMinMap[this.data.interval] || 15
-    const bars24h  = Math.round(24 * 60 / ivMin)   // 24h对应多少根
-    const bars4h   = Math.round(4  * 60 / ivMin)   // 4h对应多少根
-    const bar24hAgo = bars[Math.max(0, bars.length - bars24h)]
-    const bar4hAgo  = bars[Math.max(0, bars.length - bars4h)]
+    // 24h / 4h 概况（用已有bars估算）
+    const bar24hAgo = bars[Math.max(0, bars.length - 96)]  // 15m×96=24h
+    const bar4hAgo  = bars[Math.max(0, bars.length - 16)]
     const chg24h    = (last.close - bar24hAgo.close) / bar24hAgo.close * 100
     const chg4h     = sig.drop4h !== undefined ? sig.drop4h : (last.close - bar4hAgo.close) / bar4hAgo.close * 100
-    const vol24hSum = bars.slice(-bars24h).reduce((s,b) => s + b.volume, 0)
+    const vol24hSum = bars.slice(-96).reduce((s,b) => s + b.volume, 0)
 
     // 指标值
     const n        = bars.length - 1
@@ -1256,12 +871,11 @@ Page({
       riskMsg = `风控正常，今日已亏${todayLossU}U/${dailyMaxLossU}U`
     }
 
-    // ── 大趋势判断 ────────────────────────────────────────────
-    const trendInfo  = calcTrend(bars)
-    const energyInfo = calcEnergyBalance(bars)
-
-    // ── MACD金叉/死叉检测 ──────────────────────────────────────
-    const macdCross = detectMacdCross(bars)
+    // 趋势信息
+    const trendInfo = sig.trendInfo || null
+    const isBearTrend = trendInfo ? (trendInfo.trendColor === 'bear' || trendInfo.trendColor === 'bear_weak') : false
+    const aiScoreHint = score >= 8 ? '强烈看好' : score >= 6 ? '中等把握' : score >= 4 ? '谨慎评估' : '信号偏弱'
+    const aiLabel = `AI量化 · ${aiScoreHint} · 胜率${winRateFromScore(score)}%`
 
     this.setData({
       curPrice: fmtPrice(last.close),
@@ -1296,36 +910,115 @@ Page({
       updateTime,
       touchIdx: -1,
       
-      // MACD金叉/死叉通知条
-      macdCross: macdCross,
-      macdCrossShow: !!macdCross,
-
-      // 大趋势
-      trendLabel:  trendInfo ? trendInfo.trendLabel : '--',
-      trendColor:  trendInfo ? trendInfo.trendColor  : 'neutral',
-      trendDesc:   trendInfo ? trendInfo.trendDesc   : '--',
-      supportZone: trendInfo ? trendInfo.supportZone : '--',
-      resistZone:  trendInfo ? trendInfo.resistZone  : '--',
-      trendMa20:   trendInfo ? trendInfo.ma20 : '--',
-      trendMa60:   trendInfo ? trendInfo.ma60 : '--',
-      trendStrength: trendInfo ? trendInfo.trendStrength : 50,
-      isBearTrend: trendInfo ? (trendInfo.trendColor === 'bear' || trendInfo.trendColor === 'bear_weak') : false,
-
-      // 多空能量
-      bullPct:         energyInfo ? energyInfo.bullPct   : 50,
-      bearPct:         energyInfo ? energyInfo.bearPct   : 50,
-      domLabel:        energyInfo ? energyInfo.domLabel  : '均衡',
-      energyDominance: energyInfo ? energyInfo.dominance : 'neutral',
-
       // 风控状态
       riskStatus,
       riskMsg,
       todayLossU,
       dailyMaxLossU,
       cooldownUntil,
+
+      // AI & 趋势
+      isBearTrend,
+      aiLabel,
     })
 
     // 画 K线图
     this._drawChart(bars)
-  }
+  },
+
+  // ══ 激活码 / 会员 ══
+  onCodeInput(e) { this.setData({ codeInput: e.detail.value.trim().toUpperCase() }) },
+  submitCode() {
+    const code = (this.data.codeInput || '').toUpperCase().trim()
+    if (!code) return wx.showToast({ title: '请输入激活码', icon: 'none' })
+    const used = wx.getStorageSync('used_codes') || []
+    if (used.includes(code)) return wx.showToast({ title: '该码已使用过', icon: 'none' })
+    const now = new Date()
+    // 格式验证（不验证日期，避免跨月/跨年失效）
+    // 月卡：BTC-M-YYYYMM-XXXX
+    const isMonth = /^BTC-M-\d{6}-.+$/.test(code)
+    // 年卡：BTC-Y-YYYY-XXXX
+    const isYear  = /^BTC-Y-\d{4}-.+$/.test(code)
+    // 永久：BTC-LT-XXXX（任意长度尾号）
+    const isLife  = /^BTC-LT-.+$/.test(code)
+    if (!isMonth && !isYear && !isLife) return wx.showToast({ title: '激活码无效，请检查', icon: 'none' })
+    used.push(code)
+    wx.setStorageSync('used_codes', used)
+    wx.setStorageSync('isVip', true)
+    if (isMonth) {
+      const exp = new Date(now); exp.setMonth(exp.getMonth()+1)
+      wx.setStorageSync('vip_exp', exp.getTime())
+      wx.setStorageSync('vip_type', '月卡')
+    } else if (isYear) {
+      const exp = new Date(now); exp.setFullYear(exp.getFullYear()+1)
+      wx.setStorageSync('vip_exp', exp.getTime())
+      wx.setStorageSync('vip_type', '年卡')
+    } else {
+      wx.setStorageSync('vip_exp', 9999999999999)
+      wx.setStorageSync('vip_type', '永久会员')
+    }
+    clearInterval(this._trialTimer)
+    const vipType = isMonth ? '月卡(30天)' : isYear ? '年卡(365天)' : '永久会员'
+    this.setData({ isVip: true, inTrial: true, codeInput: '' })
+    wx.showModal({
+      title: '🎉 激活成功！',
+      content: `已开通 ${vipType}\n祝您交易顺利，稳定盈利！`,
+      showCancel: false
+    })
+  },
+  // 隐藏入口：footer连点5次
+  _footerTaps: 0,
+  onFooterTap() {
+    this._footerTaps = (this._footerTaps || 0) + 1
+    if (this._footerTaps >= 5) { this._footerTaps = 0; wx.navigateTo({ url: '/pages/admin/admin' }) }
+    setTimeout(() => { this._footerTaps = 0 }, 2000)
+  },
+  // 密码输入（弹框，6666=临时体验，8888=管理后台）
+  onPasswordInput(e) { this.setData({ pwdInput: e.detail.value }) },
+  submitPassword() {
+    const pwd = this.data.pwdInput || ''
+    if (pwd === '6666') {
+      this.setData({ isVip: true, inTrial: true, pwdInput: '', showPwdDialog: false })
+      wx.showToast({ title: '体验模式已开启', icon: 'success' })
+    } else if (pwd === '8888') {
+      this.setData({ pwdInput: '', showPwdDialog: false })
+      wx.navigateTo({ url: '/pages/admin/admin' })
+    } else {
+      wx.showToast({ title: '密码错误', icon: 'none' })
+    }
+  },
+  showPwdEntry() { this.setData({ showPwdDialog: true, pwdInput: '' }) },
+  closePwdDialog() { this.setData({ showPwdDialog: false }) },
+
+  // ══ 免责声明 ══
+  agreeDisclaimer() {
+    wx.setStorageSync('disclaimer_agreed', true)
+    this.setData({ showDisclaimer: false })
+  },
+  rejectDisclaimer() {
+    wx.showModal({
+      title: '提示',
+      content: '您需要同意风险提示才能继续使用',
+      showCancel: false,
+      success: () => {
+        // 再次显示免责声明，不允许跳过
+        this.setData({ showDisclaimer: true })
+      }
+    })
+  },
+
+  // ══ CTA联系按钮 ══
+  onCtaContact() {
+    // 将微信号复制到剪贴板
+    wx.setClipboardData({
+      data: 'weber00vip',   // ← 替换为你的真实微信号
+      success: () => {
+        wx.showModal({
+          title: '微信号已复制 ✅',
+          content: '微信号：weber00vip\n\n请添加好友，告知需要哪个套餐，付款后发送激活码给您',
+          showCancel: false
+        })
+      }
+    })
+  },
 })
