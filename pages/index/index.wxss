@@ -1085,3 +1085,38 @@ page {
   display: block; margin-top: 14rpx;
   font-size: 22rpx; color: #ef5350; text-align: center;
 }
+
+/* 管理员密码浮窗 */
+.admin-pwd-float {
+  position: fixed; bottom: 120rpx; left: 50%; transform: translateX(-50%);
+  z-index: 9999; width: 560rpx;
+}
+.admin-pwd-inner {
+  display: flex; align-items: center; gap: 12rpx;
+  background: rgba(13,26,46,.96);
+  border: 1.5rpx solid rgba(251,191,36,.4);
+  border-radius: 24rpx; padding: 16rpx 20rpx;
+  box-shadow: 0 8rpx 40rpx rgba(0,0,0,.6);
+}
+.admin-pwd-input {
+  flex: 1; height: 72rpx; padding: 0 20rpx;
+  background: rgba(255,255,255,.06);
+  border: 1rpx solid rgba(255,255,255,.1);
+  border-radius: 16rpx;
+  font-size: 28rpx; color: #f1f5f9;
+  letter-spacing: 6rpx;
+}
+.admin-pwd-placeholder { color: rgba(255,255,255,.25); font-size: 22rpx; letter-spacing: 0; }
+.admin-pwd-btn {
+  height: 72rpx; padding: 0 28rpx;
+  background: linear-gradient(135deg, #d97706, #fbbf24);
+  border-radius: 16rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26rpx; font-weight: 900; color: #0d1117;
+  flex-shrink: 0;
+}
+.admin-pwd-close {
+  height: 72rpx; width: 56rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28rpx; color: rgba(255,255,255,.3); flex-shrink: 0;
+}

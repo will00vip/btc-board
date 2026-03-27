@@ -60,19 +60,134 @@
 
 
 
-  <!-- ══ 非会员：付费墙引导卡 ══ -->
+  <!-- ══ K线图区域（全部用户可见） ══ -->
+  <view class="kline-section">
+
+    <!-- 行1：周期切换栏（折叠下拉式） -->
+    <view class="kline-title-row">
+      <view class="kline-title-left">
+        <text class="kline-section-icon">📈</text>
+        <!-- 基础周期：直接显示 -->
+        <view class="period-bar-inline">
+          <view
+            class="period-btn-sm {{interval === item.iv ? 'active' : ''}}"
+            wx:for="{{basicPeriods}}" wx:key="iv" wx:for-item="item"
+            bindtap="switchInterval"
+            data-iv="{{item.iv}}"
+            data-label="{{item.label}}"
+          >{{item.label}}</view>
+          <!-- 更多按钮 -->
+          <view class="period-btn-sm more-btn {{periodMenuOpen ? 'active' : ''}}" bindtap="togglePeriodMenu">
+            <text>{{periodMenuOpen ? '收起' : '更多▾'}}</text>
+          </view>
+        </view>
+      </view>
+      <view style="display:flex;align-items:center;gap:10rpx;flex-shrink:0;">
+        <text class="kview-badge">{{klineView}}根/屏</text>
+        <view class="chart-legend">
+          <text class="leg-boll-u">BOLL↑</text>
+          <text class="leg-boll-l">↓</text>
+          <text class="leg-ma5">MA5</text>
+          <text class="leg-ma10">MA10</text>
+        </view>
+      </view>
+    </view>
+    <!-- 展开的更多周期面板 -->
+    <view class="period-more-panel" wx:if="{{periodMenuOpen}}">
+      <view
+        class="period-more-btn {{interval === item.iv ? 'active' : ''}}"
+        wx:for="{{morePeriods}}" wx:key="iv" wx:for-item="item"
+        bindtap="switchIntervalFromMenu"
+        data-iv="{{item.iv}}"
+        data-label="{{item.label}}"
+      >{{item.label}}</view>
+    </view>
+
+    <!-- 行2：大趋势卡片（升级版） -->
+    <view class="trend-card-v2 {{trendColor}}">
+      <!-- 顶部：方向 + 趋势标签 -->
+      <view class="trend-card-top">
+        <view class="trend-card-title-row">
+          <text class="trend-card-period">{{intervalLabel}} 大趋势</text>
+          <view class="trend-card-badge {{trendColor}}">
+            <text class="trend-badge-icon">{{trendColor === 'bull' ? '🚀' : trendColor === 'down' || trendColor === 'bear' ? '🐸' : trendColor === 'bull_weak' ? '🌤' : '🌧'}}</text>
+            <text class="trend-badge-text">{{trendLabel}}</text>
+          </view>
+        </view>
+        <text class="trend-card-desc">{{trendDesc}}</text>
+      </view>
+      <!-- 中部：MA20 / MA60 / 价格位置 -->
+      <view class="trend-card-mid">
+        <view class="trend-ma-item">
+          <text class="trend-ma-label">MA20</text>
+          <text class="trend-ma-val">{{trendMa20}}</text>
+        </view>
+        <view class="trend-ma-divider"></view>
+        <view class="trend-ma-item">
+          <text class="trend-ma-label">MA60</text>
+          <text class="trend-ma-val">{{trendMa60}}</text>
+        </view>
+        <view class="trend-ma-divider"></view>
+        <view class="trend-ma-item">
+          <text class="trend-ma-label">支撑区</text>
+          <text class="trend-ma-val green">{{supportZone}}</text>
+        </view>
+        <view class="trend-ma-divider"></view>
+        <view class="trend-ma-item">
+          <text class="trend-ma-label">压力区</text>
+          <text class="trend-ma-val red">{{resistZone}}</text>
+        </view>
+      </view>
+      <!-- 底部：趋势强度进度条 -->
+      <view class="trend-card-bar-wrap">
+        <view class="trend-card-bar-track">
+          <view class="trend-card-bar-fill {{trendColor}}" style="width:{{trendStrength}}%"></view>
+        </view>
+        <text class="trend-card-bar-label">趋势强度 {{trendStrength}}%</text>
+      </view>
+    </view>
+  </view>
+  <view class="kcanvas-wrap"
+    bindtouchmove="onKlineTouch"
+    bindtouchend="onKlineTouchEnd"
+    bindtouchstart="onKlineTouchStart"
+  >
+    <canvas type="2d" id="klineCanvas" class="kcanvas"></canvas>
+    <!-- 操作提示 -->
+    <view class="kcanvas-hint" wx:if="{{touchIdx < 0}}">
+      <text>← 单指拖动  ·  双指缩放 →</text>
+    </view>
+    <!-- 触摸浮窗 -->
+    <view class="ktooltip" wx:if="{{touchIdx >= 0}}" style="left:{{tooltipLeft}}px">
+      <text class="ktt-time">{{touchTime}}</text>
+      <view class="ktt-row"><text class="ktt-l">开</text><text class="ktt-v">{{touchO}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">高</text><text class="ktt-v up">{{touchH}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">低</text><text class="ktt-v dn">{{touchL}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">收</text><text class="ktt-v">{{touchC}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">量</text><text class="ktt-v">{{touchV}}</text></view>
+      <view class="ktt-div"></view>
+      <view class="ktt-row"><text class="ktt-l">MACD</text><text class="ktt-v">{{touchMACD}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">DIF</text><text class="ktt-v">{{touchDIF}}</text></view>
+      <view class="ktt-row"><text class="ktt-l">DEA</text><text class="ktt-v">{{touchDEA}}</text></view>
+    </view>
+  </view>
+
+  <!-- ══ 风控状态栏（全部用户可见） ══ -->
+  <view class="risk-bar {{riskStatus}}">
+    <view class="risk-left">
+      <text class="risk-icon">{{riskStatus === 'normal' ? '✅' : riskStatus === 'cooldown' ? '🧊' : '🛑'}}</text>
+      <text class="risk-txt">{{riskMsg}}</text>
+    </view>
+    <view class="risk-right" wx:if="{{riskStatus !== 'normal'}}">
+      <text class="risk-time">{{cooldownUntil}}</text>
+    </view>
+  </view>
+
+  <!-- ══ 非会员：轻量付费墙（K线以下内容锁住） ══ -->
   <block wx:if="{{!isVip}}">
     <view class="paywall-card">
-      <!-- 顶部标题 -->
-      <view class="paywall-header">
-        <text class="paywall-lock">🔐</text>
-        <text class="paywall-title">解锁专业功能</text>
-        <text class="paywall-sub">实时信号 · 精准止盈 · 多指标共振</text>
-      </view>
-
-      <!-- 模糊预览层 -->
+      <!-- 模糊预览：让用户感觉数据就在下面 -->
       <view class="paywall-preview">
-        <!-- 模拟决策卡 -->
         <view class="preview-decision-card">
           <view class="preview-face-wrap">
             <text class="preview-face">🚀</text>
@@ -90,56 +205,23 @@
             <text class="preview-score-den">/10</text>
           </view>
         </view>
-        <!-- 模拟止盈条 -->
         <view class="preview-tp-row">
           <view class="preview-tp-item stop"><text>止损</text><text class="preview-tp-val">██████</text></view>
           <view class="preview-tp-item tp1"><text>TP1</text><text class="preview-tp-val">██████</text></view>
           <view class="preview-tp-item tp2"><text>TP2</text><text class="preview-tp-val">██████</text></view>
           <view class="preview-tp-item tp3"><text>TP3</text><text class="preview-tp-val">██████</text></view>
         </view>
-        <!-- 模糊遮罩 -->
         <view class="paywall-blur-mask"></view>
       </view>
 
-      <!-- 功能亮点 -->
-      <view class="paywall-features">
-        <view class="paywall-feat">
-          <text class="paywall-feat-icon">📡</text>
-          <view class="paywall-feat-body">
-            <text class="paywall-feat-name">K线形态雷达扫描</text>
-            <text class="paywall-feat-desc">实时检测插针/放量/背离等形态</text>
-          </view>
-        </view>
-        <view class="paywall-feat">
-          <text class="paywall-feat-icon">🎯</text>
-          <view class="paywall-feat-body">
-            <text class="paywall-feat-name">精准止盈止损三档</text>
-            <text class="paywall-feat-desc">TP1/TP2/TP3 盈亏比智能推算</text>
-          </view>
-        </view>
-        <view class="paywall-feat">
-          <text class="paywall-feat-icon">⚡</text>
-          <view class="paywall-feat-body">
-            <text class="paywall-feat-name">多空能量对比实时计算</text>
-            <text class="paywall-feat-desc">MACD · KDJ · RSI · BOLL 六维共振</text>
-          </view>
-        </view>
-        <view class="paywall-feat">
-          <text class="paywall-feat-icon">🔔</text>
-          <view class="paywall-feat-body">
-            <text class="paywall-feat-name">手机推送预警（Pro）</text>
-            <text class="paywall-feat-desc">信号触发秒推，不错过每次机会</text>
-          </view>
-        </view>
+      <!-- 解锁文案 -->
+      <view class="paywall-header">
+        <text class="paywall-lock">🔐</text>
+        <text class="paywall-title">解锁实时信号</text>
+        <text class="paywall-sub">决策评分 · 精准止盈 · 多指标六维共振</text>
       </view>
 
-      <!-- 用户见证 -->
-      <view class="paywall-testimonial">
-        <text class="paywall-quote">"用了一个月，几乎每次插针都提前预警，太准了！"</text>
-        <text class="paywall-quote-author">—— 用户 @小虎 · 季卡会员</text>
-      </view>
-
-      <!-- 价格 + CTA -->
+      <!-- 价格 -->
       <view class="paywall-price-row">
         <view class="paywall-price-item">
           <text class="paywall-price-tag">月卡</text>
@@ -369,136 +451,30 @@
 
 
 
-  <!-- ══ K线图区域（含周期切换 + 大趋势） ══ -->
-  <view class="kline-section">
-
-    <!-- 行1：周期切换栏（折叠下拉式） -->
-    <view class="kline-title-row">
-      <view class="kline-title-left">
-        <text class="kline-section-icon">📈</text>
-        <!-- 基础周期：直接显示 -->
-        <view class="period-bar-inline">
-          <view
-            class="period-btn-sm {{interval === item.iv ? 'active' : ''}}"
-            wx:for="{{basicPeriods}}" wx:key="iv" wx:item="item"
-            bindtap="switchInterval"
-            data-iv="{{item.iv}}"
-            data-label="{{item.label}}"
-          >{{item.label}}</view>
-          <!-- 更多按钮 -->
-          <view class="period-btn-sm more-btn {{periodMenuOpen ? 'active' : ''}}" bindtap="togglePeriodMenu">
-            <text>{{periodMenuOpen ? '收起' : '更多▾'}}</text>
-          </view>
-        </view>
-      </view>
-      <view style="display:flex;align-items:center;gap:10rpx;flex-shrink:0;">
-        <text class="kview-badge">{{klineView}}根/屏</text>
-        <view class="chart-legend">
-          <text class="leg-boll-u">BOLL↑</text>
-          <text class="leg-boll-l">↓</text>
-          <text class="leg-ma5">MA5</text>
-          <text class="leg-ma10">MA10</text>
-        </view>
-      </view>
-    </view>
-    <!-- 展开的更多周期面板 -->
-    <view class="period-more-panel" wx:if="{{periodMenuOpen}}">
-      <view
-        class="period-more-btn {{interval === item.iv ? 'active' : ''}}"
-        wx:for="{{morePeriods}}" wx:key="iv" wx:item="item"
-        bindtap="switchIntervalFromMenu"
-        data-iv="{{item.iv}}"
-        data-label="{{item.label}}"
-      >{{item.label}}</view>
-    </view>
-
-    <!-- 行2：大趋势卡片（升级版） -->
-    <view class="trend-card-v2 {{trendColor}}">
-      <!-- 顶部：方向 + 趋势标签 -->
-      <view class="trend-card-top">
-        <view class="trend-card-title-row">
-          <text class="trend-card-period">{{intervalLabel}} 大趋势</text>
-          <view class="trend-card-badge {{trendColor}}">
-            <text class="trend-badge-icon">{{trendColor === 'bull' ? '🚀' : trendColor === 'down' || trendColor === 'bear' ? '🐸' : trendColor === 'bull_weak' ? '🌤' : '🌧'}}</text>
-            <text class="trend-badge-text">{{trendLabel}}</text>
-          </view>
-        </view>
-        <text class="trend-card-desc">{{trendDesc}}</text>
-      </view>
-      <!-- 中部：MA20 / MA60 / 价格位置 -->
-      <view class="trend-card-mid">
-        <view class="trend-ma-item">
-          <text class="trend-ma-label">MA20</text>
-          <text class="trend-ma-val">{{trendMa20}}</text>
-        </view>
-        <view class="trend-ma-divider"></view>
-        <view class="trend-ma-item">
-          <text class="trend-ma-label">MA60</text>
-          <text class="trend-ma-val">{{trendMa60}}</text>
-        </view>
-        <view class="trend-ma-divider"></view>
-        <view class="trend-ma-item">
-          <text class="trend-ma-label">支撑区</text>
-          <text class="trend-ma-val green">{{supportZone}}</text>
-        </view>
-        <view class="trend-ma-divider"></view>
-        <view class="trend-ma-item">
-          <text class="trend-ma-label">压力区</text>
-          <text class="trend-ma-val red">{{resistZone}}</text>
-        </view>
-      </view>
-      <!-- 底部：趋势强度进度条 -->
-      <view class="trend-card-bar-wrap">
-        <view class="trend-card-bar-track">
-          <view class="trend-card-bar-fill {{trendColor}}" style="width:{{trendStrength}}%"></view>
-        </view>
-        <text class="trend-card-bar-label">趋势强度 {{trendStrength}}%</text>
-      </view>
-    </view>
-
-  </view>
-  <view class="kcanvas-wrap" 
-    bindtouchmove="onKlineTouch" 
-    bindtouchstart="onKlineTouch" 
-    bindtouchend="onKlineTouchEnd"
-    catchtouchmove="onKlineTouch"
-  >
-    <canvas type="2d" id="klineCanvas" class="kcanvas"></canvas>
-    <!-- 操作提示 -->
-    <view class="kcanvas-hint" wx:if="{{touchIdx < 0}}">
-      <text>← 单指拖动  ·  双指缩放 →</text>
-    </view>
-    <!-- 触摸浮窗 -->
-    <view class="ktooltip" wx:if="{{touchIdx >= 0}}" style="left:{{tooltipLeft}}px">
-      <text class="ktt-time">{{touchTime}}</text>
-      <view class="ktt-row"><text class="ktt-l">开</text><text class="ktt-v">{{touchO}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">高</text><text class="ktt-v up">{{touchH}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">低</text><text class="ktt-v dn">{{touchL}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">收</text><text class="ktt-v">{{touchC}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">量</text><text class="ktt-v">{{touchV}}</text></view>
-      <view class="ktt-div"></view>
-      <view class="ktt-row"><text class="ktt-l">MACD</text><text class="ktt-v">{{touchMACD}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">DIF</text><text class="ktt-v">{{touchDIF}}</text></view>
-      <view class="ktt-row"><text class="ktt-l">DEA</text><text class="ktt-v">{{touchDEA}}</text></view>
-    </view>
-  </view>
-
-  <!-- ══ 风控状态栏 ══ -->
-  <view class="risk-bar {{riskStatus}}">
-    <view class="risk-left">
-      <text class="risk-icon">{{riskStatus === 'normal' ? '✅' : riskStatus === 'cooldown' ? '🧊' : '🛑'}}</text>
-      <text class="risk-txt">{{riskMsg}}</text>
-    </view>
-    <view class="risk-right" wx:if="{{riskStatus !== 'normal'}}">
-      <text class="risk-time">{{cooldownUntil}}</text>
-    </view>
-  </view>
-
   <!-- ══ 底部更新时间 ══ -->
   <view class="footer">
     <view class="footer-badge" bindtap="adminTap">🥞 大饼K线雷达  ·  60s自动嗅探</view>
     <text class="footer-txt">最后更新 {{updateTime}}</text>
     <text class="footer-txt">数据来源 🔥 火币HTX  /  🌐 币安镜像</text>
+  </view>
+
+  <!-- 管理员隐藏密码入口（连点3下触发） -->
+  <view class="admin-pwd-float" wx:if="{{showAdminPwdBox}}">
+    <view class="admin-pwd-inner">
+      <input
+        class="admin-pwd-input"
+        type="number"
+        password="{{true}}"
+        placeholder="管理员密码"
+        placeholder-class="admin-pwd-placeholder"
+        value="{{adminPwdInput}}"
+        bindinput="onAdminPwdInput"
+        maxlength="8"
+        focus="{{true}}"
+      />
+      <view class="admin-pwd-btn" bindtap="submitAdminPwd">进入</view>
+      <view class="admin-pwd-close" bindtap="closeAdminPwd">✕</view>
+    </view>
   </view>
 
   </block><!-- end isVip block -->

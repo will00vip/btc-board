@@ -215,6 +215,8 @@ Page({
     isVip: false,
     activateCode: '',
     activateErr: '',
+    showAdminPwdBox: false,
+    adminPwdInput: '',
 
     // 大趋势折叠状态（已废弃，保留兼容）
     trendExpanded: false,
@@ -355,19 +357,39 @@ Page({
   onUnload() { clearInterval(this._timer) },
   onPullDownRefresh() { this.loadData().finally(() => wx.stopPullDownRefresh()) },
 
-  // ── 隐藏管理员入口（连点5下跳转） ──
+  // ── 隐藏管理员入口（连点3下弹出密码框） ──
   _adminTapCount: 0,
   _adminTapTimer: null,
   adminTap() {
     this._adminTapCount = (this._adminTapCount || 0) + 1
     clearTimeout(this._adminTapTimer)
-    if (this._adminTapCount >= 5) {
+    if (this._adminTapCount >= 3) {
       this._adminTapCount = 0
-      wx.navigateTo({ url: '/pages/admin/admin' })
+      this.setData({ showAdminPwdBox: true, adminPwdInput: '' })
     } else {
-      this._adminTapTimer = setTimeout(() => { this._adminTapCount = 0 }, 1500)
+      this._adminTapTimer = setTimeout(() => { this._adminTapCount = 0 }, 1200)
     }
   },
+  onAdminPwdInput(e) {
+    const v = e.detail.value
+    this.setData({ adminPwdInput: v })
+    // 输满4位自动验证
+    if (v.length === 4) this.submitAdminPwd()
+  },
+  submitAdminPwd() {
+    if (this.data.adminPwdInput === '8888') {
+      this.setData({ showAdminPwdBox: false })
+      wx.navigateTo({ url: '/pages/admin/admin' })
+    } else {
+      wx.vibrateShort({ type: 'heavy' })
+      this.setData({ adminPwdInput: '' })
+    }
+  },
+  closeAdminPwd() {
+    this.setData({ showAdminPwdBox: false, adminPwdInput: '' })
+  },
+
+
 
   // ── 免责声明 ──
   closeDisclaimer() {
