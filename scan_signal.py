@@ -211,40 +211,40 @@ def check_signal():
         tp2  = round(price_now + risk * 1.5, 1)
         tp3  = round(price_now + risk * 2.5, 1)
 
-        # 评分
+        # 评分（×10 转为100分制，与小程序统一）
         score = 0
         details = []
         details.append(f"✅ 下影插针 (下影/实体 = {round(lower_shadow/body,1)}x)")
-        score += 3
+        score += 30
         if vol_strong:
             details.append(f"✅ 超级放量 ({vol_ratio}x，强度极高)")
-            score += 3
+            score += 30
         else:
             details.append(f"✅ 成交量放大 ({vol_ratio}x)")
-            score += 2
+            score += 20
         if macd_long_ok:
             details.append(f"✅ MACD配合 (DIF={round(dif[-1],1)})")
-            score += 2
+            score += 20
         else:
             details.append(f"⚠️ MACD未配合 (DIF={round(dif[-1],1)}, DEA={round(dea[-1],1)})")
         if long_confirm_strong:
             details.append("✅ 确认K强（低点抬高+阳线）")
-            score += 2
+            score += 20
         elif long_confirm_weak:
             details.append("⚠️ 确认K弱（价格未跌回插针低点）")
-            score += 1
+            score += 10
         else:
             details.append("❌ 确认K未出现")
 
-        # 强度标签 + 建议评级
+        # 强度标签 + 建议评级（100分制，>=30推送）
         rr = round(risk * 1.5 / risk, 1) if risk > 0 else 0  # TP2盈亏比=1.5
         rr_str = f"1:{rr}" if rr > 0 else "--"
-        if score >= 8:
+        if score >= 80:
             level   = "🔥🔥 超强信号"
             emoji   = "🚀"
             advice  = "强烈推荐！多项指标共振，可考虑开仓"
             stars   = "⭐⭐⭐⭐⭐"
-        elif score >= 6:
+        elif score >= 60:
             level   = "🔥 强信号"
             emoji   = "📈"
             advice  = "建议参与，注意控仓（≤2成）"
@@ -256,9 +256,9 @@ def check_signal():
             stars   = "⭐⭐⭐"
 
         # 标题：一眼读懂方向/价格/评分
-        title = f"🚀 BTC做多 {level} | {price_now:.0f} | {score}/10"
+        title = f"🚀 BTC做多 {level} | {price_now:.0f} | {score}/100"
         msg = f"""🚀 BTC 做多信号  {level}
-{stars}  评分 {score}/10  盈亏比 1.5:1
+{stars}  评分 {score}/100  盈亏比 1.5:1
 ━━━━━━━━━━━━━━━━━━━━━━
 ⏰ {ts_str}
 💵 当前价格：{price_now:.1f} USDT
@@ -278,7 +278,10 @@ def check_signal():
 ⚠️ 仓位建议：信号越强仓位越重，≤30%本金
    结合大趋势判断，顺势为王！"""
         print(msg)
-        push(title, msg)
+        if score >= 30:
+            push(title, msg)
+        else:
+            print(f"[跳过推送] 评分 {score}/100 < 30，信号偏弱")
         return
 
     # ═════════════════════════════
@@ -296,34 +299,34 @@ def check_signal():
         score = 0
         details = []
         details.append(f"✅ 上影插针 (上影/实体 = {round(upper_shadow/body,1)}x)")
-        score += 3
+        score += 30
         if vol_strong:
             details.append(f"✅ 超级放量 ({vol_ratio}x，强度极高)")
-            score += 3
+            score += 30
         else:
             details.append(f"✅ 成交量放大 ({vol_ratio}x)")
-            score += 2
+            score += 20
         if macd_short_ok:
             details.append(f"✅ MACD配合 (DIF={round(dif[-1],1)})")
-            score += 2
+            score += 20
         else:
             details.append(f"⚠️ MACD未配合 (DIF={round(dif[-1],1)}, DEA={round(dea[-1],1)})")
         if short_confirm_strong:
             details.append("✅ 确认K强（高点下降+阴线）")
-            score += 2
+            score += 20
         elif short_confirm_weak:
             details.append("⚠️ 确认K弱（价格未涨回插针高点）")
-            score += 1
+            score += 10
         else:
             details.append("❌ 确认K未出现")
 
-        # 强度标签 + 建议评级
-        if score >= 8:
+        # 强度标签 + 建议评级（100分制）
+        if score >= 80:
             level   = "🔥🔥 超强信号"
             emoji   = "💥"
             advice  = "强烈推荐！多项指标共振，可考虑开仓"
             stars   = "⭐⭐⭐⭐⭐"
-        elif score >= 6:
+        elif score >= 60:
             level   = "🔥 强信号"
             emoji   = "📉"
             advice  = "建议参与，注意控仓（≤2成）"
@@ -335,9 +338,9 @@ def check_signal():
             stars   = "⭐⭐⭐"
 
         # 标题：一眼读懂方向/价格/评分
-        title = f"💥 BTC做空 {level} | {price_now:.0f} | {score}/10"
+        title = f"💥 BTC做空 {level} | {price_now:.0f} | {score}/100"
         msg = f"""💥 BTC 做空信号  {level}
-{stars}  评分 {score}/10  盈亏比 1.5:1
+{stars}  评分 {score}/100  盈亏比 1.5:1
 ━━━━━━━━━━━━━━━━━━━━━━
 ⏰ {ts_str}
 💵 当前价格：{price_now:.1f} USDT
@@ -357,7 +360,10 @@ def check_signal():
 ⚠️ 仓位建议：信号越强仓位越重，≤30%本金
    结合大趋势判断，顺势为王！"""
         print(msg)
-        push(title, msg)
+        if score >= 30:
+            push(title, msg)
+        else:
+            print(f"[跳过推送] 评分 {score}/100 < 30，信号偏弱")
         return
 
     print(f"[{now.strftime('%H:%M')}] 本次扫描无信号（做多:{long_pin} 做空:{short_pin} 放量:{vol_ok}），继续监控")
