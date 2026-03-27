@@ -4,18 +4,22 @@
   <!-- ══ 顶部导航栏 ══ -->
   <view class="navbar">
     <view class="navbar-left">
-      <image class="nav-icon" src="/assets/logo.png" mode="aspectFit" />
-      <view>
-        <text class="nav-title">BTC/USDT 插针监控</text>
-        <text class="nav-sub">火币HTX · 实时数据</text>
+      <view class="nav-radar-icon">
+        <text class="nav-radar-emoji">📡</text>
+        <view class="nav-radar-ring"></view>
       </view>
-      <view class="live-dot {{loading ? 'loading' : ''}}"></view>
-      <view class="nav-refresh-btn" bindtap="refresh">
-        <text>{{loading ? '···' : '↻ 刷新'}}</text>
+      <view class="nav-title-block">
+        <text class="nav-title">大饼K线雷达</text>
+        <text class="nav-sub">实时K线 · 多指标共振 · 智能预警</text>
       </view>
     </view>
-    <!-- 右边留白，未来放趋势徽章 -->
-    <view class="navbar-right-space"></view>
+    <view class="navbar-right">
+      <view class="live-dot {{loading ? 'loading' : ''}}"></view>
+      <view class="nav-refresh-btn" bindtap="refresh">
+        <text class="nav-refresh-text">{{loading ? '⏳' : '🔄'}}</text>
+        <text class="nav-refresh-label">{{loading ? '加载中' : '刷新'}}</text>
+      </view>
+    </view>
   </view>
 
   <!-- ══ 价格大头（全部左对齐，右边留白） ══ -->
@@ -267,7 +271,7 @@
         <view class="trend-card-title-row">
           <text class="trend-card-period">{{intervalLabel}} 大趋势</text>
           <view class="trend-card-badge {{trendColor}}">
-            <text class="trend-badge-icon">{{trendColor === 'bull' ? '🚀' : trendColor === 'down' || trendColor === 'bear' ? '🐻' : trendColor === 'bull_weak' ? '📈' : '📉'}}</text>
+            <text class="trend-badge-icon">{{trendColor === 'bull' ? '🚀' : trendColor === 'down' || trendColor === 'bear' ? '🐸' : trendColor === 'bull_weak' ? '🌤' : '🌧'}}</text>
             <text class="trend-badge-text">{{trendLabel}}</text>
           </view>
         </view>
@@ -344,8 +348,9 @@
 
   <!-- ══ 底部更新时间 ══ -->
   <view class="footer">
-    <text class="footer-txt">最后更新 {{updateTime}}  ·  60秒自动刷新</text>
-    <text class="footer-txt">数据来源：火币HTX / 币安镜像</text>
+    <view class="footer-badge">🥞 大饼K线雷达  ·  60s自动嗅探</view>
+    <text class="footer-txt">最后更新 {{updateTime}}</text>
+    <text class="footer-txt">数据来源 🔥 火币HTX  /  🌐 币安镜像</text>
   </view>
 
   <!-- ══ 错误提示 ══ -->
