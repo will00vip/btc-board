@@ -127,57 +127,6 @@
   <!-- ══ 以下内容：体验期OR会员显示；体验结束+非会员 → 付费墙 ══ -->
   <block wx:if="{{isVip || inTrial}}">
 
-    <!-- 止盈止损常驻卡（有信号显示真实数据，无信号显示当前价格参考位） -->
-    <view class="tp-card {{hasSignal ? signalDir : 'ref'}}">
-      <view class="tp-card-header">
-        <view class="tp-card-title-row">
-          <text class="tp-card-icon">{{hasSignal ? (signalDir === 'long' ? '📈' : '📉') : '📊'}}</text>
-          <text class="tp-card-title">{{hasSignal ? (signalDir === 'long' ? '做多止盈止损' : '做空止盈止损') : '当前价位参考'}}</text>
-          <view class="tp-card-badge {{hasSignal ? 'signal' : 'ref'}}">
-            <text>{{hasSignal ? '🔔 实时信号' : '📌 参考位'}}</text>
-          </view>
-        </view>
-        <view class="tp-meta-row" wx:if="{{hasSignal}}">
-          <text class="tp-meta-item loss">止损 {{stopLoss}}</text>
-          <text class="tp-meta-sep">·</text>
-          <text class="tp-meta-item">盈亏比 {{rrRatio}}</text>
-          <text class="tp-meta-sep">·</text>
-          <text class="tp-meta-item accent">胜率 {{winRate}}%</text>
-        </view>
-        <view class="tp-meta-row" wx:else>
-          <text class="tp-meta-item">当前价 {{curPrice}}</text>
-          <text class="tp-meta-sep">·</text>
-          <text class="tp-meta-item muted">基于0.3%波动估算</text>
-        </view>
-      </view>
-      <view class="tp-levels">
-        <view class="tp-level-item sl">
-          <text class="tp-level-label">止损 SL</text>
-          <text class="tp-level-val loss">{{hasSignal ? stopLoss : refSL}}</text>
-          <text class="tp-level-pct">{{hasSignal ? '-0.3%' : refSLPct}}</text>
-        </view>
-        <view class="tp-level-item t1">
-          <text class="tp-level-label">TP1 ×1.0</text>
-          <text class="tp-level-val profit">{{hasSignal ? tp1 : refTP1}}</text>
-          <text class="tp-level-pct">{{hasSignal ? '+0.3%' : refTP1Pct}}</text>
-        </view>
-        <view class="tp-level-item t2">
-          <text class="tp-level-label">TP2 ×1.5</text>
-          <text class="tp-level-val profit">{{hasSignal ? tp2 : refTP2}}</text>
-          <text class="tp-level-pct">{{hasSignal ? '+0.45%' : refTP2Pct}}</text>
-        </view>
-        <view class="tp-level-item t3">
-          <text class="tp-level-label">TP3 ×2.5</text>
-          <text class="tp-level-val profit">{{hasSignal ? tp3 : refTP3}}</text>
-          <text class="tp-level-pct">{{hasSignal ? '+0.75%' : refTP3Pct}}</text>
-        </view>
-      </view>
-      <!-- 无信号时的说明 -->
-      <view class="tp-no-signal-tip" wx:if="{{!hasSignal}}">
-        <text>⏳ 等待插针信号中 · 信号出现后自动更新为实时止盈止损</text>
-      </view>
-    </view>
-
     <!-- 信号详情（有信号时，展示插针详情） -->
     <view class="signal-detail {{signalDir}}" wx:if="{{hasSignal}}">
       <view class="section-title">
@@ -363,35 +312,101 @@
     </view>
   </block>
 
-  <!-- ══ K线图（始终可见） ══ -->
-  <!-- 周期切换 + K线标题行 -->
-  <view class="kline-header">
-    <view class="kline-title-row">
-      <text class="kline-title-txt">📈 K线图</text>
-      <view style="display:flex;align-items:center;gap:10rpx;">
-        <text class="kview-badge">{{klineView}}根</text>
-        <view class="chart-legend">
-          <text class="leg-boll-u">BOLL↑</text>
-          <text class="leg-boll-l">↓</text>
-          <text class="leg-ma5">MA5</text>
-          <text class="leg-ma10">MA10</text>
-        </view>
-      </view>
-    </view>
-    <!-- 基础周期（常驻显示） -->
-    <scroll-view class="period-bar" scroll-x="true" enhanced="true" show-scrollbar="false">
+  <!-- ══ K线图区域（始终可见） ══ -->
+
+  <!-- 【1】周期切换独立行（大按钮，醒目） -->
+  <view class="period-section">
+    <scroll-view class="period-bar-big" scroll-x="true" enhanced="true" show-scrollbar="false">
       <view
-        class="period-btn {{interval === item.iv ? 'active' : ''}}"
+        class="period-btn-big {{interval === item.iv ? 'active' : ''}}"
         wx:for="{{periods}}" wx:key="iv" wx:item="item"
         wx:if="{{item.base || showMorePeriods}}"
         bindtap="switchInterval"
         data-iv="{{item.iv}}"
         data-label="{{item.label}}"
       >{{item.iv}}</view>
-      <view class="period-more-btn" bindtap="toggleMorePeriods">
-        <text>{{showMorePeriods ? '收起↑' : '更多↓'}}</text>
+      <view class="period-more-big" bindtap="toggleMorePeriods">
+        <text>{{showMorePeriods ? '↑' : '···'}}</text>
       </view>
     </scroll-view>
+  </view>
+
+  <!-- 【2】青蛙趋势判断卡 -->
+  <view class="frog-trend-card">
+    <view class="ftc-left">
+      <view class="ftc-frog">🐸</view>
+      <view class="ftc-info">
+        <text class="ftc-title">大趋势判断</text>
+        <text class="ftc-period">{{interval}} · MA20/MA60</text>
+      </view>
+    </view>
+    <view class="ftc-right">
+      <view class="ftc-badge {{trendColor}}">
+        <text class="ftc-badge-icon">{{trendIcon}}</text>
+        <text class="ftc-badge-txt">{{trendLabel}}</text>
+      </view>
+    </view>
+  </view>
+  <!-- 趋势详情展开行 -->
+  <view class="ftc-detail-row">
+    <view class="ftc-detail-item">
+      <text class="ftc-d-label">MA20</text>
+      <text class="ftc-d-val {{trendMa20Dir}}">{{trendMa20}}</text>
+    </view>
+    <view class="ftc-detail-item">
+      <text class="ftc-d-label">MA60</text>
+      <text class="ftc-d-val {{trendMa60Dir}}">{{trendMa60}}</text>
+    </view>
+    <view class="ftc-detail-item">
+      <text class="ftc-d-label">支撑</text>
+      <text class="ftc-d-val green">{{trendSupport}}</text>
+    </view>
+    <view class="ftc-detail-item">
+      <text class="ftc-d-label">压力</text>
+      <text class="ftc-d-val red">{{trendResist}}</text>
+    </view>
+  </view>
+
+  <!-- 【3】当前价位参考卡（移到K线上方，非会员且非体验期也显示） -->
+  <view class="tp-card-mini {{hasSignal ? signalDir : 'ref'}}" wx:if="{{isVip || inTrial || true}}">
+    <view class="tp-mini-header">
+      <text class="tp-mini-icon">{{hasSignal ? (signalDir === 'long' ? '📈' : '📉') : '📊'}}</text>
+      <text class="tp-mini-title">{{hasSignal ? (signalDir === 'long' ? '做多止盈止损' : '做空止盈止损') : '当前价位参考'}}</text>
+      <view class="tp-mini-badge {{hasSignal ? 'signal' : 'ref'}}">
+        <text>{{hasSignal ? '🔔实时' : '📌参考'}}</text>
+      </view>
+    </view>
+    <view class="tp-mini-levels">
+      <view class="tp-mini-item sl">
+        <text class="tp-ml-label">止损SL</text>
+        <text class="tp-ml-val loss">{{hasSignal ? stopLoss : refSL}}</text>
+      </view>
+      <view class="tp-mini-item t1">
+        <text class="tp-ml-label">TP1</text>
+        <text class="tp-ml-val profit">{{hasSignal ? tp1 : refTP1}}</text>
+      </view>
+      <view class="tp-mini-item t2">
+        <text class="tp-ml-label">TP2</text>
+        <text class="tp-ml-val profit">{{hasSignal ? tp2 : refTP2}}</text>
+      </view>
+      <view class="tp-mini-item t3">
+        <text class="tp-ml-label">TP3</text>
+        <text class="tp-ml-val profit">{{hasSignal ? tp3 : refTP3}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 【4】K线图标题行（简化） -->
+  <view class="kline-header">
+    <view class="kline-title-row">
+      <text class="kline-title-txt">📈 K线  <text class="kview-badge">{{klineView}}根</text></text>
+      <view class="chart-legend">
+        <text class="leg-boll-u">BOLL↑</text>
+        <text class="leg-boll-l">↓</text>
+        <text class="leg-ma5">MA5</text>
+        <text class="leg-ma10">MA10</text>
+      </view>
+    </view>
   </view>
   <view class="kcanvas-wrap"
     bindtouchmove="onKlineTouch"

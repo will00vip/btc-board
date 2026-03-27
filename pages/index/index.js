@@ -169,6 +169,11 @@ Page({
     // AI标签（营销用）
     aiLabel: 'AI量化 · 实时分析中',
 
+    // 趋势判断
+    trendColor: 'sideways', trendLabel: '分析中', trendIcon: '🐸',
+    trendMa20: '--', trendMa60: '--', trendMa20Dir: 'gray', trendMa60Dir: 'gray',
+    trendSupport: '--', trendResist: '--',
+
     // 免责声明
     showDisclaimer: false,
 
@@ -888,9 +893,40 @@ Page({
       riskMsg = `风控正常，今日已亏${todayLossU}U/${dailyMaxLossU}U`
     }
 
-    // 趋势信息
+    // 趋势信息（MA20/MA60计算）
+    const closes = bars.map(b => b.close)
+    const ma = (arr, n) => {
+      if (arr.length < n) return arr[arr.length - 1]
+      return arr.slice(-n).reduce((s, v) => s + v, 0) / n
+    }
+    const ma20v = ma(closes, 20)
+    const ma60v = ma(closes, 60)
+    const lastClose = bars[bars.length - 1].close
+    // 支撑/压力：近20根最低/最高
+    const recentLows  = bars.slice(-20).map(b => b.low)
+    const recentHighs = bars.slice(-20).map(b => b.high)
+    const trendSupport = fmtPrice(Math.min(...recentLows))
+    const trendResist  = fmtPrice(Math.max(...recentHighs))
+    const trendMa20    = fmtPrice(ma20v)
+    const trendMa60    = fmtPrice(ma60v)
+    const trendMa20Dir = lastClose > ma20v ? 'red' : 'green'
+    const trendMa60Dir = lastClose > ma60v ? 'red' : 'green'
+    // 趋势判断
+    let trendColor, trendLabel, trendIcon
+    if (lastClose > ma20v && ma20v > ma60v) {
+      trendColor = 'bull';     trendLabel = '多头趋势'; trendIcon = '🐂'
+    } else if (lastClose > ma20v && ma20v <= ma60v) {
+      trendColor = 'bull_w';   trendLabel = '弱多趋势'; trendIcon = '🐸'
+    } else if (lastClose < ma20v && ma20v < ma60v) {
+      trendColor = 'bear';     trendLabel = '空头趋势'; trendIcon = '🐻'
+    } else if (lastClose < ma20v && ma20v >= ma60v) {
+      trendColor = 'bear_w';   trendLabel = '弱空趋势'; trendIcon = '😬'
+    } else {
+      trendColor = 'sideways'; trendLabel = '震荡盘整'; trendIcon = '🐸'
+    }
+    const isBearTrend = trendColor === 'bear' || trendColor === 'bear_w'
+
     const trendInfo = sig.trendInfo || null
-    const isBearTrend = trendInfo ? (trendInfo.trendColor === 'bear' || trendInfo.trendColor === 'bear_weak') : false
     const aiScoreHint = score >= 8 ? '强烈看好' : score >= 6 ? '中等把握' : score >= 4 ? '谨慎评估' : '信号偏弱'
     const aiLabel = `AI量化 · ${aiScoreHint} · 胜率${winRateFromScore(score)}%`
 
@@ -937,6 +973,9 @@ Page({
       // AI & 趋势
       isBearTrend,
       aiLabel,
+      trendColor, trendLabel, trendIcon,
+      trendMa20, trendMa60, trendMa20Dir, trendMa60Dir,
+      trendSupport, trendResist,
 
       // 无信号时的参考止盈止损（基于当前价±0.3%）
       ...(() => {
