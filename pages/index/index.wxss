@@ -50,41 +50,23 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
 /* ═══════════════════════════════
    大趋势卡
 ═══════════════════════════════ */
-.trend-card {
-  margin: 0 20rpx 16rpx; padding: 20rpx 24rpx;
-  background: #161b22; border-radius: 20rpx;
-  border: 1rpx solid #21262d;
-}
-.trend-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10rpx; }
-.trend-card-title { font-size: 26rpx; font-weight: 700; color: #8b949e; }
-.trend-label { font-size: 26rpx; font-weight: 800; padding: 4rpx 16rpx; border-radius: 12rpx; }
-.trend-label.bull      { color: #ff4d6d; background: rgba(255,77,109,.15); }
-.trend-label.bull_weak { color: #ffa657; background: rgba(255,166,87,.15); }
-.trend-label.bear      { color: #26a69a; background: rgba(38,166,154,.15); }
-.trend-label.bear_weak { color: #6e7681; background: rgba(110,118,129,.15); }
-.trend-label.neutral   { color: #8b949e; background: rgba(139,148,158,.12); }
-
-/* 大趋势独立周期切换 */
-.trend-period-bar { display: flex; gap: 10rpx; margin-bottom: 14rpx; }
-.trend-period-btn {
-  font-size: 22rpx; padding: 6rpx 20rpx; border-radius: 14rpx;
-  background: rgba(255,255,255,.06); color: #6e7681; border: 1rpx solid #21262d;
-}
-.trend-period-btn.active {
-  background: rgba(88,166,255,.18); color: #58a6ff; border-color: rgba(88,166,255,.4);
-  font-weight: 700;
-}
-
-.trend-desc { font-size: 22rpx; color: #6e7681; display: block; margin-bottom: 16rpx; }
-.trend-zones { display: flex; align-items: center; gap: 0; margin-bottom: 12rpx; }
-.trend-zone-item { flex: 1; }
-.tz-label { display: block; font-size: 20rpx; color: #6e7681; margin-bottom: 4rpx; }
-.tz-val { display: block; font-size: 24rpx; font-weight: 700; }
-.tz-val.support { color: #26a69a; }
-.tz-val.resist  { color: #ef5350; }
-.trend-zone-divider { width: 1rpx; height: 48rpx; background: #21262d; margin: 0 20rpx; }
-.trend-ma-row { display: flex; gap: 16rpx; }
+/* 旧独立趋势卡（已移到K线内嵌区，保留class防止报错） */
+.trend-card { display: none; }
+.trend-card-header { display: none; }
+.trend-card-title  { display: none; }
+.trend-label { display: none; }
+.trend-period-bar  { display: none; }
+.trend-period-btn  { display: none; }
+.trend-desc  { display: none; }
+.trend-zones { display: none; }
+.trend-zone-item   { display: none; }
+.tz-label    { display: none; }
+.tz-val      { display: none; }
+.trend-zone-divider { display: none; }
+.trend-ma-row { display: none; }
 .ma-tag { font-size: 20rpx; color: #484f58; background: rgba(255,255,255,.04); padding: 4rpx 12rpx; border-radius: 8rpx; }
+
+
 
 /* ═══════════════════════════════
    多空能量对比
@@ -161,25 +143,67 @@ page { background: #0a0e17; color: #e6edf3; font-size: 28rpx; }
 /* ═══════════════════════════════
    周期切换
 ═══════════════════════════════ */
-/* K线图标题行（含内联周期切换） */
-.kline-title-row { flex-wrap: wrap; gap: 8rpx; }
-.kline-title-left { display: flex; align-items: center; gap: 12rpx; flex: 1; min-width: 0; }
-.kline-section-icon { font-size: 28rpx; flex-shrink: 0; }
+/* K线图区块容器 */
+.kline-section { margin: 0 0 4rpx; }
 
-/* 内联周期按钮（紧凑小号，贴K线图） */
+/* 行1：K线图标题行（含内联周期切换） */
+.kline-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10rpx 20rpx 8rpx; flex-wrap: nowrap;
+}
+.kline-title-left { display: flex; align-items: center; gap: 10rpx; flex: 1; min-width: 0; overflow: hidden; }
+.kline-section-icon { font-size: 26rpx; flex-shrink: 0; }
+
+/* 内联周期按钮（紧凑小号） */
 .period-bar-inline { display: flex; gap: 6rpx; flex-wrap: nowrap; overflow-x: auto; }
 .period-btn-sm {
   flex-shrink: 0; background: rgba(255,255,255,.05); border: 1rpx solid #21262d;
-  border-radius: 10rpx; padding: 6rpx 16rpx; font-size: 22rpx; color: #484f58;
+  border-radius: 8rpx; padding: 4rpx 14rpx; font-size: 20rpx; color: #484f58;
 }
 .period-btn-sm.active {
   background: linear-gradient(135deg,rgba(88,166,255,.25),rgba(88,166,255,.1));
   border-color: #58a6ff; color: #58a6ff; font-weight: 800;
 }
 
-/* 旧 period-bar 保留兜底（已无独立渲染，仅防止报错） */
+/* 行2：大趋势内嵌条 */
+.trend-inline-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8rpx 20rpx; background: rgba(255,255,255,.03);
+  border-top: 1rpx solid rgba(255,255,255,.06);
+  border-bottom: 1rpx solid rgba(255,255,255,.04);
+}
+.trend-inline-left { display: flex; align-items: center; gap: 10rpx; }
+.trend-inline-icon { font-size: 22rpx; }
+.trend-inline-title { font-size: 22rpx; color: #6e7681; }
+.trend-inline-label {
+  font-size: 22rpx; font-weight: 800; padding: 2rpx 12rpx; border-radius: 8rpx;
+}
+.trend-inline-label.bull      { color: #ff4d6d; background: rgba(255,77,109,.12); }
+.trend-inline-label.bull_weak { color: #ffa657; background: rgba(255,166,87,.12); }
+.trend-inline-label.bear      { color: #26a69a; background: rgba(38,166,154,.12); }
+.trend-inline-label.bear_weak { color: #6e7681; background: rgba(110,118,129,.12); }
+.trend-inline-label.neutral   { color: #8b949e; background: rgba(139,148,158,.10); }
+.trend-inline-right { display: flex; align-items: center; gap: 6rpx; }
+.trend-inline-zone  { font-size: 20rpx; color: #6e7681; }
+.trend-inline-sep   { font-size: 18rpx; color: #30363d; }
+
+/* 行3：大趋势折叠详情 */
+.trend-detail-wrap {
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 4rpx 20rpx; background: rgba(0,0,0,.15);
+  border-bottom: 1rpx solid rgba(255,255,255,.04);
+}
+.trend-detail-wrap.expanded { flex-direction: column; align-items: flex-start; }
+.trend-detail-inner { width: 100%; padding: 10rpx 0 6rpx; }
+.trend-desc-inline  { font-size: 22rpx; color: #6e7681; display: block; margin-bottom: 8rpx; }
+.trend-ma-row-inline { display: flex; gap: 16rpx; }
+.trend-detail-toggle { font-size: 20rpx; color: #30363d; align-self: flex-end; }
+
+/* 旧 period-bar 保留兜底（已无独立渲染） */
 .period-bar { display: none; }
 .period-btn { display: none; }
+
+
 
 
 

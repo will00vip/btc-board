@@ -2,13 +2,22 @@
 const { fetchKlines, detectSignal, detectMacdCross } = require('../../utils/detector')
 const { macd: calcMACD, boll: calcBOLL, ema: calcEMA } = require('../../utils/indicators')
 
+// 完整周期列表（对标交易所风格）
 const PERIODS = [
-  { iv: '1m',  label: '1m超短线',  limit: 200 },
-  { iv: '5m',  label: '5m短线',    limit: 180 },
-  { iv: '15m', label: '15m主策略', limit: 150 },
-  { iv: '30m', label: '30m中线',   limit: 120 },
-  { iv: '1h',  label: '1h趋势',    limit: 100 },
-  { iv: '4h',  label: '4h大趋势',  limit: 80  },
+  { iv: '1s',  label: '1秒',   limit: 200 },
+  { iv: '1m',  label: '1分',   limit: 200 },
+  { iv: '3m',  label: '3分',   limit: 200 },
+  { iv: '5m',  label: '5分',   limit: 180 },
+  { iv: '15m', label: '15分',  limit: 150 },
+  { iv: '30m', label: '30分',  limit: 120 },
+  { iv: '1h',  label: '1时',   limit: 100 },
+  { iv: '2h',  label: '2时',   limit: 100 },
+  { iv: '4h',  label: '4时',   limit: 80  },
+  { iv: '6h',  label: '6时',   limit: 80  },
+  { iv: '12h', label: '12时',  limit: 60  },
+  { iv: '1d',  label: '1日',   limit: 60  },
+  { iv: '3d',  label: '3日',   limit: 40  },
+  { iv: '1w',  label: '1周',   limit: 30  },
 ]
 
 const TIPS = [
@@ -176,17 +185,12 @@ function bollProgress(close, upper, lower) {
 Page({
   data: {
     interval: '15m',
-    intervalLabel: '15m · 主策略',
+    intervalLabel: '15分',
     periods: PERIODS,
     tips: TIPS,
 
-    // 大趋势独立周期
-    trendInterval: '4h',
-    trendPeriods: [
-      { iv: '4h',  label: '4小时' },
-      { iv: '1d',  label: '日线' },
-      { iv: '1w',  label: '周线' },
-    ],
+    // 大趋势折叠状态
+    trendExpanded: false,
 
     // 价格
     curPrice: '--', priceChange: '--', priceDir: '',
@@ -753,32 +757,9 @@ Page({
     tick()
   },
 
-  // 大趋势独立周期切换
-  async switchTrendInterval(e) {
-    const iv = e.currentTarget.dataset.iv
-    this.setData({ trendInterval: iv, trendLabel: '加载中…', trendDesc: '' })
-    try {
-      // 拉对应周期 K 线（取 120 根够算 MA60）
-      const limitMap = { '4h': 120, '1d': 120, '1w': 60 }
-      const bars = await fetchKlines(iv, limitMap[iv] || 120)
-      const trendInfo  = calcTrend(bars)
-      const energyInfo = calcEnergyBalance(bars)
-      this.setData({
-        trendLabel:  trendInfo ? trendInfo.trendLabel : '--',
-        trendColor:  trendInfo ? trendInfo.trendColor  : 'neutral',
-        trendDesc:   trendInfo ? trendInfo.trendDesc   : '--',
-        supportZone: trendInfo ? trendInfo.supportZone : '--',
-        resistZone:  trendInfo ? trendInfo.resistZone  : '--',
-        trendMa20:   trendInfo ? trendInfo.ma20 : '--',
-        trendMa60:   trendInfo ? trendInfo.ma60 : '--',
-        bullPct:         energyInfo ? energyInfo.bullPct   : 50,
-        bearPct:         energyInfo ? energyInfo.bearPct   : 50,
-        domLabel:        energyInfo ? energyInfo.domLabel  : '均衡',
-        energyDominance: energyInfo ? energyInfo.dominance : 'neutral',
-      })
-    } catch(e) {
-      this.setData({ trendLabel: '加载失败', trendDesc: e.message || '网络错误' })
-    }
+  // 大趋势详情折叠/展开
+  toggleTrendDetail() {
+    this.setData({ trendExpanded: !this.data.trendExpanded })
   },
 
   switchInterval(e) {
@@ -825,7 +806,7 @@ Page({
     const dir = chg >= 0 ? 'up' : 'down'
 
     // 24h / 4h 概况（按当前周期动态换算 bars 数量）
-    const ivMinMap = { '1m':1, '5m':5, '15m':15, '30m':30, '1h':60, '4h':240 }
+    const ivMinMap = { '1s':1/60, '1m':1, '3m':3, '5m':5, '15m':15, '30m':30, '1h':60, '2h':120, '4h':240, '6h':360, '12h':720, '1d':1440, '3d':4320, '1w':10080 }
     const ivMin    = ivMinMap[this.data.interval] || 15
     const bars24h  = Math.round(24 * 60 / ivMin)   // 24h对应多少根
     const bars4h   = Math.round(4  * 60 / ivMin)   // 4h对应多少根
