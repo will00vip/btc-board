@@ -88,7 +88,6 @@
         </view>
       </view>
       <view style="display:flex;align-items:center;gap:10rpx;flex-shrink:0;">
-        <text class="kview-badge">{{klineView}}根/屏</text>
         <view class="chart-legend">
           <text class="leg-boll-u">BOLL↑</text>
           <text class="leg-boll-l">↓</text>
