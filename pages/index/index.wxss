@@ -534,13 +534,13 @@ page {
 .kline-section-icon { font-size: 26rpx; flex-shrink: 0; }
 
 /* 周期按钮 */
-.period-bar-inline { display: flex; gap: 7rpx; flex-wrap: nowrap; overflow-x: auto; }
+.period-bar-inline { display: flex; gap: 10rpx; flex-wrap: nowrap; overflow-x: auto; }
 .period-btn-sm {
   flex-shrink: 0;
   background: rgba(255,255,255,.06);
   border: 1rpx solid rgba(255,255,255,.1);
-  border-radius: 12rpx; padding: 5rpx 16rpx; font-size: 21rpx; color: rgba(255,255,255,.45);
-  transition: all .2s;
+  border-radius: 16rpx; padding: 10rpx 26rpx; font-size: 28rpx; color: rgba(255,255,255,.55);
+  transition: all .2s; font-weight: 600;
 }
 .period-btn-sm.active {
   background: linear-gradient(135deg, rgba(129,140,248,.3), rgba(192,132,252,.2));
@@ -799,10 +799,10 @@ page {
    导航栏会员按钮
 ══════════════════════════════════════════════ */
 .nav-vip-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 2rpx;
+  display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, rgba(217,119,6,.18), rgba(251,191,36,.1));
   border: 1rpx solid rgba(251,191,36,.4);
-  padding: 8rpx 20rpx; border-radius: 28rpx;
+  width: 72rpx; height: 72rpx; border-radius: 50%;
   transition: all .2s;
 }
 .nav-vip-btn.vip-on {
@@ -810,7 +810,7 @@ page {
   border-color: rgba(251,191,36,.65);
   box-shadow: 0 0 14rpx rgba(251,191,36,.25);
 }
-.nav-vip-icon  { font-size: 24rpx; line-height: 1; }
+.nav-vip-icon  { font-size: 36rpx; line-height: 1; }
 .nav-vip-label { font-size: 17rpx; color: #fbbf24; font-weight: 700; }
 
 /* ══════════════════════════════════════════════

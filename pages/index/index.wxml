@@ -34,7 +34,6 @@
       <view class="live-dot {{loading ? 'loading' : ''}}"></view>
       <view class="nav-vip-btn {{isVip ? 'vip-on' : ''}}" bindtap="showVipModal">
         <text class="nav-vip-icon">{{isVip ? '👑' : '🔒'}}</text>
-        <text class="nav-vip-label">{{isVip ? 'Pro' : '升级'}}</text>
       </view>
       <view class="nav-refresh-btn" bindtap="refresh">
         <text class="nav-refresh-text">{{loading ? '⏳' : '🔄'}}</text>

@@ -202,10 +202,10 @@ Page({
     interval: '15m',
     intervalLabel: '15分',
     periods: PERIODS,
-    // 基础周期（直接显示）
-    basicPeriods: PERIODS.filter(p => ['1m','5m','15m','1h','4h','1d'].includes(p.iv)),
+    // 基础周期（直接显示，精简为5个最常用）
+    basicPeriods: PERIODS.filter(p => ['1m','15m','1h','4h','1d'].includes(p.iv)),
     // 更多周期（折叠展开）
-    morePeriods:  PERIODS.filter(p => !['1m','5m','15m','1h','4h','1d'].includes(p.iv)),
+    morePeriods:  PERIODS.filter(p => !['1m','15m','1h','4h','1d'].includes(p.iv)),
     periodMenuOpen: false,  // 更多周期面板是否展开
     tips: TIPS,
 
@@ -377,7 +377,13 @@ Page({
     if (v.length === 4) this.submitAdminPwd()
   },
   submitAdminPwd() {
-    if (this.data.adminPwdInput === '8888') {
+    const pwd = this.data.adminPwdInput
+    if (pwd === '6666') {
+      // 6666：临时进入正常显示（不持久化）
+      this.setData({ showAdminPwdBox: false, isVip: true })
+      wx.showToast({ title: '已进入预览模式', icon: 'success', duration: 1500 })
+    } else if (pwd === '8888') {
+      // 8888：进管理员后台
       this.setData({ showAdminPwdBox: false })
       wx.navigateTo({ url: '/pages/admin/admin' })
     } else {
