@@ -1,5 +1,22 @@
-<!-- pages/index/index.wxml  v6 -->
+<!-- pages/index/index.wxml  v7.3 -->
 <view class="page">
+
+  <!-- ══ 免责声明弹窗（首次打开显示） ══ -->
+  <view class="disclaimer-mask" wx:if="{{showDisclaimer}}">
+    <view class="disclaimer-box">
+      <view class="disclaimer-icon">⚠️</view>
+      <text class="disclaimer-title">使用须知</text>
+      <view class="disclaimer-content">
+        <text class="disclaimer-txt">本工具仅供学习交流，展示K线技术指标数据。</text>
+        <text class="disclaimer-txt">所有内容均不构成任何投资建议，不对任何交易结果负责。</text>
+        <text class="disclaimer-txt">数字货币交易风险极高，请谨慎操作，量力而行。</text>
+        <text class="disclaimer-txt">继续使用即视为您已知晓并同意以上说明。</text>
+      </view>
+      <view class="disclaimer-btn" bindtap="closeDisclaimer">
+        <text>我已了解，进入使用 →</text>
+      </view>
+    </view>
+  </view>
 
   <!-- ══ 顶部导航栏 ══ -->
   <view class="navbar">
@@ -15,6 +32,10 @@
     </view>
     <view class="navbar-right">
       <view class="live-dot {{loading ? 'loading' : ''}}"></view>
+      <view class="nav-vip-btn {{isVip ? 'vip-on' : ''}}" bindtap="showVipModal">
+        <text class="nav-vip-icon">{{isVip ? '👑' : '🔒'}}</text>
+        <text class="nav-vip-label">{{isVip ? 'Pro' : '升级'}}</text>
+      </view>
       <view class="nav-refresh-btn" bindtap="refresh">
         <text class="nav-refresh-text">{{loading ? '⏳' : '🔄'}}</text>
         <text class="nav-refresh-label">{{loading ? '加载中' : '刷新'}}</text>
@@ -351,6 +372,73 @@
     <view class="footer-badge">🥞 大饼K线雷达  ·  60s自动嗅探</view>
     <text class="footer-txt">最后更新 {{updateTime}}</text>
     <text class="footer-txt">数据来源 🔥 火币HTX  /  🌐 币安镜像</text>
+  </view>
+
+  <!-- ══ 会员升级弹窗 ══ -->
+  <view class="vip-mask" wx:if="{{showVipModal}}" bindtap="closeVipModal">
+    <view class="vip-box" catchtap="">
+      <view class="vip-header">
+        <text class="vip-crown">👑</text>
+        <text class="vip-title">大饼K线雷达 Pro</text>
+        <text class="vip-slogan">解锁全部专业功能</text>
+      </view>
+      <view class="vip-features">
+        <view class="vip-feat-row">
+          <text class="vip-feat-icon">🔔</text>
+          <view class="vip-feat-text">
+            <text class="vip-feat-name">实时推送提醒</text>
+            <text class="vip-feat-desc">信号触发即刻推送到手机</text>
+          </view>
+          <text class="vip-feat-tag pro">Pro</text>
+        </view>
+        <view class="vip-feat-row">
+          <text class="vip-feat-icon">📊</text>
+          <view class="vip-feat-text">
+            <text class="vip-feat-name">多空历史回测</text>
+            <text class="vip-feat-desc">胜率数据实盘验证报告</text>
+          </view>
+          <text class="vip-feat-tag pro">Pro</text>
+        </view>
+        <view class="vip-feat-row">
+          <text class="vip-feat-icon">🎯</text>
+          <view class="vip-feat-text">
+            <text class="vip-feat-name">自定义预警阈值</text>
+            <text class="vip-feat-desc">个性化设置评分、量比等参数</text>
+          </view>
+          <text class="vip-feat-tag pro">Pro</text>
+        </view>
+        <view class="vip-feat-row">
+          <text class="vip-feat-icon">📈</text>
+          <view class="vip-feat-text">
+            <text class="vip-feat-name">多币种监控</text>
+            <text class="vip-feat-desc">ETH/SOL/BNB同步扫描</text>
+          </view>
+          <text class="vip-feat-tag soon">即将上线</text>
+        </view>
+      </view>
+      <view class="vip-price-row">
+        <view class="vip-price-card">
+          <text class="vip-price-tag">月卡</text>
+          <text class="vip-price-num">¥29</text>
+          <text class="vip-price-unit">/月</text>
+        </view>
+        <view class="vip-price-card hot">
+          <text class="vip-hot-badge">最划算</text>
+          <text class="vip-price-tag">季卡</text>
+          <text class="vip-price-num">¥69</text>
+          <text class="vip-price-unit">/季</text>
+        </view>
+        <view class="vip-price-card">
+          <text class="vip-price-tag">年卡</text>
+          <text class="vip-price-num">¥199</text>
+          <text class="vip-price-unit">/年</text>
+        </view>
+      </view>
+      <view class="vip-cta" bindtap="contactVip">
+        <text>联系作者开通 →</text>
+      </view>
+      <text class="vip-close" bindtap="closeVipModal">✕ 关闭</text>
+    </view>
   </view>
 
   <!-- ══ 错误提示 ══ -->

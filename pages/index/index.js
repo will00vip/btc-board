@@ -209,6 +209,11 @@ Page({
     periodMenuOpen: false,  // 更多周期面板是否展开
     tips: TIPS,
 
+    // 免责声明 & 会员弹窗
+    showDisclaimer: false,
+    showVipModal: false,
+    isVip: false,
+
     // 大趋势折叠状态（已废弃，保留兼容）
     trendExpanded: false,
     trendStrength: 50,  // 趋势强度 0~100
@@ -304,6 +309,17 @@ Page({
     this._pinchStartView = 120
     this._isPinching  = false
     this._kvCache     = {}     // 多周期缓存: { '15m': { sig, ts }, ... }
+
+    // ── 免责声明：首次显示 ──
+    const agreed = wx.getStorageSync('disclaimer_agreed')
+    if (!agreed) {
+      this.setData({ showDisclaimer: true })
+    }
+
+    // ── VIP状态 ──
+    const isVip = wx.getStorageSync('is_vip') || false
+    this.setData({ isVip })
+
     wx.createSelectorQuery()
       .select('#klineCanvas')
       .fields({ node: true, size: true })
@@ -328,6 +344,24 @@ Page({
   },
   onUnload() { clearInterval(this._timer) },
   onPullDownRefresh() { this.loadData().finally(() => wx.stopPullDownRefresh()) },
+
+  // ── 免责声明 ──
+  closeDisclaimer() {
+    wx.setStorageSync('disclaimer_agreed', true)
+    this.setData({ showDisclaimer: false })
+  },
+
+  // ── 会员弹窗 ──
+  showVipModal() { this.setData({ showVipModal: true }) },
+  closeVipModal() { this.setData({ showVipModal: false }) },
+  contactVip() {
+    wx.setClipboardData({
+      data: '大饼K线雷达Pro开通请加微信：weber00vip',
+      success() { wx.showToast({ title: '微信号已复制', icon: 'success' }) }
+    })
+  },
+
+
 
   // ══════════════════════════════════════════
   //  Canvas 绘制（火币风格三分区）
