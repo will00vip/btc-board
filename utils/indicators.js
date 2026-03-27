@@ -78,49 +78,53 @@ function boll(closes, n = 20, mult = 2) {
   })
 }
 
-/** 综合评分（满分10分） */
+/** 综合评分（满分100分） */
 function calcScore(bars, macdData, kdjData, rsiArr, wrArr, bollArr, pinDir) {
   let score = 0
   const last = bars.length - 1
   const prev = last - 1
 
-  // 低点抬高 +2
-  if (bars[last].low > bars[prev].low) score += 2
+  // 低点抬高 +20
+  if (bars[last].low > bars[prev].low) score += 20
 
-  // MACD金叉或柱线抬高 +2
+  // MACD金叉或柱线抬高 +20/+10
   const bar = macdData.bar
   if (macdData.dif[last] > macdData.dea[last] && macdData.dif[prev] <= macdData.dea[prev]) {
-    score += 2 // 金叉
+    score += 20 // 金叉
   } else if (bar[last] > bar[prev]) {
-    score += 1 // 柱线抬高
+    score += 10 // 柱线抬高
   }
 
-  // KDJ +2
+  // KDJ +20/+10
   const { K, D, J } = kdjData
   if (pinDir === 'long') {
-    if (J[last] < 20) score += 2
-    else if (K[last] > D[last] && K[prev] <= D[prev]) score += 2
-    else if (K[last] > D[last]) score += 1
+    if (J[last] < 20) score += 20
+    else if (K[last] > D[last] && K[prev] <= D[prev]) score += 20
+    else if (K[last] > D[last]) score += 10
   } else {
-    if (J[last] > 80) score += 2
-    else if (K[last] < D[last] && K[prev] >= D[prev]) score += 2
-    else if (K[last] < D[last]) score += 1
+    if (J[last] > 80) score += 20
+    else if (K[last] < D[last] && K[prev] >= D[prev]) score += 20
+    else if (K[last] < D[last]) score += 10
   }
 
-  // RSI +1
-  if (pinDir === 'long' && rsiArr[last] < 35) score += 1
-  else if (pinDir === 'short' && rsiArr[last] > 65) score += 1
+  // RSI +15（做多超卖/做空超买，权重略提升）
+  if (pinDir === 'long' && rsiArr[last] < 35) score += 15
+  else if (pinDir === 'long' && rsiArr[last] < 45) score += 8
+  else if (pinDir === 'short' && rsiArr[last] > 65) score += 15
+  else if (pinDir === 'short' && rsiArr[last] > 55) score += 8
 
-  // WR +1
-  if (pinDir === 'long' && wrArr[last] < -80) score += 1
-  else if (pinDir === 'short' && wrArr[last] > -20) score += 1
+  // WR +15
+  if (pinDir === 'long' && wrArr[last] < -80) score += 15
+  else if (pinDir === 'long' && wrArr[last] < -60) score += 8
+  else if (pinDir === 'short' && wrArr[last] > -20) score += 15
+  else if (pinDir === 'short' && wrArr[last] > -40) score += 8
 
-  // BOLL +1
+  // BOLL +10
   const boll_last = bollArr[last]
-  if (pinDir === 'long' && bars[last].close <= boll_last.lower * 1.005) score += 1
-  else if (pinDir === 'short' && bars[last].close >= boll_last.upper * 0.995) score += 1
+  if (pinDir === 'long' && bars[last].close <= boll_last.lower * 1.005) score += 10
+  else if (pinDir === 'short' && bars[last].close >= boll_last.upper * 0.995) score += 10
 
-  return Math.min(10, score)
+  return Math.min(100, score)
 }
 
 module.exports = { ema, macd, kdj, rsi, wr, boll, calcScore }

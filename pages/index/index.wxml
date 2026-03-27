@@ -53,6 +53,22 @@
     </view>
   </view>
 
+  <!-- ══ AI评分大圆圈（最顶部，top-header下方） ══ -->
+  <view class="ai-score-top-bar">
+    <view class="ai-score-ring-big {{decisionState}}">
+      <text class="ai-ring-num-big">{{score}}</text>
+      <text class="ai-ring-den-big">/100</text>
+      <text class="ai-ring-label-big">AI评分</text>
+    </view>
+    <view class="ai-score-top-info">
+      <text class="ai-score-top-label {{decisionState}}">{{scoreLabel}}</text>
+      <text class="ai-score-top-hint">{{aiLabel}}</text>
+      <view class="ai-score-bar-wrap">
+        <view class="ai-score-bar-fill {{decisionState}}" style="width:{{scoreBar}}%"></view>
+      </view>
+    </view>
+  </view>
+
   <!-- ══ 2分钟倒计时条（非会员且在体验期时显示） ══ -->
   <view class="trial-bar" wx:if="{{!isVip && inTrial}}">
     <view class="trial-bar-fill" style="width:{{trialSecs / trialTotal * 100}}%"></view>
@@ -112,24 +128,14 @@
     </view>
   </view>
 
-  <!-- ══ 价格大头（AI评分左侧大圆圈 + 价格右侧） ══ -->
+  <!-- ══ 价格大头 ══ -->
   <view class="price-hero">
-    <view class="price-hero-left">
-      <!-- AI评分大圆圈放最左 -->
-      <view class="ai-score-ring-big {{decisionState}}">
-        <text class="ai-ring-num-big">{{score}}</text>
-        <text class="ai-ring-den-big">/10</text>
-        <text class="ai-ring-label-big">AI评分</text>
-      </view>
-    </view>
-    <view class="price-hero-right">
-      <text class="price-main {{priceDir}}">{{curPrice}}</text>
-      <view class="price-badges">
-        <text class="price-badge {{priceDir}}">{{priceChange}}</text>
-        <text class="price-badge-plain">4h {{price4hChange}}</text>
-        <text class="price-badge-plain">24h {{price24hChange}}</text>
-        <text class="price-badge-plain">量 {{vol24h}}</text>
-      </view>
+    <text class="price-main {{priceDir}}">{{curPrice}}</text>
+    <view class="price-badges">
+      <text class="price-badge {{priceDir}}">{{priceChange}}</text>
+      <text class="price-badge-plain">4h {{price4hChange}}</text>
+      <text class="price-badge-plain">24h {{price24hChange}}</text>
+      <text class="price-badge-plain">量 {{vol24h}}</text>
     </view>
   </view>
 

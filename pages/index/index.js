@@ -47,7 +47,7 @@ const TIPS = [
   },
   {
     icon: '⚡', title: '评分这样看',
-    body: '≥8分 🔥 强信号直接打\n5~7分 ⚠️ 轻仓谨慎进\n<5分 🚫 看书等机会',
+    body: '≥80分 🔥 强信号直接打\n50~79分 ⚠️ 轻仓谨慎进\n<30分 🚫 看书等机会',
     cls: 'tip-score', tag: '评分指南'
   },
   {
@@ -66,7 +66,7 @@ function winRateFromScore(s) {
   return ({0:28,1:30,2:32,3:35,4:38,5:48,6:55,7:63,8:72,9:80,10:85})[Math.min(10,Math.max(0,s))] || 35
 }
 function toStars(s) {
-  const f = Math.min(5, Math.round(s / 2))
+  const f = Math.min(5, Math.round(s / 20))
   return '★'.repeat(f) + '☆'.repeat(5 - f)
 }
 function fmtPrice(v) { return v >= 10000 ? v.toFixed(1) : v.toFixed(2) }
@@ -840,9 +840,9 @@ Page({
       decisionSub = `已过滤：${sig.reason}`
     } else if (sig.type === 'long' || sig.type === 'short') {
       hasSignal = true
-      score      = sig.score
+      score      = sig.score          // 现在是0~100
       scoreStars = toStars(score)
-      scoreBar   = score * 10
+      scoreBar   = score              // 直接用，0~100即为百分比
       signalDir  = sig.type
       pinTime    = timeStr(sig.pin.time)
       winRate    = winRateFromScore(score)
@@ -875,19 +875,19 @@ Page({
         posRiskU = sig.positionAdvice.riskAmount
       }
 
-      if (score >= 8) {
+      if (score >= 80) {
         decisionState   = sig.type === 'long' ? 'buy' : 'short_s'
         decisionFace    = sig.type === 'long' ? '🚀' : '📉'
         decisionVerdict = sig.type === 'long' ? '强烈推荐做多！' : '强烈推荐做空！'
         decisionSub     = sig.type === 'long' ? '多指标共振，优先把握机会' : '上影插针确认，注意控仓'
         scoreLabel      = '强烈推荐'
-      } else if (score >= 6) {
+      } else if (score >= 60) {
         decisionState   = 'ok'
         decisionFace    = sig.type === 'long' ? '📈' : '📉'
         decisionVerdict = '✅ 建议做' + (sig.type === 'long' ? '多' : '空')
         decisionSub     = '信号中等，轻仓跟进，严控止损'
         scoreLabel      = '建议做'
-      } else if (score >= 5) {
+      } else if (score >= 40) {
         decisionState   = 'watch'; decisionFace = '⚠️'
         decisionVerdict = '谨慎观望'; decisionSub = '信号偏弱，可观望或超轻仓'
         scoreLabel      = '谨慎'
@@ -954,7 +954,7 @@ Page({
     const isBearTrend = trendColor === 'bear' || trendColor === 'bear_w'
 
     const trendInfo = sig.trendInfo || null
-    const aiScoreHint = score >= 8 ? '强烈看好' : score >= 6 ? '中等把握' : score >= 4 ? '谨慎评估' : '信号偏弱'
+    const aiScoreHint = score >= 80 ? '强烈看好' : score >= 60 ? '中等把握' : score >= 40 ? '谨慎评估' : '信号偏弱'
     const aiLabel = `AI量化 · ${aiScoreHint}`
 
     this.setData({
