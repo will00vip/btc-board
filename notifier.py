@@ -54,9 +54,8 @@ def send_pushdeer(title: str, content: str) -> bool:
     data = {
         "pushkey": PUSHDEER_KEY,
         "title":   title,
-        "desp":    content,
-        "text":    content,
-        "type":    "markdown",
+        "text":    content,    # PushDeer必填字段（不是desp）
+        "type":    "text",
     }
     try:
         resp = requests.post(PUSHDEER_URL, data=data, timeout=10)
