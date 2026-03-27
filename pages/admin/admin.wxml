@@ -83,7 +83,7 @@
         class="issued-item {{item.used ? 'used' : 'fresh'}}"
         wx:for="{{issuedCodes}}"
         wx:key="code"
-        wx:item="item"
+        wx:for-item="item"
       >
         <view class="issued-left">
           <text class="issued-code">{{item.code}}</text>
@@ -99,11 +99,11 @@
     <!-- 底部统计 -->
     <view class="stat-row">
       <view class="stat-item">
-        <text class="stat-num">{{issuedCodes.filter(c => !c.used).length}}</text>
+        <text class="stat-num">{{unusedCount}}</text>
         <text class="stat-label">未使用</text>
       </view>
       <view class="stat-item">
-        <text class="stat-num sold">{{issuedCodes.filter(c => c.used).length}}</text>
+        <text class="stat-num sold">{{usedCount}}</text>
         <text class="stat-label">已激活</text>
       </view>
       <view class="stat-item">

@@ -21,6 +21,8 @@ Page({
 
     issuedCodes: [],      // 已发出的码列表
     totalRevenue: 0,
+    unusedCount: 0,
+    usedCount: 0,
   },
 
   onLoad() {
@@ -119,6 +121,9 @@ Page({
       .filter(i => i.used)
       .reduce((sum, i) => sum + (i.price || 0), 0)
 
-    this.setData({ issuedCodes: issued, totalRevenue: revenue })
+    const usedCount   = issued.filter(i => i.used).length
+    const unusedCount = issued.length - usedCount
+
+    this.setData({ issuedCodes: issued, totalRevenue: revenue, usedCount, unusedCount })
   },
 })
