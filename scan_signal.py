@@ -236,33 +236,47 @@ def check_signal():
         else:
             details.append("❌ 确认K未出现")
 
-        # 强度标签
+        # 强度标签 + 建议评级
+        rr = round(risk * 1.5 / risk, 1) if risk > 0 else 0  # TP2盈亏比=1.5
+        rr_str = f"1:{rr}" if rr > 0 else "--"
         if score >= 8:
-            level = "🔥🔥 超强信号"
-            emoji = "🚀"
+            level   = "🔥🔥 超强信号"
+            emoji   = "🚀"
+            advice  = "强烈推荐！多项指标共振，可考虑开仓"
+            stars   = "⭐⭐⭐⭐⭐"
         elif score >= 6:
-            level = "🔥 强信号"
-            emoji = "📈"
+            level   = "🔥 强信号"
+            emoji   = "📈"
+            advice  = "建议参与，注意控仓（≤2成）"
+            stars   = "⭐⭐⭐⭐"
         else:
-            level = "⚠️ 普通信号"
-            emoji = "👀"
+            level   = "⚠️ 普通信号"
+            emoji   = "👀"
+            advice  = "谨慎观察，等确认K再决定"
+            stars   = "⭐⭐⭐"
 
-        title = f"{emoji} BTC做多信号 {level}"
-        msg = f"""{emoji}【BTC插针做多信号】{level}
-━━━━━━━━━━━━━━━
-时间：{ts_str}　评分：{score}/10
-当前价格：{price_now:.1f} USDT
+        # 标题：一眼读懂方向/价格/评分
+        title = f"🚀 BTC做多 {level} | {price_now:.0f} | {score}/10"
+        msg = f"""🚀 BTC 做多信号  {level}
+{stars}  评分 {score}/10  盈亏比 1.5:1
+━━━━━━━━━━━━━━━━━━━━━━
+⏰ {ts_str}
+💵 当前价格：{price_now:.1f} USDT
+📊 方向：做多 ▲（下影插针反转）
 
-📍 满足条件：
+📍 信号明细：
 {chr(10).join(details)}
 
-💰 交易参考（15m视角）：
-  止损：{sl}（-{round((price_now-sl)/price_now*100,2)}%）
-  TP1：{tp1}（+{round((tp1-price_now)/price_now*100,2)}%）
-  TP2：{tp2}（+{round((tp2-price_now)/price_now*100,2)}%）
-  TP3：{tp3}（+{round((tp3-price_now)/price_now*100,2)}%）
+💡 建议：{advice}
 
-⚠️ 请结合大趋势和仓位管理再决策！"""
+💰 交易计划（15分钟视角）：
+  🔴 止损  {sl}  （亏 {round((price_now-sl)/price_now*100,2)}%）
+  🟡 TP1   {tp1}  （盈 {round((tp1-price_now)/price_now*100,2)}%，保本离场）
+  🟢 TP2   {tp2}  （盈 {round((tp2-price_now)/price_now*100,2)}%，主要目标）
+  💎 TP3   {tp3}  （盈 {round((tp3-price_now)/price_now*100,2)}%，超额利润）
+
+⚠️ 仓位建议：信号越强仓位越重，≤30%本金
+   结合大趋势判断，顺势为王！"""
         print(msg)
         push(title, msg)
         return
@@ -303,32 +317,45 @@ def check_signal():
         else:
             details.append("❌ 确认K未出现")
 
+        # 强度标签 + 建议评级
         if score >= 8:
-            level = "🔥🔥 超强信号"
-            emoji = "💥"
+            level   = "🔥🔥 超强信号"
+            emoji   = "💥"
+            advice  = "强烈推荐！多项指标共振，可考虑开仓"
+            stars   = "⭐⭐⭐⭐⭐"
         elif score >= 6:
-            level = "🔥 强信号"
-            emoji = "📉"
+            level   = "🔥 强信号"
+            emoji   = "📉"
+            advice  = "建议参与，注意控仓（≤2成）"
+            stars   = "⭐⭐⭐⭐"
         else:
-            level = "⚠️ 普通信号"
-            emoji = "👀"
+            level   = "⚠️ 普通信号"
+            emoji   = "👀"
+            advice  = "谨慎观察，等确认K再决定"
+            stars   = "⭐⭐⭐"
 
-        title = f"{emoji} BTC做空信号 {level}"
-        msg = f"""{emoji}【BTC插针做空信号】{level}
-━━━━━━━━━━━━━━━
-时间：{ts_str}　评分：{score}/10
-当前价格：{price_now:.1f} USDT
+        # 标题：一眼读懂方向/价格/评分
+        title = f"💥 BTC做空 {level} | {price_now:.0f} | {score}/10"
+        msg = f"""💥 BTC 做空信号  {level}
+{stars}  评分 {score}/10  盈亏比 1.5:1
+━━━━━━━━━━━━━━━━━━━━━━
+⏰ {ts_str}
+💵 当前价格：{price_now:.1f} USDT
+📊 方向：做空 ▼（上影插针反转）
 
-📍 满足条件：
+📍 信号明细：
 {chr(10).join(details)}
 
-💰 交易参考（15m视角）：
-  止损：{sl}（+{round((sl-price_now)/price_now*100,2)}%）
-  TP1：{tp1}（-{round((price_now-tp1)/price_now*100,2)}%）
-  TP2：{tp2}（-{round((price_now-tp2)/price_now*100,2)}%）
-  TP3：{tp3}（-{round((price_now-tp3)/price_now*100,2)}%）
+💡 建议：{advice}
 
-⚠️ 请结合大趋势和仓位管理再决策！"""
+💰 交易计划（15分钟视角）：
+  🔴 止损  {sl}  （亏 {round((sl-price_now)/price_now*100,2)}%）
+  🟡 TP1   {tp1}  （盈 {round((price_now-tp1)/price_now*100,2)}%，保本离场）
+  🟢 TP2   {tp2}  （盈 {round((price_now-tp2)/price_now*100,2)}%，主要目标）
+  💎 TP3   {tp3}  （盈 {round((price_now-tp3)/price_now*100,2)}%，超额利润）
+
+⚠️ 仓位建议：信号越强仓位越重，≤30%本金
+   结合大趋势判断，顺势为王！"""
         print(msg)
         push(title, msg)
         return

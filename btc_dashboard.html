@@ -300,14 +300,20 @@ body {
 <!-- 工具栏 -->
 <div class="toolbar">
   <span class="tb-label">周期：</span>
-  <button class="period-btn" onclick="switchInterval('1m',this)">1m</button>
-  <button class="period-btn" onclick="switchInterval('5m',this)">5m</button>
-  <button class="period-btn active" onclick="switchInterval('15m',this)">15m</button>
-  <button class="period-btn" onclick="switchInterval('30m',this)">30m</button>
-  <button class="period-btn" onclick="switchInterval('1h',this)">1h</button>
-  <button class="period-btn" onclick="switchInterval('4h',this)">4h</button>
-  <button class="period-btn" onclick="switchInterval('1d',this)">日线</button>
-  <button class="period-btn" onclick="switchInterval('1w',this)">周线</button>
+  <button class="period-btn" onclick="switchInterval('1s',this)">1秒</button>
+  <button class="period-btn" onclick="switchInterval('1m',this)">1分</button>
+  <button class="period-btn" onclick="switchInterval('3m',this)">3分</button>
+  <button class="period-btn" onclick="switchInterval('5m',this)">5分</button>
+  <button class="period-btn active" onclick="switchInterval('15m',this)">15分</button>
+  <button class="period-btn" onclick="switchInterval('30m',this)">30分</button>
+  <button class="period-btn" onclick="switchInterval('1h',this)">1时</button>
+  <button class="period-btn" onclick="switchInterval('2h',this)">2时</button>
+  <button class="period-btn" onclick="switchInterval('4h',this)">4时</button>
+  <button class="period-btn" onclick="switchInterval('6h',this)">6时</button>
+  <button class="period-btn" onclick="switchInterval('12h',this)">12时</button>
+  <button class="period-btn" onclick="switchInterval('1d',this)">1日</button>
+  <button class="period-btn" onclick="switchInterval('3d',this)">3日</button>
+  <button class="period-btn" onclick="switchInterval('1w',this)">1周</button>
 
   <div class="toolbar-sep"></div>
   <span class="tb-label">指标：</span>
@@ -341,6 +347,44 @@ body {
 
   <!-- 右侧 -->
   <div class="right-panel">
+
+    <!-- 🆕 大趋势摘要条（跟随K线周期，和APP一致） -->
+    <div id="trend-inline-bar" style="
+      display:flex;align-items:center;justify-content:space-between;
+      padding:9px 14px;border-radius:10px;
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+      flex-shrink:0;
+    ">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:16px;">📊</span>
+        <span id="trend-bar-period" style="font-size:13px;color:#8b949e;font-weight:600;">15分 趋势</span>
+        <span id="trend-bar-label" style="font-size:13px;font-weight:900;padding:3px 14px;border-radius:8px;background:rgba(139,148,158,.1);color:#8b949e;">计算中…</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6e7681;">
+        <span>🟢 支撑 <b id="trend-support" style="color:#8b949e;">--</b></span>
+        <span>·</span>
+        <span>🔴 压力 <b id="trend-resist" style="color:#8b949e;">--</b></span>
+      </div>
+    </div>
+
+    <!-- 🆕 信号等级说明条 -->
+    <div style="
+      display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
+      padding:0;flex-shrink:0;
+    ">
+      <div style="text-align:center;padding:7px 4px;border-radius:8px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.2);">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">⭐⭐⭐ 普通信号</div>
+        <div style="font-size:11px;color:var(--yellow);">评分 5~5分<br>谨慎观察</div>
+      </div>
+      <div style="text-align:center;padding:7px 4px;border-radius:8px;background:rgba(255,77,109,.06);border:1px solid rgba(255,77,109,.2);">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">🔥 强信号</div>
+        <div style="font-size:11px;color:var(--red);">评分 6~7分<br>建议轻仓</div>
+      </div>
+      <div style="text-align:center;padding:7px 4px;border-radius:8px;background:rgba(155,114,255,.08);border:1px solid rgba(155,114,255,.25);">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">🔥🔥 超强信号</div>
+        <div style="font-size:11px;color:var(--purple);">评分 8~10分<br>可重仓操作</div>
+      </div>
+    </div>
 
     <!-- ① 决策大卡 -->
     <div class="dec-card state-wait" id="dec-card">
@@ -502,14 +546,20 @@ let chartMain, chartVol, chartMACD, chartKDJ, chartRSI;
 const indState = { ma: true, boll: true, macd: true, kdj: true, rsi: false };
 
 const INTERVAL_CFG = {
-  '1m':  { label:'1m · 超短线', limit:200 },
-  '5m':  { label:'5m · 短线',   limit:180 },
-  '15m': { label:'15m · 主策略',limit:150 },
-  '30m': { label:'30m · 中线',  limit:120 },
-  '1h':  { label:'1h · 趋势',   limit:100 },
-  '4h':  { label:'4h · 大趋势', limit:80  },
-  '1d':  { label:'日线 · 波段', limit:60  },
-  '1w':  { label:'周线 · 长线', limit:52  },
+  '1s':  { label:'1秒 · 超高频', limit:200 },
+  '1m':  { label:'1分 · 超短线', limit:200 },
+  '3m':  { label:'3分 · 短线',   limit:200 },
+  '5m':  { label:'5分 · 短线',   limit:180 },
+  '15m': { label:'15分 · 主策略',limit:150 },
+  '30m': { label:'30分 · 中线',  limit:120 },
+  '1h':  { label:'1时 · 趋势',   limit:100 },
+  '2h':  { label:'2时 · 趋势',   limit:100 },
+  '4h':  { label:'4时 · 大趋势', limit:80  },
+  '6h':  { label:'6时 · 大趋势', limit:80  },
+  '12h': { label:'12时 · 波段',  limit:60  },
+  '1d':  { label:'1日 · 波段',   limit:60  },
+  '3d':  { label:'3日 · 中长线', limit:40  },
+  '1w':  { label:'1周 · 长线',   limit:30  },
 };
 
 // ─── 数据缓存（来自 data.json）───
@@ -1014,6 +1064,49 @@ function updateDecCard(pin, sg, klines) {
 // ─── 资金费率 ───
 async function getFR() { try { const r=await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT',{signal:AbortSignal.timeout?AbortSignal.timeout(4000):undefined}); if(!r.ok) return null; return+((await r.json()).lastFundingRate); } catch { return null; } }
 
+// ─── 大趋势摘要条（跟随K线周期） ───
+function updateTrendBar(closes, highs, lows) {
+  const n = closes.length;
+  if (n < 20) return;
+  // MA20 / MA60
+  const ma20 = closes.slice(-20).reduce((a,b)=>a+b,0)/20;
+  const ma60 = n >= 60 ? closes.slice(-60).reduce((a,b)=>a+b,0)/60 : null;
+  const cur  = closes[n-1];
+  // 趋势判断
+  let tLabel, tColor, tBg;
+  if (ma60) {
+    if (cur > ma20 && ma20 > ma60) {
+      tLabel='📈 强势多头'; tColor='#ff4d6d'; tBg='rgba(255,77,109,.18)';
+    } else if (cur > ma20) {
+      tLabel='↗ 偏多';    tColor='#ffa657'; tBg='rgba(255,166,87,.15)';
+    } else if (cur < ma20 && ma20 < ma60) {
+      tLabel='📉 强势空头'; tColor='#26a69a'; tBg='rgba(38,166,154,.18)';
+    } else if (cur < ma20) {
+      tLabel='↘ 偏空';    tColor='#6e7681'; tBg='rgba(110,118,129,.12)';
+    } else {
+      tLabel='→ 震荡';    tColor='#8b949e'; tBg='rgba(139,148,158,.10)';
+    }
+  } else {
+    tLabel = cur > ma20 ? '↗ 价格在MA20上方' : '↘ 价格在MA20下方';
+    tColor = cur > ma20 ? '#ffa657' : '#6e7681';
+    tBg    = cur > ma20 ? 'rgba(255,166,87,.12)' : 'rgba(110,118,129,.10)';
+  }
+  // 支撑/压力（近20根最低/最高）
+  const recentLows  = lows.slice(-20);
+  const recentHighs = highs.slice(-20);
+  const support = Math.min(...recentLows).toFixed(0);
+  const resist  = Math.max(...recentHighs).toFixed(0);
+
+  const ivLabel = INTERVAL_CFG[INTERVAL]?.label?.split('·')[0]?.trim() || INTERVAL;
+  document.getElementById('trend-bar-period').textContent = ivLabel + ' 趋势';
+  const lbl = document.getElementById('trend-bar-label');
+  lbl.textContent = tLabel;
+  lbl.style.color      = tColor;
+  lbl.style.background = tBg;
+  document.getElementById('trend-support').textContent = support;
+  document.getElementById('trend-resist').textContent  = resist;
+}
+
 // ─── 主加载 ───
 async function loadAll() {
   document.getElementById('last-upd').textContent='加载中…';
@@ -1037,6 +1130,7 @@ async function loadAll() {
     updateBadges(sg);
     updateSignalButtons(klineData,ind,sg,fr); // 新增：一键看多空
     updateDecCard(pin,sg,klineData);
+    updateTrendBar(closes,highs,lows);  // 新增：大趋势摘要条
     
     // ─── 金叉死叉震动检测 ───
     const n=closes.length-1;
