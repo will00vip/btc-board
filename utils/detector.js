@@ -109,7 +109,7 @@ function calcPositionSize(entryPrice, stopLoss, config = CONFIG) {
 /** 主检测函数，返回完整分析对象 */
 async function detectSignal(interval) {
   interval = interval || '15m'
-  const limit = 120   // 120根，够用又快
+  const limit = 300   // 300根，指标预热充分（BOLL/MACD前期不乱）
 
   // 命中缓存直接返回（30s内）
   const cached = getCached(interval)
@@ -212,7 +212,7 @@ async function detectSignal(interval) {
     positionAdvice = calcPositionSize(entryPrice, stopLoss, CONFIG)
   }
 
-  return {
+  const result = {
     type: signalType,
     bars, bars4h,
     drop4h,
@@ -228,7 +228,9 @@ async function detectSignal(interval) {
     // 指标值
     macdBar, macdPrev,
     dif: macdData.dif[n], dea: macdData.dea[n],
+    dif_prev: macdData.dif[n-1], dea_prev: macdData.dea[n-1],
     kVal: kdjData.K[n], dVal: kdjData.D[n], jVal,
+    kVal_prev: kdjData.K[n-1], dVal_prev: kdjData.D[n-1],
     rsiVal, wrVal,
     bollLast,
     // 仓位建议

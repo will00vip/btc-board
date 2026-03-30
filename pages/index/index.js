@@ -349,11 +349,21 @@ Page({
     const macdObj = calcMACD(closes)   // { dif, dea, bar }
 
     // ── 价格范围 ──
+    // 先用 K线实体计算基础范围，BOLL前20根不稳定不纳入（避免撑扁Y轴）
     let priceHi = -Infinity, priceLo = Infinity
-    data.forEach((b, i) => {
-      priceHi = Math.max(priceHi, b.high, bollArr[i].upper)
-      priceLo = Math.min(priceLo, b.low,  bollArr[i].lower)
+    data.forEach(b => {
+      priceHi = Math.max(priceHi, b.high)
+      priceLo = Math.min(priceLo, b.low)
     })
+    // BOLL稳定段（第20根以后）才扩展范围
+    data.forEach((b, i) => {
+      if (i < 20) return
+      priceHi = Math.max(priceHi, bollArr[i].upper)
+      priceLo = Math.min(priceLo, bollArr[i].lower)
+    })
+    // 上下留5%边距，让K线不顶边
+    const pricePad = (priceHi - priceLo) * 0.05 || 1
+    priceHi += pricePad; priceLo -= pricePad
     const priceRange = priceHi - priceLo || 1
     const py = p => mainY + (1 - (p - priceLo) / priceRange) * mainH
 
@@ -361,8 +371,13 @@ Page({
     const volMax = Math.max(...vols) || 1
     const vy = v => volY + volH - (v / volMax) * volH
 
-    // ── MACD范围 ──
-    const macdVals = [...macdObj.bar, ...macdObj.dif, ...macdObj.dea]
+    // ── MACD范围（跳过前26根不稳定值，避免压扁MACD区域） ──
+    const macdStable = n > 26 ? n - 26 : 0
+    const macdVals = [
+      ...macdObj.bar.slice(macdStable),
+      ...macdObj.dif.slice(macdStable),
+      ...macdObj.dea.slice(macdStable)
+    ]
     const macdMax  = Math.max(...macdVals.map(Math.abs)) || 1
     const macdMidY = macdY + macdH / 2
     const my = v => macdMidY - (v / macdMax) * (macdH / 2)
