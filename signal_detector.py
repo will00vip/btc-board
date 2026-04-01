@@ -117,11 +117,15 @@ def is_pin_bar(candle: pd.Series, direction: str = "long") -> tuple[bool, dict]:
 
 
 def is_volume_amplified(df: pd.DataFrame, pin_idx: int) -> tuple[bool, float]:
-    """判断插针K线成交量是否放大"""
-    if len(df) < LOOKBACK_CANDLES + 1:
+    """
+    判断插针K线成交量是否放大
+    优化：基准用前20根均量（而非前5根），避免量能枯竭期把小量当放量
+    """
+    BASE_CANDLES = 20  # 量比基准周期改为20根
+    if len(df) < BASE_CANDLES + 1:
         return False, 0.0
     pin_vol = df.iloc[pin_idx]["volume"]
-    prev_vols = df.iloc[pin_idx - LOOKBACK_CANDLES: pin_idx]["volume"]
+    prev_vols = df.iloc[pin_idx - BASE_CANDLES: pin_idx]["volume"]
     avg_vol = prev_vols.mean()
     if avg_vol == 0:
         return False, 0.0
@@ -456,20 +460,138 @@ def evaluate_trade_value(
     }
 
 
-# ── 综合信号评分 ────────────────────────────────────────────────
+# ── 综合信号评分（对齐三步法，12分制） ──────────────────────────
+
+def score_signal_3step(
+    daily_trend: str,           # "strong_bull/bull/strong_bear/bear/neutral"
+    h1_resonance: bool,         # 1h MACD+RSI共振是否满足（满分3分）
+    pin_ratio: float,           # 影线/实体 比例（插针强度）
+    vol_ratio: float,           # 量比（放量强度）
+    rsi_val: float,             # 当前15m RSI值
+    direction: str,             # "long" 或 "short"
+    macd_ok: bool,              # MACD配合
+    kdj_ok: bool,               # KDJ配合
+    low_rising: bool,           # 极值确认（低点抬高/高点下降）
+    h1_rsi_val: float = 50.0,   # 1h RSI值（用于共振降权判断）
+) -> tuple[int, int, str]:
+    """
+    三步法对齐评分（硬上限12分制）：
+
+    步骤1 - 日线大趋势（最多3分）：
+        顺势强趋势 +3，顺势普通趋势 +2，震荡 +1
+        [优化] 超跌/超涨（逆势但极端）允许 +1分触底反弹机会
+
+    步骤2 - 1h共振（最多3分）→ 优化RSI宽松度：
+        MACD方向对 且 RSI理想区(<55多/>45空)  → +3（满分）
+        MACD方向对 且 RSI中性区(55~65多/35~45空) → +2（降权）
+        MACD方向对 且 RSI偏热(65~75多/25~35空)   → +1（最低共振）
+        无MACD配合 但 RSI极值(<30多/>70空)       → +1（极值救场）
+        其他                                     → +0
+
+    步骤3 - 15m形态强度（最多4分）：
+        插针比例≥3倍 +2，≥1.5倍 +1
+        量比≥2倍 +2，≥1.3倍 +1
+
+    附加条件（最多2分）：
+        RSI极值（<30多/>70空）+1，极端（<20多/>80空）再+1
+        极值确认（低点抬高/高点下降）+1
+
+    推送门槛：≥5/12分（≈App 42分）
+    强信号：≥9/12分
+    上限：min(score, 12)，100分换算基准固定12
+    """
+    score = 0
+
+    # ── 步骤1：日线大趋势（最多3分） ──────────────────
+    if direction == "long":
+        if daily_trend == "strong_bull":
+            score += 3
+        elif daily_trend == "bull":
+            score += 2
+        elif daily_trend == "neutral":
+            score += 1
+        elif daily_trend in ("bear", "strong_bear"):
+            # 逆势做多只有超跌才给分（步骤1贡献0，留给其他步骤撑）
+            score += 0
+    else:  # short
+        if daily_trend == "strong_bear":
+            score += 3
+        elif daily_trend == "bear":
+            score += 2
+        elif daily_trend == "neutral":
+            score += 1
+        elif daily_trend in ("bull", "strong_bull"):
+            score += 0  # 逆势做空，步骤1贡献0
+
+    # ── 步骤2：1h共振（最多3分，RSI降权）─────────────
+    # h1_resonance 是老接口（True/False），这里用精细化的 h1_rsi_val
+    if h1_resonance:
+        if direction == "long":
+            if h1_rsi_val < 55:
+                score += 3   # 理想区：多头共振且RSI未热
+            elif h1_rsi_val < 65:
+                score += 2   # 可接受：RSI偏热但还行
+            else:
+                score += 1   # 勉强：RSI已热，共振质量低
+        else:  # short
+            if h1_rsi_val > 45:
+                score += 3   # 理想区：空头共振且RSI未冷
+            elif h1_rsi_val > 35:
+                score += 2   # 可接受
+            else:
+                score += 1   # RSI已超卖，空头共振质量低
+    else:
+        # 无共振但RSI极值（触底/触顶）给1分救场
+        if direction == "long" and rsi_val < 30:
+            score += 1
+        elif direction == "short" and rsi_val > 70:
+            score += 1
+
+    # ── 步骤3：15m形态强度（最多4分）─────────────────
+    if pin_ratio >= 3.0:
+        score += 2
+    elif pin_ratio >= 1.5:
+        score += 1
+
+    if vol_ratio >= 2.0:
+        score += 2
+    elif vol_ratio >= 1.3:
+        score += 1
+
+    # ── 附加：15m RSI位置（最多2分）──────────────────
+    if direction == "long":
+        if rsi_val < 20:
+            score += 2   # 极度超卖
+        elif rsi_val < 30:
+            score += 1   # 超卖
+    else:
+        if rsi_val > 80:
+            score += 2   # 极度超买
+        elif rsi_val > 70:
+            score += 1   # 超买
+
+    # ── 附加：极值确认（1分）──────────────────────────
+    if low_rising:
+        score += 1
+
+    # ══ 硬上限12分，换算100分 ══════════════════════════
+    score = min(score, 12)
+    score_100 = round(score / 12 * 100)
+
+    if score >= 9:
+        level = "🔥强信号"
+    elif score >= 6:
+        level = "⚡中等信号"
+    elif score >= 4:
+        level = "⚠️弱信号"
+    else:
+        level = "❄️噪音"
+
+    return score, score_100, level
+
 
 def score_signal(macd_ok, kdj_ok, rsi_ok, wr_ok, boll_ok, low_rising) -> tuple[int, str]:
-    """
-    综合评分：
-    - 插针形态+放量 是前提条件（必须满足）
-    - 低点抬高：+2分（强确认）
-    - MACD配合：+2分
-    - KDJ配合：+2分
-    - RSI超卖：+1分
-    - WR超卖：+1分
-    - BOLL触下轨：+1分
-    满分10分，≥5分触发推送，≥8分为强信号
-    """
+    """旧版10分制（保留兼容，内部不再使用）"""
     score = 0
     if low_rising: score += 2
     if macd_ok:    score += 2
@@ -477,30 +599,175 @@ def score_signal(macd_ok, kdj_ok, rsi_ok, wr_ok, boll_ok, low_rising) -> tuple[i
     if rsi_ok:     score += 1
     if wr_ok:      score += 1
     if boll_ok:    score += 1
-
-    if score >= 8:
-        level = "🔥强信号"
-    elif score >= 5:
-        level = "⚡中等信号"
-    else:
-        level = "⚠️弱信号"
-
+    level = "🔥强信号" if score >= 8 else ("⚡中等信号" if score >= 5 else "⚠️弱信号")
     return score, level
+
+
+# ── 日线趋势判断（供 detect_signal 内部调用） ─────────────────────
+
+def _calc_daily_trend(df_daily: pd.DataFrame) -> tuple[str, float]:
+    """
+    判断日线趋势类型
+    返回 (trend_str, price_vs_ema50_pct)
+    trend_str: 'strong_bull'/'bull'/'strong_bear'/'bear'/'neutral'
+               + 特殊标记 'overdip'（超跌>8%于EMA50下方）/'overblow'（超涨>8%于EMA50上方）
+    price_vs_ema50_pct: 价格偏离EMA50的百分比（正=在EMA50上方）
+
+    [优化] 当价格已跌至EMA50下方≥8%时标记 overdip，
+           允许逆势做多（超跌反弹）；
+           当价格已涨至EMA50上方≥8%时标记 overblow，
+           允许逆势做空（超涨回落）。
+    """
+    if df_daily is None or len(df_daily) < 30:
+        return "neutral", 0.0
+
+    close = df_daily["close"]
+    ema20 = close.ewm(span=20, adjust=False).mean()
+    ema50 = close.ewm(span=50, adjust=False).mean()
+    e20 = ema20.iloc[-1]
+    e50 = ema50.iloc[-1]
+    cur_price = close.iloc[-1]
+    slope = (ema20.iloc[-1] - ema20.iloc[-6]) / ema20.iloc[-6] * 100  # 5日斜率%
+
+    price_vs_ema50 = (cur_price - e50) / e50 * 100  # 偏离EMA50的%
+
+    # 超跌/超涨优先判断（逆势触底/顶机会）
+    if price_vs_ema50 <= -8.0:
+        return "overdip", round(price_vs_ema50, 1)   # 超跌，支持逆势做多
+    if price_vs_ema50 >= 8.0:
+        return "overblow", round(price_vs_ema50, 1)  # 超涨，支持逆势做空
+
+    if e20 > e50 * 1.005 and slope > 0.5:
+        return "strong_bull", round(price_vs_ema50, 1)
+    elif e20 > e50 * 1.001 and slope > 0:
+        return "bull", round(price_vs_ema50, 1)
+    elif e20 < e50 * 0.995 and slope < -0.5:
+        return "strong_bear", round(price_vs_ema50, 1)
+    elif e20 < e50 * 0.999 and slope < 0:
+        return "bear", round(price_vs_ema50, 1)
+    else:
+        return "neutral", round(price_vs_ema50, 1)
+
+
+def _calc_h1_resonance(df_1h: pd.DataFrame, direction: str) -> tuple[bool, str, float]:
+    """
+    判断1h MACD+RSI共振
+    返回 (ok: bool, desc: str, rsi_val: float)
+    rsi_val 用于评分函数的降权判断
+
+    做多理想：1h MACD DIF > DEA 且 RSI < 55（未热）
+    做多可接受：RSI 55~65 降权
+    做多勉强：RSI 65~75 最低共振
+    极端超卖（RSI<30）：即使MACD未配合也给1分救场（在评分函数处理）
+
+    做空镜像对称
+    """
+    if df_1h is None or len(df_1h) < 30:
+        return False, "1h数据不足", 50.0
+
+    dif, dea, _ = calc_macd(df_1h["close"])
+    rsi_1h = calc_rsi(df_1h["close"])
+    dif_last = dif.iloc[-1]
+    dea_last = dea.iloc[-1]
+    rsi_val = round(rsi_1h.iloc[-1], 1)
+
+    if direction == "long":
+        macd_bull = dif_last > dea_last
+        if macd_bull and rsi_val < 75:   # MACD方向对，RSI未极度超买就认可共振
+            if rsi_val < 55:
+                desc = f"1h MACD多头区✅ RSI={rsi_val}(理想)"
+            elif rsi_val < 65:
+                desc = f"1h MACD多头区⚡ RSI={rsi_val}(偏热-降权)"
+            else:
+                desc = f"1h MACD多头区⚠️ RSI={rsi_val}(热-弱共振)"
+            return True, desc, rsi_val
+        elif rsi_val < 30:
+            return True, f"1h RSI极度超卖✅ RSI={rsi_val}", rsi_val
+        else:
+            return False, f"1h 多头共振未满足 MACD={'多头' if macd_bull else '空头'} RSI={rsi_val}", rsi_val
+    else:
+        macd_bear = dif_last < dea_last
+        if macd_bear and rsi_val > 25:   # MACD方向对，RSI未极度超卖就认可共振
+            if rsi_val > 45:
+                desc = f"1h MACD空头区✅ RSI={rsi_val}(理想)"
+            elif rsi_val > 35:
+                desc = f"1h MACD空头区⚡ RSI={rsi_val}(偏冷-降权)"
+            else:
+                desc = f"1h MACD空头区⚠️ RSI={rsi_val}(冷-弱共振)"
+            return True, desc, rsi_val
+        elif rsi_val > 70:
+            return True, f"1h RSI极度超买✅ RSI={rsi_val}", rsi_val
+        else:
+            return False, f"1h 空头共振未满足 MACD={'空头' if macd_bear else '多头'} RSI={rsi_val}", rsi_val
 
 
 # ── 主检测函数 ──────────────────────────────────────────────────
 
-def detect_signal(df: pd.DataFrame, drop_4h: float = 0.0) -> dict | None:
+# 推送门槛：三步法12分制，≥5分才推（对应App约42%）
+PUSH_MIN_SCORE = 5    # 最低推送分（三步法12分制）
+PUSH_STRONG_SCORE = 9 # 强信号分（三步法12分制）
+
+
+def detect_signal(
+    df: pd.DataFrame,
+    drop_4h: float = 0.0,
+    df_daily: pd.DataFrame = None,   # 日线数据（可选，有则更准确）
+    df_1h: pd.DataFrame = None,      # 1h数据（可选，有则做共振检测）
+) -> dict | None:
     """
-    主信号检测函数（支持做多/做空双向）
-    返回信号字典（score≥5时）或 None
-    drop_4h: 4小时涨跌幅，用于交易价值评估
+    主信号检测函数（三步法对齐版 v4.1）
+    推送门槛：三步法12分制 ≥5分（即App约42分以上）
+    drop_4h:  4小时涨跌幅
+    df_daily: 日线K线（用于步骤1大趋势）
+    df_1h:    1h K线（用于步骤2共振检测）
     """
     if len(df) < 30:
         return None
 
-    # 先检测做多（下影插针），再检测做空（上影插针）
+    # ── 步骤1：计算日线大趋势 ──────────────────────────────────
+    daily_trend, price_vs_ema50 = _calc_daily_trend(df_daily)
+
+    daily_trend_cn = {
+        "strong_bull": "🚀日线强多头",
+        "bull":        "📈日线多头",
+        "strong_bear": "💥日线强空头",
+        "bear":        "📉日线空头",
+        "neutral":     "↔️日线震荡",
+        "overdip":     f"🩸超跌{price_vs_ema50:.1f}%(触底机会)",
+        "overblow":    f"🌋超涨+{price_vs_ema50:.1f}%(顶部机会)",
+    }.get(daily_trend, "↔️震荡")
+
+    # ── 优化④：检测同支撑位连续插针（降权） ──────────────────
+    # 统计最近6根K线中同方向插针数量，第2次以上降权
+    def _count_recent_pins(direction: str, lookback_range=6) -> int:
+        count = 0
+        for i in range(-lookback_range, 0):
+            if abs(i) <= len(df):
+                ok, _ = is_pin_bar(df.iloc[i], direction=direction)
+                if ok:
+                    count += 1
+        return count
+
+    # ── 先检测做多（下影插针），再检测做空（上影插针） ────────
     for direction in ["long", "short"]:
+
+        # 步骤1方向过滤
+        if daily_trend == "strong_bull" and direction == "short":
+            continue  # 日线强多头不做空
+        if daily_trend == "strong_bear" and direction == "long":
+            continue  # 日线强空头不做多
+        # overdip 只做多，overblow 只做空
+        if daily_trend == "overdip" and direction == "short":
+            continue
+        if daily_trend == "overblow" and direction == "long":
+            continue
+
+        # ── 步骤2：1h共振检测（返回3个值）──────────────────
+        h1_ok, h1_desc, h1_rsi_val = _calc_h1_resonance(df_1h, direction)
+
+        # 统计最近6根里的同向插针数（用于降权）
+        recent_pin_count = _count_recent_pins(direction, lookback_range=6)
+
         for lookback in [-3, -2, -1]:
             pin_ok, pin_detail = is_pin_bar(df.iloc[lookback], direction=direction)
             if not pin_ok:
@@ -514,28 +781,69 @@ def detect_signal(df: pd.DataFrame, drop_4h: float = 0.0) -> dict | None:
             if not extreme_confirmed and lookback != -1:
                 continue
 
-            # 各指标检查（传入方向）
+            # 各指标检查
             macd_ok, macd_desc = check_macd(df, direction)
             kdj_ok,  kdj_desc  = check_kdj(df,  direction)
             rsi_ok,  rsi_desc  = check_rsi(df,  direction)
             wr_ok,   wr_desc   = check_wr(df,   direction)
             boll_ok, boll_desc = check_boll(df, direction)
 
-            # 综合评分（仅供参考，不再作为推送门槛）
-            score, level = score_signal(macd_ok, kdj_ok, rsi_ok, wr_ok, boll_ok, extreme_confirmed)
+            # 当前15m RSI值（用于三步法评分）
+            rsi_15m = calc_rsi(df["close"])
+            rsi_15m_val = round(rsi_15m.iloc[-1], 1)
+
+            # ── 三步法综合评分（12分制，硬上限） ─────────────
+            pin_ratio = pin_detail["shadow_ratio"]
+            score, score_100, level = score_signal_3step(
+                daily_trend=daily_trend,
+                h1_resonance=h1_ok,
+                pin_ratio=pin_ratio,
+                vol_ratio=vol_ratio,
+                rsi_val=rsi_15m_val,
+                direction=direction,
+                macd_ok=macd_ok,
+                kdj_ok=kdj_ok,
+                low_rising=extreme_confirmed,
+                h1_rsi_val=h1_rsi_val,
+            )
+
+            # ── 优化④：连续插针降权 ───────────────────────────
+            # 同一支撑位出现≥3根插针，反转质量递减，扣1分
+            consecutive_penalty = 0
+            if recent_pin_count >= 3:
+                consecutive_penalty = 1
+                score = max(0, score - consecutive_penalty)
+                score_100 = round(score / 12 * 100)
+                # 重新判断level
+                if score >= 9:
+                    level = "🔥强信号"
+                elif score >= 6:
+                    level = "⚡中等信号"
+                elif score >= 4:
+                    level = "⚠️弱信号"
+                else:
+                    level = "❄️噪音"
+
+            # ════════════════════════════════════════════════
+            # 推送门槛：≥5分（12分制）才触发推送
+            # ════════════════════════════════════════════════
+            if score < PUSH_MIN_SCORE:
+                import logging
+                logging.getLogger('btc_monitor').info(
+                    f"[过滤] {direction} 信号评分{score}/12({score_100}/100) < {PUSH_MIN_SCORE}分，不推送"
+                    f" | 日线:{daily_trend_cn} | 1h:{h1_desc}"
+                    + (f" | 连续插针{recent_pin_count}根-扣{consecutive_penalty}分" if consecutive_penalty else "")
+                )
+                continue
 
             entry_price = df.iloc[-1]["close"]
 
             if direction == "long":
                 pin_extreme = pin_detail["low_price"]
                 stop_loss   = round(pin_extreme * 0.998, 1)
-                tp1 = round(entry_price * 1.30, 1)
-                tp2 = round(entry_price * 1.50, 1)
             else:
                 pin_extreme = pin_detail["high_price"]
                 stop_loss   = round(pin_extreme * 1.002, 1)
-                tp1 = round(entry_price * 0.70, 1)
-                tp2 = round(entry_price * 0.50, 1)
 
             # 交易价值评估
             trade_eval = evaluate_trade_value(
@@ -557,26 +865,36 @@ def detect_signal(df: pd.DataFrame, drop_4h: float = 0.0) -> dict | None:
 
             return {
                 "found": True,
-                "direction": direction,   # "long" 或 "short"
-                "score": score,
+                "direction": direction,
+                "score": score,           # 12分制（三步法，硬上限12）
+                "score_100": score_100,   # 100分制（与App对齐）
                 "level": level,
                 "time": df.iloc[-1]["timestamp"].strftime("%m月%d日 %H:%M"),
                 "entry_price": entry_price,
-                "pin_extreme": pin_extreme,  # 做多=低点，做空=高点
+                "pin_extreme": pin_extreme,
                 "stop_loss": stop_loss,
-                "tp1": tp1,
-                "tp2": tp2,
+                # 三步法信息
+                "daily_trend": daily_trend,
+                "daily_trend_cn": daily_trend_cn,
+                "price_vs_ema50": price_vs_ema50,   # 价格偏离EMA50%
+                "h1_resonance": h1_ok,
+                "h1_desc": h1_desc,
+                "h1_rsi": h1_rsi_val,
+                "consecutive_pins": recent_pin_count,   # 连续插针数
+                "consecutive_penalty": consecutive_penalty,
+                # 形态细节
                 "shadow_ratio": pin_detail["shadow_ratio"],
                 "close_position": pin_detail["close_position"],
                 "volume_ratio": vol_ratio,
                 "extreme_confirmed": extreme_confirmed,
-                "low_rising": extreme_confirmed,  # 兼容旧字段名
+                "low_rising": extreme_confirmed,
+                # 指标
                 "macd_ok": macd_ok,   "macd_desc": macd_desc,
                 "kdj_ok":  kdj_ok,    "kdj_desc":  kdj_desc,
                 "rsi_ok":  rsi_ok,    "rsi_desc":  rsi_desc,
                 "wr_ok":   wr_ok,     "wr_desc":   wr_desc,
                 "boll_ok": boll_ok,   "boll_desc": boll_desc,
-                # 交易价值评估
+                # 交易价值
                 "trade_rating":   trade_eval["rating"],
                 "trade_advice":   trade_eval["advice"],
                 "trade_rr":       trade_eval["rr_ratio"],

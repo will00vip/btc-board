@@ -108,67 +108,100 @@ def _mark_sent(direction: str) -> None:
 # ── 推送内容格式化 ─────────────────────────────────────────────────
 
 def format_signal_message(signal: dict, drop_pct: float, trend: dict) -> tuple[str, str]:
-    """格式化推送内容 —— 首行核心决策摘要 + 详情分层"""
+    """格式化推送内容 —— 三步法v4.1版"""
+    score     = signal.get("score", 0)       # 12分制，硬上限12
+    score_100 = signal.get("score_100", 0)   # 100分制（与App对齐）
     level     = signal.get("level", "⚡信号")
-    score     = signal.get("score", 0)
     rating    = signal.get("trade_rating", "")
-    rr        = signal.get("trade_rr", 0)
     direction = signal.get("direction", "long")
     dir_emoji = "📈做多" if direction == "long" else "📉做空"
     dir_label = "买入" if direction == "long" else "卖出"
-    score_bar = "★" * score + "☆" * (10 - score)
 
-    # ── 标题（通知栏显示） ──────────────────────────────────────────
-    title = f"🔔BTC插针{dir_label}【{score}/10】{level} | {signal['entry_price']:,.0f}U"
+    daily_trend     = signal.get("daily_trend", "neutral")
+    daily_trend_cn  = signal.get("daily_trend_cn", "↔️震荡")
+    price_vs_ema50  = signal.get("price_vs_ema50", 0.0)
+    h1_ok           = signal.get("h1_resonance", False)
+    h1_desc         = signal.get("h1_desc", "—")
+    h1_rsi          = signal.get("h1_rsi", 50.0)
+    h1_icon         = "✅" if h1_ok else "⏳"
+    consecutive_pins    = signal.get("consecutive_pins", 1)
+    consecutive_penalty = signal.get("consecutive_penalty", 0)
 
-    # ── 环境提示 ──────────────────────────────────────────────────
+    # 三步法完成情况
+    step1_ok = daily_trend not in ("neutral",)
+    step2_ok = h1_ok
+    step3_ok = True
+    steps_done = sum([step1_ok, step2_ok, step3_ok])
+
+    # 超跌/超涨逆势标记
+    contrarian_note = ""
+    if daily_trend == "overdip":
+        contrarian_note = f"  ⚠️ 逆势做多（超跌{price_vs_ema50:.1f}%）信号，止损要严格"
+    elif daily_trend == "overblow":
+        contrarian_note = f"  ⚠️ 逆势做空（超涨+{price_vs_ema50:.1f}%）信号，止损要严格"
+
+    # 连续插针降权提示
+    pin_note = ""
+    if consecutive_pins >= 3:
+        pin_note = f"  ⚠️ 同区域已出现{consecutive_pins}根插针，反转质量递减-扣{consecutive_penalty}分"
+
+    # ── 标题 ──────────────────────────────────────────────────
+    title = f"🔔BTC{dir_label}【{score}/12 | {score_100}/100】{level} | {signal['entry_price']:,.0f}U"
+
+    # ── 环境提示 ──────────────────────────────────────────────
     now_hour = datetime.now(CST).hour
     time_tip = ""
     if 0 <= now_hour < 6:
         time_tip = "🌙 凌晨信号，流动性低，谨慎操作"
     elif 20 <= now_hour or now_hour < 2:
-        time_tip = "🇺🇸 美股交易时段，波动较大"
+        time_tip = "🇺🇸 美股时段，波动较大"
 
     drop_tip = ""
     if drop_pct < -5:
-        drop_tip = f"⚠️ 近4H急跌{drop_pct:.1f}%，插针反弹力度存疑，轻仓试"
+        drop_tip = f"⚠️ 近4H急跌{drop_pct:.1f}%，轻仓试"
     elif drop_pct > 5:
-        drop_tip = f"⚠️ 近4H急涨{drop_pct:.1f}%，做空插针需防假突破"
-
-    # ── 趋势偏向 ──────────────────────────────────────────────────
-    trend_1h = trend.get("1h", "—")
-    trend_4h = trend.get("4h", "—")
-    bias = trend.get("bias", "—")
-    # 根据方向调整 bias 文字
-    if direction == "short":
-        bias = bias.replace("做多", "做空").replace("偏多", "偏空").replace("偏空", "偏多")
-
-    # ── 确认标签 ──────────────────────────────────────────────────
-    conf_label = ("低点抬高✅" if direction == "long" else "高点下降✅") \
-        if signal.get("extreme_confirmed") \
-        else ("低点待确认⏳" if direction == "long" else "高点待确认⏳")
+        drop_tip = f"⚠️ 近4H急涨{drop_pct:.1f}%，做空需防假突破"
 
     risk_notes = signal.get("trade_risks", [])
     risk_lines = [f"  {r}" for r in risk_notes] if risk_notes else ["  ✅ 无额外风险"]
 
+    conf_label = ("低点抬高✅" if direction == "long" else "高点下降✅") \
+        if signal.get("extreme_confirmed") \
+        else ("低点待确认⏳" if direction == "long" else "高点待确认⏳")
+
     lines = [
-        # ── 第一屏：核心决策 ──────────────────────────────────────
-        f"━━ {dir_emoji} 插针{dir_label}  {score_bar} ━━",
+        # ── 核心决策 ──────────────────────────────────────────
+        f"━━ {dir_emoji} 插针{dir_label}  {level} ━━",
+        f"评分：{score}/12  ≈App {score_100}/100  三步法{steps_done}/3步",
         f"价格：{signal['entry_price']:,.1f}  时间：{signal['time']}",
-        f"止损：{signal['stop_loss']:,.1f}  每U险：{signal.get('trade_risk_per',0):.1f}",
+        f"止损：{signal['stop_loss']:,.1f}  每U风险：{signal.get('trade_risk_per',0):.1f}",
         f"TP1 {signal.get('trade_tp_cons',0):,.0f}  TP2 {signal.get('trade_tp_std',0):,.0f}  TP3 {signal.get('trade_tp_agg',0):,.0f}",
         f"→ {rating}",
         f"",
-        # ── 仓位建议 ──────────────────────────────────────────────
+        # ── 三步法状态 ────────────────────────────────────────
+        f"【三步法共振】",
+        f"  步骤1 大趋势：{daily_trend_cn}",
+        f"  步骤2 1h共振：{h1_icon} {h1_desc}",
+        f"  步骤3 15m触发：✅ 插针{signal['shadow_ratio']}倍 量{signal['volume_ratio']}倍",
+        f"  {conf_label}",
+    ]
+
+    if contrarian_note:
+        lines.append(contrarian_note)
+    if pin_note:
+        lines.append(pin_note)
+
+    lines += [
+        f"",
+        # ── 仓位建议 ──────────────────────────────────────────
         f"【仓位建议】",
         f"  开仓：{signal.get('pos_lots',1)}张  保证金：{signal.get('pos_margin',0):.0f}U ({signal.get('pos_ratio',0):.1f}%仓位)",
         f"  杠杆：{signal.get('pos_leverage',10)}x  最大亏损：{signal.get('pos_risk_u',0):.0f}U",
-        f"  ⚠️ 仓位基于账户{ACCOUNT_BALANCE:.0f}U×2%风险，实际按自己账户调整",
         f"",
-        # ── 第二屏：大趋势背景 ───────────────────────────────────
+        # ── 大趋势背景 ────────────────────────────────────────
         f"【大趋势背景】",
-        f"  1H：{trend_1h}  |  4H：{trend_4h}",
-        f"  {bias}",
+        f"  1H：{trend.get('1h','—')}  |  4H：{trend.get('4h','—')}",
+        f"  {trend.get('bias','—')}",
     ]
 
     if time_tip:
@@ -178,10 +211,9 @@ def format_signal_message(signal: dict, drop_pct: float, trend: dict) -> tuple[s
 
     lines += [
         f"",
-        # ── 第三屏：指标详情 ─────────────────────────────────────
-        f"【指标详情  {score}/10分】",
-        f"  形态：影线{signal['shadow_ratio']}倍  收盘{signal['close_position']}%  量{signal['volume_ratio']}倍",
-        f"  {conf_label}",
+        # ── 指标详情 ──────────────────────────────────────────
+        f"【指标详情  {score}/12分 | 1h RSI={h1_rsi}】",
+        f"  收盘位置：{signal['close_position']}%",
         f"  MACD：{signal['macd_desc']}",
         f"  KDJ ：{signal['kdj_desc']}",
         f"  RSI ：{signal['rsi_desc']}",
@@ -191,7 +223,7 @@ def format_signal_message(signal: dict, drop_pct: float, trend: dict) -> tuple[s
         f"【风险提示】",
     ] + risk_lines + [
         f"",
-        f"⚡ 核对SOP → 决策 → 下单时挂止损单",
+        f"⚡ 核对SOP → 决策 → 挂止损单",
     ]
 
     return title, "\n".join(lines)
@@ -214,6 +246,22 @@ def run_once() -> None:
     drop_pct = get_price_change_pct(SYMBOL, hours=4)
     logger.info(f"4小时涨跌: {drop_pct:+.1f}%")
 
+    # ── 拉取日线和1h数据（用于三步法共振） ─────────────────────
+    df_daily, df_1h = None, None
+    try:
+        df_daily = get_klines(SYMBOL, "1day", limit=60)
+        if not df_daily.empty:
+            logger.info(f"[三步法] 日线数据加载成功 ({len(df_daily)}根)")
+    except Exception as e:
+        logger.warning(f"[三步法] 日线数据失败: {e}")
+
+    try:
+        df_1h = get_klines(SYMBOL, "60min", limit=100)
+        if not df_1h.empty:
+            logger.info(f"[三步法] 1h数据加载成功 ({len(df_1h)}根)")
+    except Exception as e:
+        logger.warning(f"[三步法] 1h数据失败: {e}")
+
     # ── MACD状态日志 ────────────────────────────────────────────
     logger.info(get_macd_status_line(df))
 
@@ -231,9 +279,9 @@ def run_once() -> None:
         logger.info("MACD：无新叉口")
 
     # ══════════════════════════════════════════════════════════
-    # ② 插针形态检测（原有逻辑，不变）
+    # ② 三步法插针形态检测（日线趋势 + 1h共振 + 15m插针）
     # ══════════════════════════════════════════════════════════
-    signal = detect_signal(df, drop_4h=drop_pct)
+    signal = detect_signal(df, drop_4h=drop_pct, df_daily=df_daily, df_1h=df_1h)
 
     if signal and signal.get("found"):
         direction = signal.get("direction", "long")
@@ -279,7 +327,7 @@ def main():
     logger.info(f"  K线周期: {INTERVAL}")
     logger.info(f"  扫描间隔: {CHECK_INTERVAL // 60} 分钟")
     logger.info(f"  指标体系: MACD + KDJ + RSI + WR + BOLL")
-    logger.info(f"  推送条件: 插针形态 + 放量（有形态即推）")
+    logger.info(f"  推送条件: 三步法 ≥5/12分（≈App 42分）才推送")
     logger.info(f"  信号去重: 同方向 {DEDUP_HOURS}H 内不重复")
     logger.info(f"  趋势判断: 1H + 4H 双周期 EMA20/EMA50")
     logger.info("=" * 50)
